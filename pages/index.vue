@@ -15,14 +15,20 @@
 
     <!-- 2. 카테고리 선택 -->
     <v-row class="pa-4 pt-2" dense>
-      <v-col cols="4" v-for="(item, i) in categories" :key="i">
-        <v-card class="text-center py-5 rounded-xl elevation-1 hover-highlight hover-blue" color="blue-grey-lighten-5">
-          <v-icon size="32" :color="item.color">{{ item.icon }}</v-icon>
+      <v-col cols="6" v-for="(item, i) in categories" :key="i">
+        <v-card
+            class="text-center py-5 rounded-lg elevation-0"
+            color="grey-lighten-4"
+            style="border: 1px solid #ddd"
+            @click="goToCategory(item.route)"
+        >
+          <v-icon size="30" color="primary">{{ item.icon }}</v-icon>
           <div class="mt-2 font-weight-bold text-body-1">{{ item.title }}</div>
           <div class="text-caption text-grey-darken-1">{{ item.subtitle }}</div>
         </v-card>
       </v-col>
     </v-row>
+
 
     <!-- 3. 해시태그 -->
     <v-sheet color="white" class="mx-4 mb-4 px-2 pt-3 pb-3 rounded-lg">
@@ -37,17 +43,22 @@
     </v-sheet>
 
     <!-- 4. 위치 안내 배너 -->
-    <v-sheet color="indigo-darken-1" dark class="mx-4 mb-5 px-4 py-4 rounded-xl">
+    <v-sheet color="orange-lighten-5" class="mx-4 mb-5 px-4 py-4 rounded-xl border">
       <div class="d-flex justify-space-between align-center">
         <div>
-          <div class="text-subtitle-2 font-weight-bold">현재 위치 기반 실시간 경매</div>
-          <div class="text-caption mt-1">내 주변 5km 반경의 최신 경매글</div>
+          <div class="text-subtitle-2 font-weight-bold text-brown-darken-2">
+            📍 현재 위치 기반 실시간 경매
+          </div>
+          <div class="text-caption mt-1 text-grey-darken-2">
+            내 주변 <strong>2km</strong> 반경의 최신 경매글
+          </div>
         </div>
-        <v-btn icon color="amber" @click="refreshLocationData">
+        <v-btn icon color="brown" variant="tonal" @click="refreshLocationData">
           <v-icon>mdi-crosshairs-gps</v-icon>
         </v-btn>
       </div>
     </v-sheet>
+
 
     <!-- 5. 오늘의 알바 -->
     <div class="px-4 mb-2 d-flex justify-space-between align-end">
@@ -55,7 +66,7 @@
         <div class="font-weight-bold text-subtitle-1">오늘의 알바 경매</div>
         <div class="text-caption text-grey">당일 핫 한 알바 경매</div>
       </div>
-      <div class="text-caption text-orange">5km 이내</div>
+      <div class="text-caption text-orange">2km 이내</div>
     </div>
 
     <v-row class="px-4" dense  v-if="jobs.length > 0">
@@ -86,24 +97,29 @@ import { dealApi } from '@/domains/deal/infrastructure/dealApi'
 import { hashtagApi } from '@/domains/hashtag/infrastructure/hashtagApi'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import { useGeoStore } from '@/stores/geoStore'
+import {useRouter} from "#vue-router";
 
 const jobs = ref<Deal[]>([])
 const deals = ref<Deal[]>([])
 const hashtags = ref<string[]>([])
 const locationLabel = ref('위치 정보 없음')
 const geo = useGeoStore()
+const router = useRouter()
 
 const categories = [
-  { title: '중고거래', subtitle: '실시간 경매 등록', icon: 'mdi-bag-personal', color: 'orange' },
-  { title: '알바 구해요', subtitle: '시급 알바 경매', icon: 'mdi-storefront', color: 'blue-grey' },
-  { title: '알바 합니다', subtitle: '시간 경매 구직', icon: 'mdi-account-tie', color: 'indigo' },
+  { title: '중고거래', subtitle: '실시간 경매 등록', icon: 'mdi-bag-personal', route: '/deals/used' },
+  { title: '알바 급해요!', subtitle: '시급 알바 경매', icon: 'mdi-storefront', route: '/deals/parttime' },
+  { title: '구직 급해요!', subtitle: '시간 경매 구직', icon: 'mdi-account-tie', route: '/deals/parttime-request' },
+  { title: '물물교환', subtitle: '물건끼리 맞교환', icon: 'mdi-swap-horizontal', route: '/deals/barter' },
 ]
+
 
 const fetchNearbyDealsByType = async (type: 'used' | 'parttime') => {
   try {
     const res = await dealApi.fetchNearbyDeals({
       lat: geo.latitude!,
       lng: geo.longitude!,
+      radius: 2.0,
       type
     })
     if (type === 'parttime') jobs.value = res
@@ -134,6 +150,9 @@ const refreshLocationData = async () => {
     await fetchNearbyDealsByType('parttime')
     await fetchNearbyDealsByType('used')
   }
+}
+const goToCategory = (path: string) => {
+  router.push(path)
 }
 
 onMounted(() => {

@@ -23,19 +23,49 @@ export const dealApi = {
     getTodayDeals(): Promise<DealResponse[]> {
         return apiClient.get<DealResponse[]>('/api/deals/today')
     },
+
     async fetchNearbyDeals({
                                lat,
                                lng,
+                               radius,
                                type
                            }: {
         lat: number
         lng: number
+        radius: number
         type: 'used' | 'parttime'
     }) {
         return apiClient.get<Deal[]>('/deals/nearby', {
-            params: { lat, lng, type }
+            params: { lat, lng, radius, type }
         })
+    },
+
+    // ✅ 무한스크롤용 리스트 조회
+    getList({
+                type,
+                page,
+                pageSize
+            }: {
+        type: 'used' | 'parttime' | 'barter'
+        page: number
+        pageSize: number
+    }): Promise<DealResponse[]> {
+        return apiClient.get<DealResponse[]>('/api/deals', {
+            params: { type, page, pageSize }
+        })
+    },
+
+    searchDeals(params: {
+        type: string
+        tags?: string[]
+        minPrice?: number
+        maxPrice?: number
+        sort?: string
+        page?: number
+        radius?: number
+        lat?: number
+        lng?: number
+    }) {
+        return apiClient.get('/api/deals/search', { params })
     }
-
 }
-

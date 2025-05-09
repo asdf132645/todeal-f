@@ -1,8 +1,15 @@
 export interface DealRequest {
     title: string
     description: string
+    type: 'used' | 'parttime' | 'barter' | 'parttime-request'
     startPrice: number
-    deadline: string // ISO string
+    deadline: string // ISO 8601
+    region: string
+    regionDepth1: string
+    regionDepth2: string
+    regionDepth3: string
+    latitude: number
+    longitude: number
+    images: string[] // S3 업로드 완료된 URL
     hashtags: string[]
-    images: string[] // S3 URL 배열
 }

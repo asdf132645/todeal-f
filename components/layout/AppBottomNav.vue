@@ -5,7 +5,7 @@
       <span class="text-caption">홈</span>
     </v-btn>
 
-    <v-btn to="/search" value="search">
+    <v-btn to="/deals/search" value="search">
       <v-icon>mdi-magnify</v-icon>
       <span class="text-caption">검색</span>
     </v-btn>
@@ -15,7 +15,7 @@
       <span class="text-caption">등록</span>
     </v-btn>
 
-    <v-btn to="/bids" value="bids">
+    <v-btn to="/bids/history" value="bids">
       <v-icon>mdi-gavel</v-icon>
       <span class="text-caption">입찰내역</span>
     </v-btn>

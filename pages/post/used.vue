@@ -4,7 +4,6 @@
       <div class="text-h6 font-weight-bold mb-2">중고 거래 등록</div>
       <div class="text-caption text-grey-darken-1 mb-4">실시간 경매용 중고 거래를 등록하세요.</div>
 
-      <!-- 이미지 업로드 슬롯 (5개 고정) -->
       <v-row dense class="mb-5">
         <v-col
             v-for="(img, index) in images"
@@ -14,13 +13,7 @@
         >
           <div class="upload-slot" @click="triggerFileInput(index)">
             <template v-if="img">
-              <v-img
-                  :src="getImageUrl(img)"
-                  cover
-                  max-width="100"
-                  max-height="100"
-                  class="rounded"
-              />
+              <v-img :src="getImageUrl(img)" cover max-width="100" max-height="100" class="rounded" />
             </template>
             <template v-else>
               <v-icon size="36" color="grey-lighten-1">mdi-plus</v-icon>
@@ -51,7 +44,8 @@
           persistent-hint
       />
 
-      <!-- 마감 날짜 -->
+      <KakaoLocationPicker v-model:region="region" class="mb-4" />
+
       <v-text-field
           label="마감 날짜"
           readonly
@@ -84,7 +78,9 @@
 import { ref } from 'vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { useSnackbarStore } from '@/stores/snackbarStore'
-import { useGeoStore } from '@/stores/geoStore'
+import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
+
+const snackbar = useSnackbarStore()
 
 const title = ref('')
 const description = ref('')
@@ -92,8 +88,19 @@ const startPrice = ref<number | null>(null)
 const hashtags = ref<string[]>([])
 const images = ref<(File | null)[]>([null, null, null, null, null])
 const fileInputs = ref<(HTMLInputElement | null)[]>([])
-const snackbar = useSnackbarStore()
-const geo = useGeoStore()
+
+const region = ref({
+  full: '',
+  depth1: '',
+  depth2: '',
+  depth3: '',
+  x: null,
+  y: null
+})
+
+const deadlineDialog = ref(false)
+const deadlineDate = ref<Date | null>(null)
+const formattedDeadline = ref('')
 
 const assignInputRef = (el: Element | null, index: number) => {
   if (!el || el.tagName !== 'INPUT') return
@@ -116,13 +123,9 @@ const onFileChange = (e: Event, index: number) => {
 
 const getImageUrl = (file: File) => URL.createObjectURL(file)
 
-const deadlineDialog = ref(false)
-const deadlineDate = ref<Date | null>(null)
-const formattedDeadline = ref('')
-
 const onConfirmDeadline = () => {
   if (!deadlineDate.value) {
-    alert('마감 날짜를 선택하세요.')
+    snackbar.show('마감 날짜를 선택하세요.', 'error')
     return
   }
   const selected = new Date(deadlineDate.value)
@@ -134,6 +137,7 @@ const onConfirmDeadline = () => {
     snackbar.show('마감 날짜는 최대 90일까지만 설정할 수 있어요.', 'error')
     return
   }
+
   const yyyy = selected.getFullYear()
   const mm = String(selected.getMonth() + 1).padStart(2, '0')
   const dd = String(selected.getDate()).padStart(2, '0')
@@ -154,8 +158,8 @@ const submit = async () => {
     return
   }
 
-  if (!geo.latitude || !geo.longitude) {
-    snackbar.show('위치 정보를 불러올 수 없습니다.', 'error')
+  if (!region.value.x || !region.value.y) {
+    snackbar.show('위치를 선택해주세요.', 'error')
     return
   }
 
@@ -167,19 +171,23 @@ const submit = async () => {
     title: title.value,
     description: description.value,
     startPrice: startPrice.value,
+    currentPrice: startPrice.value,
     deadline: getDeadlineISO(),
+    region: region.value.full,
+    regionDepth1: region.value.depth1,
+    regionDepth2: region.value.depth2,
+    regionDepth3: region.value.depth3,
+    latitude: parseFloat(region.value.y),
+    longitude: parseFloat(region.value.x),
     images: uploadedUrls,
     hashtags: hashtags.value,
-    type: 'used', // 'parttime' 도 가능
-    latitude: geo.latitude,
-    longitude: geo.longitude
+    type: 'used'
   }
 
   try {
     const res = await dealApi.createDeal(payload)
     console.log('✅ 등록 완료', res)
     snackbar.show('등록 성공!', 'success')
-    // TODO: 등록 후 라우팅 이동 필요 시 추가
   } catch (err) {
     console.error('등록 실패:', err)
     snackbar.show('등록 실패', 'error')

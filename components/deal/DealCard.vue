@@ -1,5 +1,5 @@
 <template>
-  <v-card class="rounded-lg" elevation="2">
+  <v-card class="rounded-lg" elevation="2" @click="goToDetail">
     <v-img
         :src="deal.images?.[0] || 'https://via.placeholder.com/300x200'"
         height="160"
@@ -22,13 +22,19 @@
 
 <script setup lang="ts">
 import type { Deal } from '~/domains/deal/domain/deal/dealTypes'
+import {useRouter} from "#vue-router";
 
-defineProps<{ deal: Deal }>()
+const props = defineProps<{ deal: Deal }>()
+const router = useRouter()
 
 const formatTime = (time: string) => {
   return new Date(time).toLocaleString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+const goToDetail = () => {
+  router.push(`/deals/detail/${props.deal.id}`)
 }
 </script>
