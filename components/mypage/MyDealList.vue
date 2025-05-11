@@ -20,7 +20,7 @@
                 color="primary"
                 class="mt-2"
                 @click.stop="goToEdit(deal.id)"
-            >✏️ 수정</v-btn>
+            >Edit</v-btn>
           </v-card-text>
         </v-card>
       </v-col>
@@ -37,7 +37,7 @@ const myDeals = ref([])
 const router = useRouter()
 
 const goToDetail = (id: number) => {
-  router.push(`/deals/${id}`)
+  router.push(`deals/detail/${id}`)
 }
 
 const goToEdit = (id: number) => {
