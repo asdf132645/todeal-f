@@ -67,5 +67,10 @@ export const dealApi = {
         lng?: number
     }) {
         return apiClient.get('/api/deals/search', { params })
+    },
+
+    // ✅ 거래종료 (딜 삭제) 메서드 추가
+    deleteDeal(dealId: number): Promise<void> {
+        return apiClient.delete(`/api/deals/${dealId}`)
     }
 }

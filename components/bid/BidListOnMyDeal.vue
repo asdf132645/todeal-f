@@ -26,6 +26,14 @@
             >
               입찰 진행중
             </v-chip>
+            <v-btn
+                size="small"
+                variant="tonal"
+                color="grey"
+                @click="deleteDeal(group.deal.id)"
+            >
+              거래종료
+            </v-btn>
           </div>
 
           <v-divider class="my-2" />
@@ -34,40 +42,50 @@
             <v-list-item
                 v-for="bid in group.bids"
                 :key="bid.id"
-                class="d-flex align-center justify-space-between"
+                class="py-3 px-4 rounded-lg mb-2"
+                :class="group.deal.winnerBidId === bid.id ? 'bg-green-lighten-5' : 'bg-grey-lighten-4'"
             >
-              <div>
-                💰 {{ bid.amount.toLocaleString() }}원 /
-                👤 {{ bid.nickname }}
-              </div>
+              <div class="d-flex justify-space-between align-center w-100">
+                <div>
+                  <div class="font-weight-bold">
+                    💰 {{ bid.amount.toLocaleString() }}원 / 👤 {{ bid.nickname }}
+                  </div>
+                  <div v-if="group.deal.winnerBidId === bid.id" class="text-green-darken-2 text-caption mt-1">
+                    ✅ 낙찰자
+                  </div>
+                </div>
 
-              <div class="d-flex gap-2">
-                <v-btn
-                    v-if="group.deal.winnerBidId === bid.id"
-                    size="small"
-                    color="grey"
-                    disabled
-                >
-                  낙찰자
-                </v-btn>
+                <div class="d-flex align-center gap-2">
+                  <v-btn
+                      v-if="!group.deal.winnerBidId"
+                      size="small"
+                      color="primary"
+                      @click="selectWinner(bid.id)"
+                  >
+                    낙찰 확정
+                  </v-btn>
 
-                <v-btn
-                    v-else-if="!group.deal.winnerBidId"
-                    size="small"
-                    color="primary"
-                    @click="selectWinner(bid.id)"
-                >
-                  낙찰 확정
-                </v-btn>
+                  <v-btn
+                      v-if="group.deal.winnerBidId === bid.id"
+                      size="small"
+                      color="error"
+                      @click="cancelWinner(group.deal.id)"
+                  >
+                    확정 취소
+                  </v-btn>
 
-                <v-btn
-                    size="small"
-                    variant="outlined"
-                    color="blue"
-                    @click="goToChat(group.deal.id, bid.userId)"
-                >
-                  채팅
-                </v-btn>
+                  <v-btn
+                      v-if="group.deal.winnerBidId === bid.id"
+                      size="small"
+                      variant="tonal"
+                      color="indigo"
+                      @click="goToChat(group.deal.id, bid.userId)"
+                  >
+                    💬 채팅
+                  </v-btn>
+
+
+                </div>
               </div>
             </v-list-item>
           </v-list>
@@ -85,6 +103,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { bidApi } from '@/domains/bid/infrastructure/bidApi'
+import { dealApi } from '@/domains/deal/infrastructure/dealApi'
 
 const groupedBids = ref<any[]>([])
 const router = useRouter()
@@ -108,8 +127,28 @@ const selectWinner = async (bidId: number) => {
   }
 }
 
+const cancelWinner = async (dealId: number) => {
+  try {
+    if (!confirm('정말 낙찰 확정을 취소하시겠습니까?')) return
+    await bidApi.cancelWinnerBid(dealId)
+    fetchBids()
+  } catch (e) {
+    console.error('낙찰 취소 실패:', e)
+  }
+}
+
+const deleteDeal = async (dealId: number) => {
+  try {
+    if (!confirm('정말 이 공고를 거래종료 처리하시겠습니까? 관련 채팅도 모두 삭제됩니다.')) return
+    await dealApi.deleteDeal(dealId)
+    fetchBids()
+  } catch (e) {
+    console.error('거래종료 실패:', e)
+  }
+}
+
 const goToChat = (dealId: number, userId: number) => {
-  router.push(`/chat/${dealId}/${userId}`)
+  router.push(`/chats/${dealId}`)
 }
 
 onMounted(fetchBids)

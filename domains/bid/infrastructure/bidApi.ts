@@ -28,6 +28,11 @@ export const bidApi = {
         return apiClient.post(`/api/bids/${bidId}/select-winner`)
     },
 
+    /** 낙찰 확정 취소 */
+    cancelWinnerBid(dealId: number) {
+        return apiClient.patch(`/api/bids/${dealId}/cancel-winner`)
+    },
+
     /** 내가 입찰한 물건들 */
     getMyBids() {
         return apiClient.get('/api/bids/mine')
@@ -36,5 +41,10 @@ export const bidApi = {
     /** 내 물건에 입찰된 목록 */
     getBidsOnMyDeals() {
         return apiClient.get('/api/bids/on-my-deals')
-    }
+    },
+    // 입찰 취소
+    cancelBid(bidId: number): Promise<void> {
+        return apiClient.delete(`/api/bids/${bidId}`)
+    },
+
 }

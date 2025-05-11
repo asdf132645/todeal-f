@@ -3,6 +3,7 @@ import { useRoute } from 'vue-router'
 import { onMounted, ref, computed } from 'vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
+import { barterBidApi } from '~/domains/barterBid/infrastructure/barterBidApi'
 
 import DealDetailBase from '@/components/deal/DealDetailBase.vue'
 import UsedDealSection from '@/components/deal/UsedDealSection.vue'
@@ -27,7 +28,6 @@ const sectionMap = {
 }
 const currentSection = computed(() => sectionMap[type] || UsedDealSection)
 
-// ✅ 마감 여부: 시간 or 낙찰 확정
 const isExpired = computed(() => {
   if (!deal.value) return false
   const expiredByTime = new Date(deal.value.deadline) < new Date()
@@ -38,12 +38,22 @@ const isExpired = computed(() => {
 const fetchDeal = async () => {
   deal.value = await dealApi.getDealById(dealId)
 }
+
 const fetchBids = async () => {
-  bids.value = await bidApi.getBidListByDealId(dealId)
+  if (type === 'barter') {
+    bids.value = await barterBidApi.getListByDealId(dealId)
+  } else {
+    bids.value = await bidApi.getBidListByDealId(dealId)
+  }
 }
+
 const selectBid = async (bidId: number) => {
   if (!confirm('해당 입찰자를 낙찰자로 확정하시겠습니까?')) return
-  await bidApi.selectWinnerBid(bidId)
+  if (type === 'barter') {
+    await barterBidApi.accept(bidId)
+  } else {
+    await bidApi.selectWinnerBid(bidId)
+  }
   await fetchDeal()
   await fetchBids()
   alert('낙찰 처리 완료')
@@ -55,10 +65,8 @@ onMounted(async () => {
 })
 </script>
 
-
 <template>
   <v-container v-if="deal" class="py-4">
-    <!-- ✅ 마감 안내 -->
     <v-alert
         v-if="isExpired"
         type="warning"
@@ -70,14 +78,11 @@ onMounted(async () => {
       ⏰ 이 경매는 마감되었습니다.
     </v-alert>
 
-    <!-- 기본 정보 -->
     <DealDetailBase :deal="deal" />
-
-    <!-- 타입별 섹션 -->
     <component :is="currentSection" :deal="deal" :isExpired="isExpired" v-if="!isExpired" />
 
     <!-- 입찰자 목록 -->
-    <v-card class="mt-6 pa-4" v-if="isOwner && bids.length > 0">
+    <v-card class="mt-6 pa-4" v-if="bids.length > 0">
       <div class="text-subtitle-1 font-weight-bold mb-3">입찰자 목록</div>
       <v-list>
         <v-list-item
@@ -85,16 +90,24 @@ onMounted(async () => {
             :key="bid.id"
             class="d-flex justify-space-between align-center"
         >
-          <div>{{ bid.nickname }} - {{ bid.amount.toLocaleString() }}원</div>
+          <!-- ✨ 타입별 다른 표시 -->
+          <div v-if="type === 'barter'">
+            제안 물품 <strong>{{ bid.proposedItem }}</strong><br />
+            설명 {{ bid.description }}<br />
+            사용자 ID: {{ bid.userId }}
+          </div>
+          <div v-else>
+            💰 {{ bid.amount.toLocaleString() }}원 / 👤 {{ bid.nickname }}
+          </div>
 
-          <v-btn
-              size="small"
-              color="primary"
-              :disabled="deal.winnerBidId !== null"
-              @click="selectBid(bid.id)"
-          >
-            낙찰하기
-          </v-btn>
+<!--          <v-btn-->
+<!--              size="small"-->
+<!--              color="primary"-->
+<!--              :disabled="deal.winnerBidId !== null"-->
+<!--              @click="selectBid(bid.id)"-->
+<!--          >-->
+<!--            낙찰하기-->
+<!--          </v-btn>-->
         </v-list-item>
       </v-list>
     </v-card>

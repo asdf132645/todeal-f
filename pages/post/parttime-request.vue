@@ -7,7 +7,7 @@
       <v-textarea v-model="form.description" label="요청 메시지" rows="4" outlined dense required />
       <v-text-field v-model="form.deadline" label="마감 시간" type="datetime-local" outlined dense />
 
-      <KakaoLocationPicker @selected="onLocationSelected" class="mb-4" />
+      <KakaoLocationPicker class="mb-4" v-model:region="region" />
 
       <v-file-input
           v-model="images"
@@ -91,9 +91,10 @@ const submit = async () => {
 
   loading.value = true
   try {
-    const uploadedImages = images.value.length
-        ? images.value.map((_, i) => `https://s3.bucket/fake-${i}.jpg`)
-        : []
+    // // 이미지가 있다면 실제 URL 받아오는 부분
+    // const uploadedImages = images.value.length
+    //     ? await uploadImages(images.value) // 이미지 업로드 처리 함수 호출
+    //     : []
 
     const payload = {
       title: form.value.title,
@@ -101,14 +102,14 @@ const submit = async () => {
       type: 'parttime-request',
       startPrice: 0,
       currentPrice: 0,
-      deadline: form.value.deadline,
+      deadline: new Date(form.value.deadline).toISOString(),  // 날짜 포맷 맞추기
       region: region.value.full,
       regionDepth1: region.value.depth1,
       regionDepth2: region.value.depth2,
       regionDepth3: region.value.depth3,
       latitude: parseFloat(region.value.y),
       longitude: parseFloat(region.value.x),
-      images: uploadedImages,
+      // images: uploadedImages, // S3 업로드된 이미지 URL
       hashtags: hashtags.value
     }
 
@@ -121,4 +122,5 @@ const submit = async () => {
     loading.value = false
   }
 }
+
 </script>

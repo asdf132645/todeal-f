@@ -10,7 +10,6 @@
       </div>
     </v-sheet>
 
-
     <BannerArea />
 
     <!-- 2. 카테고리 선택 -->
@@ -28,7 +27,6 @@
         </v-card>
       </v-col>
     </v-row>
-
 
     <!-- 3. 해시태그 -->
     <v-sheet color="white" class="mx-4 mb-4 px-2 pt-3 pb-3 rounded-lg">
@@ -59,7 +57,6 @@
       </div>
     </v-sheet>
 
-
     <!-- 5. 오늘의 알바 -->
     <div class="px-4 mb-2 d-flex justify-space-between align-end">
       <div>
@@ -69,7 +66,7 @@
       <div class="text-caption text-orange">2km 이내</div>
     </div>
 
-    <v-row class="px-4" dense  v-if="jobs.length > 0">
+    <v-row class="px-4" dense v-if="jobs.length > 0">
       <v-col cols="6" v-for="job in jobs" :key="job.id">
         <JobCard :job="job" />
       </v-col>
@@ -84,6 +81,24 @@
       </v-col>
     </v-row>
     <div v-else class="text-caption text-grey text-center pb-6">주변에 중고거래 경매가 아직 없어요 🧺</div>
+
+    <!-- 7. 오늘의 물물교환 -->
+    <div class="px-4 mt-6 mb-2 font-weight-bold text-subtitle-1">오늘의 물물교환</div>
+    <v-row class="px-4" dense v-if="barters.length > 0">
+      <v-col cols="6" v-for="barter in barters" :key="barter.id">
+        <DealCard :deal="barter" />
+      </v-col>
+    </v-row>
+    <div v-else class="text-caption text-grey text-center pb-6">주변에 물물교환 경매가 아직 없어요 🧺</div>
+
+    <!-- 8. 오늘의 구직 -->
+    <div class="px-4 mt-6 mb-2 font-weight-bold text-subtitle-1">오늘의 구직 경매</div>
+    <v-row class="px-4" dense v-if="jobs.length > 0">
+      <v-col cols="6" v-for="job in jobs" :key="job.id">
+        <JobCard :job="job" />
+      </v-col>
+    </v-row>
+    <div v-else class="text-caption text-grey text-center pb-6">주변에 구직 경매가 아직 없어요 🧳</div>
 
   </v-container>
 </template>
@@ -101,6 +116,7 @@ import {useRouter} from "#vue-router";
 
 const jobs = ref<Deal[]>([])
 const deals = ref<Deal[]>([])
+const barters = ref<Deal[]>([])  // 물물교환 추가
 const hashtags = ref<string[]>([])
 const locationLabel = ref('위치 정보 없음')
 const geo = useGeoStore()
@@ -113,19 +129,20 @@ const categories = [
   { title: '물물교환', subtitle: '물건끼리 맞교환', icon: 'mdi-swap-horizontal', route: '/deals/barter' },
 ]
 
-
-const fetchNearbyDealsByType = async (type: 'used' | 'parttime') => {
+const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'parttime-request') => {
   try {
     const res = await dealApi.fetchNearbyDeals({
       lat: geo.latitude!,
       lng: geo.longitude!,
-      radius: 2.0,
+      radius: 3.0,
       type
     })
     if (type === 'parttime') jobs.value = res
-    else deals.value = res
+    else if (type === 'used') deals.value = res
+    else if (type === 'barter') barters.value = res  // 물물교환 데이터 처리
+    else jobs.value = res  // 구직 데이터 처리
   } catch (e) {
-    console.error(`위치 기반 ${type === 'parttime' ? '알바' : '중고'} 조회 실패:`, e)
+    console.error(`위치 기반 ${type} 조회 실패:`, e)
   }
 }
 
@@ -149,8 +166,11 @@ const refreshLocationData = async () => {
     locationLabel.value = await fetchLocationLabel(geo.latitude, geo.longitude)
     await fetchNearbyDealsByType('parttime')
     await fetchNearbyDealsByType('used')
+    await fetchNearbyDealsByType('barter')  // 물물교환 추가
+    await fetchNearbyDealsByType('parttime-request')  // 구직 추가
   }
 }
+
 const goToCategory = (path: string) => {
   router.push(path)
 }
@@ -158,7 +178,5 @@ const goToCategory = (path: string) => {
 onMounted(() => {
   fetchPopularHashtags()
   refreshLocationData()
-  fetchNearbyDealsByType('parttime')
-  fetchNearbyDealsByType('used')
 })
 </script>

@@ -40,6 +40,16 @@
           <div class="text-body-2 text-grey-darken-2">
             ⏰ 마감일: {{ formatDate(bid.deal.deadline) }}
           </div>
+
+          <!-- 입찰 취소 버튼 (입찰 진행중일 때만) -->
+          <v-btn
+              v-if="bid.deal.winnerBidId === null"
+              color="red"
+              size="small"
+              @click="cancelBid(bid.id)"
+          >
+            입찰 취소
+          </v-btn>
         </v-card>
       </v-col>
     </v-row>
@@ -67,12 +77,28 @@ const formatDate = (iso: string) => {
   return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`
 }
 
-onMounted(async () => {
+// 입찰 취소 메서드
+const cancelBid = async (bidId: number) => {
+  try {
+    const isConfirmed = confirm("정말 이 입찰을 취소하시겠습니까?")
+    if (!isConfirmed) return
+    await bidApi.cancelBid(bidId)
+    alert("입찰이 취소되었습니다.")
+    // 리스트 새로고침
+    fetchBids()
+  } catch (e) {
+    console.error('입찰 취소 실패:', e)
+  }
+}
+
+const fetchBids = async () => {
   try {
     const res = await bidApi.getMyBids()
     bids.value = res
   } catch (e) {
     console.error('내 입찰 목록 불러오기 실패:', e)
   }
-})
+}
+
+onMounted(fetchBids)
 </script>

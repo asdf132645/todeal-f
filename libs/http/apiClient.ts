@@ -22,6 +22,13 @@ export const apiClient = {
         return handleResponse(res.data)
     },
 
+    patch: async <T>(url: string, data?: object): Promise<T> => {
+        const axios = useNuxtApp().$axios
+        const res = await axios.patch<ApiResponse<T>>(url, data)
+        return handleResponse(res.data)
+    },
+
+
     put: async <T>(url: string, data?: object): Promise<T> => {
         const axios = useNuxtApp().$axios
         const res = await axios.put<ApiResponse<T>>(url, data)

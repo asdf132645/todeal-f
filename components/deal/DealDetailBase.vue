@@ -14,7 +14,7 @@
 
     <div class="mt-3 text-caption">
       마감: <strong>{{ formatDeadline(deal.deadline) }}</strong><br />
-      현재가: <strong>{{ deal.currentPrice.toLocaleString() }}원</strong>
+      <span v-if="deal.type !== 'barter'">현재가: <strong>{{ deal.currentPrice.toLocaleString() }}원</strong></span>
     </div>
   </div>
 </template>
