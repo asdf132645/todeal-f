@@ -1,37 +1,34 @@
 <template>
   <v-app-bar app flat height="64" color="indigo-darken-3" class="px-4">
-    <!-- 로고 및 앱명 -->
     <v-toolbar-title class="font-weight-bold text-white">
       to<span class="text-amber-accent-2">DEAL</span>
     </v-toolbar-title>
 
-    <!-- 위치 정보 pill -->
+    <!-- 위치 및 반경 선택 -->
     <v-btn
         variant="flat"
         class="mx-2 px-3 py-1 rounded-pill bg-white"
-        @click="onClickLocation"
+        @click="locationDialog = true"
     >
       <v-icon size="18" color="deep-orange-darken-2">mdi-map-marker</v-icon>
       <span class="ml-1 text-caption font-weight-medium text-grey-darken-3">
-        {{ regionName }}
+        {{ regionName }} ({{ radius }}km)
       </span>
       <v-icon size="14" color="grey-darken-1" class="ml-1">mdi-chevron-down</v-icon>
     </v-btn>
 
     <v-spacer />
 
-    <!-- 알림 아이콘 -->
     <v-btn icon>
       <v-icon color="white">mdi-bell-outline</v-icon>
     </v-btn>
 
-    <!-- 햄버거 메뉴 -->
     <v-btn icon @click="drawer = true">
       <v-icon color="white">mdi-menu</v-icon>
     </v-btn>
   </v-app-bar>
 
-  <!-- 드로어 메뉴 -->
+  <!-- 드로어 -->
   <v-navigation-drawer v-model="drawer" temporary location="right">
     <v-list nav dense>
       <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
@@ -40,13 +37,31 @@
       <v-list-item to="/settings" title="설정" prepend-icon="mdi-cog" />
     </v-list>
   </v-navigation-drawer>
+
+  <!-- 위치 + 반경 선택 다이얼로그 -->
+  <v-dialog v-model="locationDialog" max-width="400">
+    <v-card>
+      <v-card-title class="text-subtitle-1 font-weight-bold">지역/반경 설정</v-card-title>
+      <v-card-text>
+        <div class="mb-4">현재 위치: <strong>{{ regionName }}</strong></div>
+        <RadiusSelector @change="onRadiusChange" />
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn color="primary" text @click="locationDialog = false">닫기</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import RadiusSelector from '@/components/common/RadiusSelector.vue'
 
 const drawer = ref(false)
+const locationDialog = ref(false)
 const regionName = ref('내 위치')
+const radius = ref(2) // 기본값
 
 const getRegionNameFromCoords = async () => {
   const lat = parseFloat(localStorage.getItem('userLat') || '37.5665')
@@ -65,11 +80,16 @@ const getRegionNameFromCoords = async () => {
   })
 }
 
+const onRadiusChange = (val: number) => {
+  radius.value = val
+  localStorage.setItem('userRadius', val.toString())
+  locationDialog.value = false
+  window.location.reload() // 반경 반영을 위해 새로고침
+}
+
 onMounted(() => {
+  const stored = localStorage.getItem('userRadius')
+  radius.value = stored;
   setTimeout(() => getRegionNameFromCoords(), 300)
 })
-
-const onClickLocation = () => {
-  console.log('위치 버튼 클릭됨')
-}
 </script>

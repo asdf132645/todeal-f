@@ -54,7 +54,7 @@
             📍 현재 위치 기반 실시간 경매
           </div>
           <div class="text-caption mt-1 text-grey-darken-2">
-            내 주변 <strong>2km</strong> 반경의 최신 경매글
+            내 주변 <strong>{{ userRadius }}km</strong> 반경의 최신 경매글
           </div>
         </div>
         <v-btn icon color="brown" variant="tonal" @click="refreshLocationData">
@@ -69,7 +69,7 @@
         <div class="font-weight-bold text-subtitle-1">오늘의 알바 경매</div>
         <div class="text-caption text-grey">당일 핫 한 알바 경매</div>
       </div>
-      <div class="text-caption text-orange">2km 이내</div>
+      <div class="text-caption text-orange">{{ userRadius }}km 이내</div>
     </div>
     <v-row class="px-4" dense v-if="parttimeRequest.length > 0">
       <v-col cols="6" v-for="job in parttimeRequest" :key="job.id">
@@ -126,6 +126,7 @@ const hashtags = ref<string[]>([])
 const locationLabel = ref('위치 정보 없음')
 const geo = useGeoStore()
 const router = useRouter()
+const userRadius = ref('');
 
 const defaultHashtags = [
   '#알바구함', '#중고거래', '#급처분', '#오늘출근', '#물물교환', '#시급만원', '#서울', '#신림동'
@@ -140,10 +141,11 @@ const categories = [
 
 const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'parttime-request') => {
   try {
+
     const res = await dealApi.fetchNearbyDeals({
       lat: geo.latitude!,
       lng: geo.longitude!,
-      radius: 150.0,
+      radius: userRadius.value,
       type
     })
     if (type === 'parttime') jobs.value = res
@@ -187,6 +189,7 @@ const goToCategory = (path: string) => {
 }
 
 onMounted(() => {
+  userRadius.value = localStorage.getItem('userRadius')
   fetchPopularHashtags()
   refreshLocationData()
 })

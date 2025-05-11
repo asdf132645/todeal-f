@@ -1,4 +1,4 @@
-// src/domains/deal/infrastructure/dealApi.ts
+// ✅ src/domains/deal/infrastructure/dealApi.ts
 import { apiClient } from '@/libs/http/apiClient'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import type { DealRequest } from '@/domains/deal/domain/deal/dto/DealRequest'
@@ -72,5 +72,15 @@ export const dealApi = {
     // ✅ 거래종료 (딜 삭제) 메서드 추가
     deleteDeal(dealId: number): Promise<void> {
         return apiClient.delete(`/api/deals/${dealId}`)
+    },
+
+    // ✅ 내가 등록한 딜 목록 조회
+    getMyDeals(): Promise<DealResponse[]> {
+        return apiClient.get('/api/deals/mine')
+    },
+
+    // ✅ 딜 수정 요청
+    updateDeal(dealId: number, payload: DealRequest): Promise<DealResponse> {
+        return apiClient.put(`/api/deals/${dealId}`, payload)
     }
 }

@@ -117,7 +117,7 @@ onMounted(async () => {
             사용자 ID: {{ bid.userId }}
           </div>
           <div v-else>
-            💰 {{ bid.amount.toLocaleString() }}원 / 👤 {{ bid.nickname }}
+            {{ bid.amount.toLocaleString() }}원 / [닉네임 : {{ bid.nickname }}]
           </div>
         </v-list-item>
       </v-list>
