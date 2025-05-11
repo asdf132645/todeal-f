@@ -30,10 +30,16 @@
 
     <!-- 3. 해시태그 -->
     <v-sheet color="white" class="mx-4 mb-4 px-2 pt-3 pb-3 rounded-lg">
-      <div class="text-subtitle-2 font-weight-bold mb-2">🔥 인기 해시태그</div>
+      <div class="text-subtitle-2 font-weight-bold mb-2 text-indigo-darken-3">🔥 인기 해시태그</div>
       <v-slide-group show-arrows>
         <v-slide-group-item v-for="tag in hashtags" :key="tag">
-          <v-chip class="ma-1 px-3" color="orange-lighten-4 hover-highlight hover-blue" text-color="orange-darken-3" pill>
+          <v-chip
+              class="ma-1 px-3"
+              color="#8264ee"
+              text-color="#8264ee"
+              style="border: 1px solid #8264ee"
+              pill
+          >
             {{ tag }}
           </v-chip>
         </v-slide-group-item>
@@ -65,9 +71,8 @@
       </div>
       <div class="text-caption text-orange">2km 이내</div>
     </div>
-
-    <v-row class="px-4" dense v-if="jobs.length > 0">
-      <v-col cols="6" v-for="job in jobs" :key="job.id">
+    <v-row class="px-4" dense v-if="parttimeRequest.length > 0">
+      <v-col cols="6" v-for="job in parttimeRequest" :key="job.id">
         <JobCard :job="job" />
       </v-col>
     </v-row>
@@ -99,7 +104,6 @@
       </v-col>
     </v-row>
     <div v-else class="text-caption text-grey text-center pb-6">주변에 구직 경매가 아직 없어요 🧳</div>
-
   </v-container>
 </template>
 
@@ -112,15 +116,20 @@ import { dealApi } from '@/domains/deal/infrastructure/dealApi'
 import { hashtagApi } from '@/domains/hashtag/infrastructure/hashtagApi'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import { useGeoStore } from '@/stores/geoStore'
-import {useRouter} from "#vue-router";
+import { useRouter } from '#vue-router'
 
 const jobs = ref<Deal[]>([])
 const deals = ref<Deal[]>([])
-const barters = ref<Deal[]>([])  // 물물교환 추가
+const barters = ref<Deal[]>([]);
+const parttimeRequest = ref<Deal[]>([]);
 const hashtags = ref<string[]>([])
 const locationLabel = ref('위치 정보 없음')
 const geo = useGeoStore()
 const router = useRouter()
+
+const defaultHashtags = [
+  '#알바구함', '#중고거래', '#급처분', '#오늘출근', '#물물교환', '#시급만원', '#서울', '#신림동'
+]
 
 const categories = [
   { title: '중고거래', subtitle: '실시간 경매 등록', icon: 'mdi-bag-personal', route: '/deals/used' },
@@ -134,13 +143,14 @@ const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'pa
     const res = await dealApi.fetchNearbyDeals({
       lat: geo.latitude!,
       lng: geo.longitude!,
-      radius: 3.0,
+      radius: 150.0,
       type
     })
     if (type === 'parttime') jobs.value = res
     else if (type === 'used') deals.value = res
-    else if (type === 'barter') barters.value = res  // 물물교환 데이터 처리
-    else jobs.value = res  // 구직 데이터 처리
+    else if (type === 'barter') barters.value = res;
+    else if (type === 'parttime-request') parttimeRequest.value = res;
+    else jobs.value = res
   } catch (e) {
     console.error(`위치 기반 ${type} 조회 실패:`, e)
   }
@@ -149,9 +159,10 @@ const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'pa
 const fetchPopularHashtags = async () => {
   try {
     const res = await hashtagApi.fetchPopularHashtags()
-    hashtags.value = res
+    hashtags.value = res.length > 0 ? res : defaultHashtags
   } catch (e) {
     console.error('인기 해시태그 조회 실패:', e)
+    hashtags.value = defaultHashtags
   }
 }
 
@@ -166,8 +177,8 @@ const refreshLocationData = async () => {
     locationLabel.value = await fetchLocationLabel(geo.latitude, geo.longitude)
     await fetchNearbyDealsByType('parttime')
     await fetchNearbyDealsByType('used')
-    await fetchNearbyDealsByType('barter')  // 물물교환 추가
-    await fetchNearbyDealsByType('parttime-request')  // 구직 추가
+    await fetchNearbyDealsByType('barter')
+    await fetchNearbyDealsByType('parttime-request')
   }
 }
 

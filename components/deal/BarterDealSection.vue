@@ -13,6 +13,7 @@ import { barterBidApi } from '~/domains/barterBid/infrastructure/barterBidApi'
 const props = defineProps<{ deal: any }>()
 const item = ref('')
 const desc = ref('')
+const emit = defineEmits(['bid-complete'])
 
 const submit = async () => {
   await barterBidApi.propose({
@@ -21,6 +22,8 @@ const submit = async () => {
     description: desc.value,
     images: []
   })
-  alert('제안 완료!')
+  alert('제안 완료!');
+  emit('bid-complete') // ✅ 부모에 알림
+
 }
 </script>

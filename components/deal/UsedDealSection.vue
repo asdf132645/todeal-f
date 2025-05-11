@@ -27,6 +27,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
+const emit = defineEmits(['bid-complete'])
 
 const props = defineProps<{
   deal: any,
@@ -51,6 +52,7 @@ const submitBid = async () => {
     })
 
     alert('✅ 입찰이 완료되었습니다!')
+    emit('bid-complete') // ✅ 부모에 알림
 
     // 🔥 리스트 새로고침 콜백 호출
     if (props.onBidSuccess) props.onBidSuccess()

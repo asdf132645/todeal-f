@@ -59,6 +59,11 @@ const selectBid = async (bidId: number) => {
   alert('낙찰 처리 완료')
 }
 
+const handleBidComplete = async () => {
+  await fetchDeal()
+  await fetchBids()
+}
+
 onMounted(async () => {
   await fetchDeal()
   await fetchBids()
@@ -67,6 +72,7 @@ onMounted(async () => {
 
 <template>
   <v-container v-if="deal" class="py-4">
+    <!-- 마감 안내 -->
     <v-alert
         v-if="isExpired"
         type="warning"
@@ -78,8 +84,23 @@ onMounted(async () => {
       ⏰ 이 경매는 마감되었습니다.
     </v-alert>
 
+    <!-- 지역 정보 표시 -->
+    <v-card class="mb-4 pa-3" elevation="1">
+      <div class="text-subtitle-2 font-weight-medium mb-1">📍 거래 지역</div>
+      <div class="text-body-2">
+        {{ deal.regionDepth1 }} {{ deal.regionDepth2 }} {{ deal.regionDepth3 }}
+      </div>
+    </v-card>
+
+    <!-- 딜 상세 -->
     <DealDetailBase :deal="deal" />
-    <component :is="currentSection" :deal="deal" :isExpired="isExpired" v-if="!isExpired" />
+    <component
+        :is="currentSection"
+        :deal="deal"
+        :isExpired="isExpired"
+        @bid-complete="handleBidComplete"
+        v-if="!isExpired"
+    />
 
     <!-- 입찰자 목록 -->
     <v-card class="mt-6 pa-4" v-if="bids.length > 0">
@@ -90,7 +111,6 @@ onMounted(async () => {
             :key="bid.id"
             class="d-flex justify-space-between align-center"
         >
-          <!-- ✨ 타입별 다른 표시 -->
           <div v-if="type === 'barter'">
             제안 물품 <strong>{{ bid.proposedItem }}</strong><br />
             설명 {{ bid.description }}<br />
@@ -99,15 +119,6 @@ onMounted(async () => {
           <div v-else>
             💰 {{ bid.amount.toLocaleString() }}원 / 👤 {{ bid.nickname }}
           </div>
-
-<!--          <v-btn-->
-<!--              size="small"-->
-<!--              color="primary"-->
-<!--              :disabled="deal.winnerBidId !== null"-->
-<!--              @click="selectBid(bid.id)"-->
-<!--          >-->
-<!--            낙찰하기-->
-<!--          </v-btn>-->
         </v-list-item>
       </v-list>
     </v-card>

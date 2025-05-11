@@ -12,6 +12,7 @@ import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 const props = defineProps<{ deal: any }>()
 const bidAmount = ref(0)
 const bidding = ref(false)
+const emit = defineEmits(['bid-complete'])
 
 const submitBid = async () => {
   if (bidAmount.value <= props.deal.currentPrice) return
@@ -19,6 +20,8 @@ const submitBid = async () => {
   try {
     await bidApi.placeBid({ dealId: props.deal.id, amount: bidAmount.value })
     alert('지원 완료!')
+    emit('bid-complete') // ✅ 부모에 알림
+
   } catch {
     alert('실패')
   } finally {
