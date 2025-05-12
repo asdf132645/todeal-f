@@ -25,11 +25,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onMounted } from 'vue';
+import MyProfileSection from '~/components/mypage/MyProfileSection.vue';
+import MyDealList from '~/components/mypage/MyDealList.vue';
+import MyEtcSettings from '~/components/mypage/MyEtcSettings.vue';
+
+import { useAuthStore } from '@/stores/authStore';
+import { storeToRefs } from 'pinia';
+
+
 const tab = ref(0)
 
-import MyProfileSection from '~/components/mypage/MyProfileSection.vue'
-import MyDealList from '~/components/mypage/MyDealList.vue'
-import MyBidHistory from '~/components/mypage/MyBidHistory.vue'
-import MyEtcSettings from '~/components/mypage/MyEtcSettings.vue'
+const auth = useAuthStore()
+const { user } = storeToRefs(auth)
+
+onMounted(() => {
+  if (!user.value) {
+    auth.fetchMyInfo()
+  }
+})
 </script>

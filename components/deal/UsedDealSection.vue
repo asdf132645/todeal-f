@@ -27,11 +27,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
+import { useAuthStore } from '@/stores/authStore'
+
+const auth = useAuthStore()
 const emit = defineEmits(['bid-complete'])
 
 const props = defineProps<{
   deal: any,
-  onBidSuccess?: () => void // ✅ 리스트 새로고침 콜백
+  onBidSuccess?: () => void
 }>()
 
 const bidAmount = ref(0)
@@ -48,15 +51,12 @@ const submitBid = async () => {
     await bidApi.placeBid({
       dealId: props.deal.id,
       amount: bidAmount.value,
-      nickname: '지영' // 나중엔 로그인 유저에서 자동 주입
+      nickname: auth.user?.nickname || '알 수 없음'
     })
 
     alert('✅ 입찰이 완료되었습니다!')
-    emit('bid-complete') // ✅ 부모에 알림
-
-    // 🔥 리스트 새로고침 콜백 호출
+    emit('bid-complete')
     if (props.onBidSuccess) props.onBidSuccess()
-
     bidAmount.value = 0
   } catch {
     alert('❌ 입찰에 실패했습니다. 다시 시도해주세요.')

@@ -7,8 +7,7 @@
       <v-textarea v-model="form.description" label="설명" rows="4" outlined dense />
       <v-text-field v-model="form.proposedItem" label="교환 희망 품목" required outlined dense />
       <v-text-field v-model="form.deadline" label="마감 시간" type="datetime-local" outlined dense required />
-
-      <KakaoLocationPicker @selected="onLocationSelected" class="mt-3" />
+      <KakaoLocationPicker class="mb-4" v-model:region="region" />
 
       <v-file-input
           v-model="images"
@@ -52,8 +51,8 @@ const region = ref({
   depth1: '',
   depth2: '',
   depth3: '',
-  x: null,
-  y: null
+  longitude: null,
+  latitude: null
 })
 
 const images = ref<File[]>([])
@@ -64,8 +63,8 @@ const onLocationSelected = (item: any) => {
     depth1: item.address_name.split(' ')[0],
     depth2: item.address_name.split(' ')[1],
     depth3: item.address_name.split(' ')[2] || '',
-    x: item.x,
-    y: item.y
+    longitude: item.longitude,
+    latitude: item.latitude
   }
 }
 
@@ -80,7 +79,7 @@ const submit = async () => {
     return
   }
 
-  if (!region.value.x || !region.value.y) {
+  if (!region.value.longitude || !region.value.latitude) {
     snackbar.show('위치를 선택해주세요.', 'error')
     return
   }
@@ -102,8 +101,8 @@ const submit = async () => {
       regionDepth1: region.value.depth1,
       regionDepth2: region.value.depth2,
       regionDepth3: region.value.depth3,
-      latitude: parseFloat(region.value.y),
-      longitude: parseFloat(region.value.x),
+      latitude: parseFloat(region.value.latitude),
+      longitude: parseFloat(region.value.longitude),
       images: uploadedImages,
       hashtags: []
     }

@@ -60,23 +60,11 @@ const region = ref({
   depth1: '',
   depth2: '',
   depth3: '',
-  x: null,
-  y: null
-})
-
-const images = ref<File[]>([])
-const hashtags = ref<string[]>([])
-
-const onLocationSelected = (item: any) => {
-  region.value = {
-    full: item.address_name,
-    depth1: item.address_name.split(' ')[0],
-    depth2: item.address_name.split(' ')[1],
-    depth3: item.address_name.split(' ')[2] || '',
-    x: item.x,
-    y: item.y
-  }
-}
+  longitude: null,
+  latitude: null
+});
+const images = ref<File[]>([]);
+const hashtags = ref<string[]>([]);
 
 const submit = async () => {
   if (!form.value.description || !form.value.deadline || !form.value.title) {
@@ -84,7 +72,7 @@ const submit = async () => {
     return
   }
 
-  if (!region.value.x || !region.value.y) {
+  if (!region.value.longitude || !region.value.latitude) {
     snackbar.show('위치를 선택해주세요.', 'error')
     return
   }
@@ -107,8 +95,8 @@ const submit = async () => {
       regionDepth1: region.value.depth1,
       regionDepth2: region.value.depth2,
       regionDepth3: region.value.depth3,
-      latitude: parseFloat(region.value.y),
-      longitude: parseFloat(region.value.x),
+      latitude: parseFloat(region.value.latitude),
+      longitude: parseFloat(region.value.longitude),
       // images: uploadedImages, // S3 업로드된 이미지 URL
       hashtags: hashtags.value
     }

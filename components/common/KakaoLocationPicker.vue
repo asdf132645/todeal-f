@@ -30,31 +30,25 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 
 const emit = defineEmits(['update:region'])
 
 const keyword = ref('')
 const results = ref<any[]>([])
 
-watch(keyword, (val) => {
-  if (val.length >= 1) {
-    search()
-  }
-})
-
 const search = () => {
-  if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) return
+  if (!keyword.value || !window.kakao?.maps?.services) return
   const ps = new window.kakao.maps.services.Places()
 
   ps.keywordSearch(keyword.value, (data, status) => {
     if (status === window.kakao.maps.services.Status.OK) {
-      // 행정동 주소가 있는 경우만 필터링
-      results.value = data.filter(item => {
-        const address = item.address_name
-        const parts = address.split(' ')
-        return parts.length >= 3 // 시, 구, 동 까지 있는 경우만 허용
+      results.value = data.filter((item) => {
+        const parts = item.address_name.split(' ')
+        return parts.length >= 3
       })
+    } else {
+      results.value = []
     }
   })
 }
@@ -70,12 +64,12 @@ const select = (item: any) => {
     depth1: regionDepth1,
     depth2: regionDepth2,
     depth3: regionDepth3,
-    latitude: parseFloat(item.y),  // 위도
-    longitude: parseFloat(item.x)  // 경도
+    latitude: parseFloat(item.y),
+    longitude: parseFloat(item.x)
   })
 
-  results.value = []
   keyword.value = item.place_name
+  results.value = [] // 리스트 닫기
 }
 </script>
 
@@ -87,6 +81,7 @@ const select = (item: any) => {
 
 .result-item {
   margin-bottom: 10px;
+  cursor: pointer;
 }
 
 .result-card {
