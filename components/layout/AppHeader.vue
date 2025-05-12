@@ -31,10 +31,16 @@
   <!-- 드로어 -->
   <v-navigation-drawer v-model="drawer" temporary location="right">
     <v-list nav dense>
-      <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
-      <v-list-item to="/bids/history" title="입찰내역" prepend-icon="mdi-gavel" />
-      <v-list-item to="/post" title="글 등록" prepend-icon="mdi-plus-box" />
-      <v-list-item to="/settings" title="설정" prepend-icon="mdi-cog" />
+      <template v-if="auth.user">
+        <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
+        <v-list-item to="/bids/history" title="입찰내역" prepend-icon="mdi-gavel" />
+        <v-list-item to="/post" title="글 등록" prepend-icon="mdi-plus-box" />
+        <v-list-item to="/settings" title="설정" prepend-icon="mdi-cog" />
+        <v-list-item @click="auth.logout" title="로그아웃" prepend-icon="mdi-logout" />
+      </template>
+      <template v-else>
+        <v-list-item to="/auth/login" title="로그인" prepend-icon="mdi-login" />
+      </template>
     </v-list>
   </v-navigation-drawer>
 
@@ -57,11 +63,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import RadiusSelector from '@/components/common/RadiusSelector.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 const drawer = ref(false)
 const locationDialog = ref(false)
 const regionName = ref('내 위치')
 const radius = ref(2) // 기본값
+const auth = useAuthStore()
 
 const getRegionNameFromCoords = async () => {
   const lat = parseFloat(localStorage.getItem('userLat') || '37.5665')
@@ -89,7 +97,7 @@ const onRadiusChange = (val: number) => {
 
 onMounted(() => {
   const stored = localStorage.getItem('userRadius')
-  radius.value = stored;
+  if (stored) radius.value = parseInt(stored)
   setTimeout(() => getRegionNameFromCoords(), 300)
 })
 </script>

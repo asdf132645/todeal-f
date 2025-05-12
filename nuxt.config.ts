@@ -38,7 +38,11 @@ export default defineNuxtConfig({
           tagPosition: 'head',
           // Nuxt 3 인식용
           defer: true, // 또는 async: true
-        }
+        },
+        {
+          src: 'https://developers.kakao.com/sdk/js/kakao.js',
+          defer: true,
+        },
       ]
     },
   },
