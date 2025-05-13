@@ -5,7 +5,7 @@
       <AppHeader />
     </template>
     <template v-else>
-      <AppBackHeader :title="pageTitle"  />
+      <AppBackHeader :title="pageTitle" />
     </template>
 
     <v-main class="pb-16 px-4">
@@ -43,19 +43,19 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useGeoStore } from '@/stores/geoStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useNotificationStore } from '@/stores/notificationStore'
+
 import AppHeader from '~/components/layout/AppHeader.vue'
 import AppBottomNav from '~/components/layout/AppBottomNav.vue'
-import AppBackHeader from "~/components/layout/AppBackHeader.vue";
+import AppBackHeader from '~/components/layout/AppBackHeader.vue'
 
 const route = useRoute()
 const geo = useGeoStore()
+const auth = useAuthStore()
+const notification = useNotificationStore()
 
 const isMainPage = computed(() => route.path === '/')
-
-const showConsentDialog = ref(false)
-const showLocationError = ref(false)
-
-const LOCATION_KEY = 'locationConsent'
 const pageTitle = computed(() => {
   const map: Record<string, string> = {
     '/plans': '유료 플랜',
@@ -73,6 +73,59 @@ const pageTitle = computed(() => {
   return map[route.path] || '페이지'
 })
 
+const LOCATION_KEY = 'locationConsent'
+const showConsentDialog = ref(false)
+const showLocationError = ref(false)
+const socket = ref<WebSocket | null>(null)
+let reconnectTimeout: any = null
+
+const connectNotificationSocket = () => {
+  const userId = auth.user?.id
+  if (!userId) return
+
+  if (socket.value && socket.value.readyState === WebSocket.OPEN) return
+
+  const ws = new WebSocket(`ws://localhost:8080/ws/notify?userId=${userId}`)
+  socket.value = ws
+
+  ws.onopen = () => {
+    console.log('✅ 알림 소켓 연결됨', userId)
+    clearTimeout(reconnectTimeout)
+  }
+
+  ws.onmessage = (event) => {
+    try {
+      const msg = JSON.parse(event.data)
+      if (msg.type === 'chat') {
+        notification.add({
+          dealId: msg.dealId,
+          chatRoomId: msg.chatRoomId,
+          dealTitle: msg.dealTitle
+        })
+      } else if (msg.type === 'deal') {
+        notification.add({
+          dealId: msg.dealId,
+          isBarter: true,
+          dealTitle: msg.dealTitle
+        })
+      }
+    } catch (e) {
+      console.error('❌ 알림 메시지 파싱 실패:', e)
+    }
+  }
+
+  ws.onclose = () => {
+    console.warn('🔌 알림 소켓 종료됨, 3초 후 재연결 시도...')
+    socket.value = null
+    reconnectTimeout = setTimeout(() => connectNotificationSocket(), 3000)
+  }
+
+  ws.onerror = (e) => {
+    console.error('❌ 알림 소켓 오류:', e)
+    ws.close()
+  }
+}
+
 onMounted(async () => {
   const consent = localStorage.getItem(LOCATION_KEY)
 
@@ -83,18 +136,24 @@ onMounted(async () => {
   } else {
     showConsentDialog.value = true
   }
+
+  connectNotificationSocket()
 })
 
 const handleConsent = async (agree: boolean) => {
   localStorage.setItem(LOCATION_KEY, String(agree))
   showConsentDialog.value = false
   await geo.initLocationWithConsent(agree)
+
   if (agree) {
     localStorage.setItem('userLat', String(geo.latitude))
     localStorage.setItem('userLng', String(geo.longitude))
     localStorage.setItem('userRegionName', geo.regionName)
+
+
   }
 }
+
 
 watch(() => geo.error, (val) => {
   if (val) showLocationError.value = true

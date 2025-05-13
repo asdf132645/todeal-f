@@ -3,6 +3,7 @@ import { apiClient } from '@/libs/http/apiClient'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import type { DealRequest } from '@/domains/deal/domain/deal/dto/DealRequest'
 import type { DealResponse } from '@/domains/deal/domain/deal/dto/DealResponse'
+import { useAuthStore } from '@/stores/authStore'
 
 export const dealApi = {
     fetchDeals(
@@ -12,9 +13,16 @@ export const dealApi = {
         return apiClient.get<Deal[]>(`/deals?type=${type}&sort=${sort}`)
     },
 
-    createDeal(payload: DealRequest): Promise<DealResponse> {
-        return apiClient.post<DealResponse>('/api/deals', payload)
+    async createDeal(payload: DealRequest): Promise<DealResponse> {
+        const auth = useAuthStore() // ✅ 핀아에서 유저 정보 가져오기
+        console.log(auth.user)
+        return apiClient.post('/api/deals', payload, {
+            headers: {
+                'X-USER-ID': auth.user.id
+            }
+        })
     },
+
     checkDealRegistration: () => apiClient.get('/api/users/deal-check'),
     notifyAdComplete: () => apiClient.post('/api/users/ad-complete'),
 

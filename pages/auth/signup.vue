@@ -92,6 +92,9 @@ const router = useRouter()
 
 const tempToken = route.query.tempToken as string
 const dialog = ref(false)
+import {apiClient} from "~/libs/http/apiClient";
+import {useGeoStore} from "~/stores/geoStore";
+const geo = useGeoStore()
 
 const form = reactive({
   email: '',
@@ -111,7 +114,12 @@ onMounted(() => {
         (pos) => {
           form.latitude = pos.coords.latitude
           form.longitude = pos.coords.longitude
-          console.log('✅ 위치 설정됨:', form.latitude, form.longitude)
+          // console.log('✅ 위치 설정됨:', form.latitude, form.longitude)
+          //여기서 위치 저장 API 호출
+          apiClient.post('/users/location', {
+            latitude: geo.latitude,
+            longitude: geo.longitude
+          })
         },
         (err) => {
           console.warn('❌ 위치 가져오기 실패:', err)

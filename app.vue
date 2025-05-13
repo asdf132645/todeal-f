@@ -12,7 +12,7 @@ import AppSnackbar from "~/components/common/AppSnackbar.vue";
 import { useAuthStore } from '@/stores/authStore'
 
 onMounted(async () => {
-  const auth = useAuthStore()
+  const auth = useAuthStore();
   if (!auth.accessToken && getStoredRefreshToken()) {
     try {
       await auth.refreshAccessToken();

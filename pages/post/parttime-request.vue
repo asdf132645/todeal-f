@@ -100,7 +100,6 @@ const submit = async () => {
   loading.value = true
   try {
     const res = await dealApi.checkDealRegistration()
-    if (!res.success) throw new Error(res.message)
 
     if (!user.value?.isPremium && res.data?.adRequired) {
       const { showRewardAd } = useAd()

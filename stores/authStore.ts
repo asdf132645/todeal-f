@@ -23,6 +23,7 @@ export const useAuthStore = defineStore('auth', () => {
     const fetchMyInfo = async () => {
         try {
             const res = await apiClient.get('/api/users/me')
+            // console.log(res)
             setUser(res)
             await registerFcm(res?.id)
         } catch (e) {

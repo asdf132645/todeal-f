@@ -32,6 +32,7 @@
 import { ref, onMounted } from 'vue'
 import { useGeoStore } from '@/stores/geoStore'
 import LocationConsentDialog from '@/components/common/LocationConsentDialog.vue'
+import {apiClient} from "~/libs/http/apiClient";
 
 const emit = defineEmits<{
   (e: 'change', value: number): void
@@ -66,7 +67,12 @@ const recalculateLocation = async () => {
 const handleConsent = (accepted: boolean) => {
   if (accepted) {
     localStorage.setItem('locationConsent', 'true')
-    recalculateLocation()
+    recalculateLocation();
+    //여기서 위치 저장 API 호출
+    apiClient.post('/users/location', {
+      latitude: geo.latitude,
+      longitude: geo.longitude
+    })
   } else {
     localStorage.setItem('locationConsent', 'false')
   }

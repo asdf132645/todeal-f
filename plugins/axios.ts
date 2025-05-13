@@ -1,6 +1,7 @@
 // plugins/axios.ts
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 import axios from 'axios'
+import { useAuthStore } from '@/stores/authStore'
 
 export default defineNuxtPlugin((nuxtApp) => {
     const config = useRuntimeConfig()
@@ -12,9 +13,12 @@ export default defineNuxtPlugin((nuxtApp) => {
         }
     })
 
-    // ✅ 목업 유저 ID 추가
+    // ✅ 로그인된 유저 ID를 동적으로 헤더에 넣음
     axiosInstance.interceptors.request.use((req) => {
-        req.headers['X-USER-ID'] = '1' // ← 여기에 원하는 목업 userId 임시데이터
+        const auth = useAuthStore()
+        if (auth.user?.id) {
+            req.headers['X-USER-ID'] = String(auth.user.id)
+        }
         return req
     })
 

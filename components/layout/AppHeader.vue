@@ -1,8 +1,10 @@
 <template>
   <v-app-bar app flat height="64" color="indigo-darken-3" class="px-4">
-    <v-toolbar-title class="font-weight-bold text-white">
-      to<span class="text-amber-accent-2">DEAL</span>
-    </v-toolbar-title>
+    <NuxtLink to="/" class="text-decoration-none">
+      <v-toolbar-title class="font-weight-bold text-white">
+        to<span class="text-amber-accent-2">DEAL</span>
+      </v-toolbar-title>
+    </NuxtLink>
 
     <!-- 위치 및 반경 선택 -->
     <v-btn
@@ -19,41 +21,10 @@
 
     <v-spacer />
 
-    <!-- 🔔 실시간 알림 아이콘 + 메뉴 -->
-    <v-menu offset-y>
-      <template #activator="{ props }">
-        <v-badge
-            v-if="unreadCount > 0"
-            color="red"
-            :content="unreadCount"
-            overlap
-            class="mr-2"
-        >
-          <v-btn icon v-bind="props">
-            <v-icon color="white">mdi-bell-outline</v-icon>
-          </v-btn>
-        </v-badge>
-        <v-btn v-else icon v-bind="props">
-          <v-icon color="white">mdi-bell-outline</v-icon>
-        </v-btn>
-      </template>
+    <!-- 🔔 공통 알림 컴포넌트 -->
+    <NotificationBell />
 
-      <v-list density="compact" class="py-1" style="min-width: 280px;">
-        <v-list-item
-            v-for="msg in unreadMessages"
-            :key="msg.chatRoomId"
-            @click="goToChat(msg.chatRoomId)"
-        >
-          <v-list-item-title class="text-body-2">
-            💬 <strong>{{ msg.dealTitle }}</strong>에 새 메시지!
-          </v-list-item-title>
-        </v-list-item>
-        <v-list-item v-if="unreadMessages.length === 0">
-          <v-list-item-title class="text-caption text-grey">알림 없음</v-list-item-title>
-        </v-list-item>
-      </v-list>
-    </v-menu>
-
+    <!-- ☰ 햄버거 메뉴 -->
     <v-btn icon @click="drawer = !drawer">
       <v-icon>mdi-menu</v-icon>
     </v-btn>
@@ -66,8 +37,7 @@
         <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
         <v-list-item to="/bids/history" title="입찰내역" prepend-icon="mdi-gavel" />
         <v-list-item to="/post" title="글 등록" prepend-icon="mdi-plus-box" />
-        <v-list-item to="/plan" title="유료 플랜" prepend-icon="mdi-currency-krw" /> <!-- ✅ 추가 -->
-<!--        <v-list-item to="/settings" title="설정" prepend-icon="mdi-cog" />-->
+        <v-list-item to="/plan" title="유료 플랜" prepend-icon="mdi-currency-krw" />
         <v-list-item @click="auth.logout" title="로그아웃" prepend-icon="mdi-logout" />
       </template>
       <template v-else>
@@ -75,7 +45,6 @@
       </template>
     </v-list>
   </v-navigation-drawer>
-
 
   <!-- 위치 + 반경 선택 다이얼로그 -->
   <v-dialog v-model="locationDialog" max-width="400">
@@ -94,57 +63,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
-import RadiusSelector from '@/components/common/RadiusSelector.vue'
+import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import { useRouter } from 'vue-router'
+import RadiusSelector from '@/components/common/RadiusSelector.vue'
+import NotificationBell from '@/components/common/NotificationBell.vue'
 
 const drawer = ref(false)
 const locationDialog = ref(false)
 const regionName = ref('내 위치')
 const radius = ref(2)
 const auth = useAuthStore()
-const router = useRouter()
 
-// 알림 관련
-const unreadMessages = ref<{ chatRoomId: number; dealTitle: string }[]>([])
-const unreadCount = computed(() => unreadMessages.value.length)
-
-const goToChat = (chatRoomId: number) => {
-  unreadMessages.value = unreadMessages.value.filter(m => m.chatRoomId !== chatRoomId)
-  router.push(`/chat/${chatRoomId}`)
+const onRadiusChange = (val: number) => {
+  radius.value = val
+  localStorage.setItem('userRadius', val.toString())
+  locationDialog.value = false
+  window.location.reload()
 }
 
-let socket: WebSocket | null = null
-const connectSocket = () => {
-  const userId = auth.user?.id
-  if (!userId) return
-
-  // ✅ 기존 chatRoomId 대신 userId 기준 알림 채널로 연결
-  socket = new WebSocket(`wss://your-server.com/ws/chat-notify?userId=${userId}`)
-
-  socket.onopen = () => {
-    console.log('✅ 알림 소켓 연결됨')
-  }
-
-  socket.onmessage = (event) => {
-    const msg = JSON.parse(event.data)
-
-    if (msg.senderId === userId) return
-
-    unreadMessages.value.push({
-      chatRoomId: msg.chatRoomId,
-      dealTitle: msg.dealTitle
-    })
-  }
-
-  socket.onclose = () => {
-    console.warn('🔌 알림 소켓 종료됨')
-    socket = null
-  }
-}
-
-// 위치 처리
 const getRegionNameFromCoords = async () => {
   const lat = parseFloat(localStorage.getItem('userLat') || '37.5665')
   const lng = parseFloat(localStorage.getItem('userLng') || '126.9780')
@@ -162,21 +98,9 @@ const getRegionNameFromCoords = async () => {
   })
 }
 
-const onRadiusChange = (val: number) => {
-  radius.value = val
-  localStorage.setItem('userRadius', val.toString())
-  locationDialog.value = false
-  window.location.reload()
-}
-
 onMounted(() => {
   const stored = localStorage.getItem('userRadius')
   if (stored) radius.value = parseInt(stored)
   setTimeout(() => getRegionNameFromCoords(), 300)
-  connectSocket()
-})
-
-onBeforeUnmount(() => {
-  socket?.close()
 })
 </script>
