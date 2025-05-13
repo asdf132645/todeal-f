@@ -10,12 +10,12 @@
       <span class="text-caption">검색</span>
     </v-btn>
 
-    <v-btn to="/post" value="post">
+    <v-btn @click="handleProtectedRoute('/post')" value="post">
       <v-icon>mdi-plus-box</v-icon>
       <span class="text-caption">등록</span>
     </v-btn>
 
-    <v-btn to="/bids/history" value="bids">
+    <v-btn @click="handleProtectedRoute('/bids/history')" value="bids">
       <v-icon>mdi-gavel</v-icon>
       <span class="text-caption">입찰내역</span>
     </v-btn>
@@ -26,3 +26,21 @@
     </v-btn>
   </v-bottom-navigation>
 </template>
+
+<script setup lang="ts">
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+const isLoggedIn = () => {
+  return !!sessionStorage.getItem('accessToken')
+}
+
+const handleProtectedRoute = (path: string) => {
+  if (!isLoggedIn()) {
+    router.push('/auth/login')
+  } else {
+    router.push(path)
+  }
+}
+</script>

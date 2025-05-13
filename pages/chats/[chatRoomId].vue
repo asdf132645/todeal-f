@@ -14,7 +14,7 @@
             :class="['chat-bubble', msg.senderId === userId ? 'mine' : 'theirs']"
         >
           <div class="text-caption grey--text mb-1">
-            {{ msg.senderId === userId ? '나' : '상대방' }}
+            {{ msg.senderId === userId ? '나' : '상대방' }}`
           </div>
 
           <div>{{ msg.message }}</div>
@@ -50,16 +50,20 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ref, onMounted, nextTick, watch } from 'vue'
 import { useChatSocket } from '@/composables/useChatSocket'
 import { useChatMessages } from '@/composables/useChatMessages'
 import { format, isToday } from 'date-fns'
 import { chatApi } from '@/domains/chat/infrastructure/chatApi'
+import { useAuthStore } from '@/stores/authStore'
 
 const route = useRoute()
+const router = useRouter()
+const auth = useAuthStore()
+
 const chatRoomId = Number(route.params.chatRoomId)
-const userId = 1
+const userId = auth.user?.id
 
 const text = ref('')
 const isTyping = ref(false)
@@ -86,10 +90,12 @@ const handleMessage = async (msg: any) => {
     id: data.id,
     chatRoomId: data.chatRoomId,
     senderId: data.senderId,
-    message: data.message,
-    read: data.read,
+    message: data.messageContent || data.message,
+    read: data.read ?? false,
     sentAt: data.sentAt,
+    receiverId: data.receiverId ?? null,
   })
+  messages.value.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime())
 
   await markMessagesAsRead()
   scrollToBottom()

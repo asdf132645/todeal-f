@@ -59,8 +59,11 @@ async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
     return '위치 미지정'
   }
 }
-
 const goToDetail = () => {
   router.push(`/deals/detail/${props.job.id}`)
+  router.push({
+    path: `/deals/detail/${props.job.id}`,
+    query: { type: props.job.type }
+  })
 }
 </script>

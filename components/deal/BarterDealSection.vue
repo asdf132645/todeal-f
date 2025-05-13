@@ -9,21 +9,38 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
 import { barterBidApi } from '~/domains/barterBid/infrastructure/barterBidApi'
+
 const props = defineProps<{ deal: any }>()
-const item = ref('')
-const desc = ref('')
 const emit = defineEmits(['bid-complete'])
 
+const item = ref('')
+const desc = ref('')
+
+const auth = useAuthStore()
+const router = useRouter()
+
 const submit = async () => {
+  if (!auth.user) {
+    router.push('/auth/login')
+    return
+  }
+
+  if (!item.value.trim()) {
+    alert('제안할 물품을 입력해주세요.')
+    return
+  }
+
   await barterBidApi.propose({
     dealId: props.deal.id,
     proposedItem: item.value,
     description: desc.value,
     images: []
   })
-  alert('제안 완료!');
-  emit('bid-complete') // ✅ 부모에 알림
 
+  alert('제안 완료!');
+  emit('bid-complete')
 }
 </script>

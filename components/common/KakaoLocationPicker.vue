@@ -1,110 +1,92 @@
 <template>
   <div>
     <v-text-field
-        v-model="keyword"
-        label="지역(동 단위) 검색"
-        append-icon="mdi-magnify"
-        @click:append="search"
-        @keydown.enter.prevent="search"
+        v-model="region.full"
+        label="주소 검색"
+        prepend-inner-icon="mdi-map-marker"
+        readonly
         outlined
+        hide-details
+        @click="openPostcode"
+        class="rounded-lg"
     />
-    <div class="text-caption text-grey-darken-1 mb-3">
-      📌 주소는 동까지만 선택되며, 너무 자세한 위치는 입력하지 않아도 돼요.
+
+    <div v-if="region.latitude && region.longitude" class="mt-2 text-caption text-grey-darken-1">
     </div>
-    <v-list v-if="results.length" class="search-results">
-      <v-list-item
-          v-for="item in results"
-          :key="item.id"
-          @click="select(item)"
-          class="result-item"
-      >
-        <v-card class="result-card" flat>
-          <v-card-text>
-            <div class="place-name">{{ item.place_name }}</div>
-            <div class="address">{{ item.address_name }}</div>
-          </v-card-text>
-        </v-card>
-      </v-list-item>
-    </v-list>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const emit = defineEmits(['update:region'])
+const emit = defineEmits<{
+  (e: 'update:region', region: {
+    full: string
+    depth1: string
+    depth2: string
+    depth3: string
+    zonecode: string
+    latitude: number
+    longitude: number
+  }): void
+}>()
 
-const keyword = ref('')
-const results = ref<any[]>([])
+const region = ref({
+  full: '',
+  depth1: '',
+  depth2: '',
+  depth3: '',
+  zonecode: '',
+  latitude: 0,
+  longitude: 0
+})
 
-const search = () => {
-  if (!keyword.value || !window.kakao?.maps?.services) return
-  const ps = new window.kakao.maps.services.Places()
+const openPostcode = () => {
+  if (typeof window === 'undefined') return
 
-  ps.keywordSearch(keyword.value, (data, status) => {
-    if (status === window.kakao.maps.services.Status.OK) {
-      results.value = data.filter((item) => {
-        const parts = item.address_name.split(' ')
-        return parts.length >= 3
-      })
-    } else {
-      results.value = []
-    }
-  })
+  if (window.kakao?.maps?.load) {
+    window.kakao.maps.load(() => {
+      launchPostcode()
+    })
+  } else if (window.daum?.Postcode) {
+    launchPostcode()
+  } else {
+    console.warn('❌ 카카오 SDK가 아직 로드되지 않았습니다.')
+  }
 }
 
-const select = (item: any) => {
-  const parts = item.address_name.split(' ')
-  const regionDepth1 = parts[0]
-  const regionDepth2 = parts[1]
-  const regionDepth3 = parts[2] || ''
+const launchPostcode = () => {
+  new window.daum.Postcode({
+    oncomplete(data: any) {
+      const address = data.address
+      const parts = address.split(' ')
+      const depth1 = parts[0] || ''
+      const depth2 = parts[1] || ''
+      const depth3 = parts[2] || ''
+      const zonecode = data.zonecode
 
-  emit('update:region', {
-    full: `${regionDepth1} ${regionDepth2} ${regionDepth3}`,
-    depth1: regionDepth1,
-    depth2: regionDepth2,
-    depth3: regionDepth3,
-    latitude: parseFloat(item.y),
-    longitude: parseFloat(item.x)
-  })
+      const geocoder = new window.kakao.maps.services.Geocoder()
+      geocoder.addressSearch(address, (result: any[], status: any) => {
+        if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
+          const lat = parseFloat(result[0].y)
+          const lng = parseFloat(result[0].x)
 
-  keyword.value = item.place_name
-  results.value = [] // 리스트 닫기
+          region.value = {
+            full: `${depth1} ${depth2} ${depth3}`,
+            depth1,
+            depth2,
+            depth3,
+            zonecode,
+            latitude: lat,
+            longitude: lng
+          }
+
+          emit('update:region', region.value)
+        } else {
+          console.error('❌ 주소 → 좌표 변환 실패')
+        }
+      })
+    }
+  }).open()
 }
 </script>
-
-<style scoped>
-.search-results {
-  padding: 0;
-  margin: 0;
-}
-
-.result-item {
-  margin-bottom: 10px;
-  cursor: pointer;
-}
-
-.result-card {
-  padding: 12px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s ease-in-out;
-}
-
-.result-card:hover {
-  transform: scale(1.03);
-}
-
-.place-name {
-  font-weight: bold;
-  font-size: 16px;
-  color: #333;
-}
-
-.address {
-  font-size: 14px;
-  color: #777;
-  margin-top: 4px;
-}
-</style>

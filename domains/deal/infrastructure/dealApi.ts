@@ -15,6 +15,8 @@ export const dealApi = {
     createDeal(payload: DealRequest): Promise<DealResponse> {
         return apiClient.post<DealResponse>('/api/deals', payload)
     },
+    checkDealRegistration: () => apiClient.get('/api/users/deal-check'),
+    notifyAdComplete: () => apiClient.post('/api/users/ad-complete'),
 
     getDealById(id: number): Promise<DealResponse> {
         return apiClient.get<DealResponse>(`/api/deals/${id}`)
@@ -82,5 +84,16 @@ export const dealApi = {
     // ✅ 딜 수정 요청
     updateDeal(dealId: number, payload: DealRequest): Promise<DealResponse> {
         return apiClient.put(`/api/deals/${dealId}`, payload)
+    },
+    getTicket(): Promise<{
+        id: number
+        type: string
+        remaining: number
+        adRequired: boolean
+        updatedAt: string
+    }> {
+        return apiClient.get('/api/users/ticket')
     }
+
+
 }

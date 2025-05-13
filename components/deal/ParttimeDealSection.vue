@@ -8,6 +8,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -16,10 +17,15 @@ const emit = defineEmits(['bid-complete'])
 
 const bidAmount = ref(0)
 const bidding = ref(false)
-
 const auth = useAuthStore()
+const router = useRouter()
 
 const submitBid = async () => {
+  if (!auth.user) {
+    router.push('/auth/login')
+    return
+  }
+
   if (bidAmount.value <= props.deal.currentPrice) {
     alert(`⛔ 현재 시급보다 높게 입력해야 합니다.\n(현재 시급: ${props.deal.currentPrice.toLocaleString()}원)`)
     return

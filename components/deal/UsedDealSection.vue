@@ -26,10 +26,12 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 import { useAuthStore } from '@/stores/authStore'
 
 const auth = useAuthStore()
+const router = useRouter()
 const emit = defineEmits(['bid-complete'])
 
 const props = defineProps<{
@@ -41,6 +43,11 @@ const bidAmount = ref(0)
 const bidding = ref(false)
 
 const submitBid = async () => {
+  if (!auth.user) {
+    router.push('/auth/login')
+    return
+  }
+
   if (bidAmount.value <= props.deal.currentPrice) {
     alert(`⛔ 현재가보다 높은 금액만 입찰 가능합니다.\n(현재가: ${props.deal.currentPrice.toLocaleString()}원)`)
     return
@@ -51,7 +58,7 @@ const submitBid = async () => {
     await bidApi.placeBid({
       dealId: props.deal.id,
       amount: bidAmount.value,
-      nickname: auth.user?.nickname || '알 수 없음'
+      nickname: auth.user.nickname || '알 수 없음'
     })
 
     alert('✅ 입찰이 완료되었습니다!')

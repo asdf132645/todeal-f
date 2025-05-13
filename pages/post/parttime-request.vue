@@ -31,6 +31,7 @@
           persistent-hint
       />
 
+      <AdRewardButton v-if="showAdButton" class="mt-4" />
       <v-btn color="primary" class="mt-4" @click="submit" :loading="loading">
         요청 등록하기
       </v-btn>
@@ -39,15 +40,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
 import { useSnackbarStore } from '@/stores/snackbarStore'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
+import { useAd } from '@/composables/useAd'
+import { useAuthStore } from '@/stores/authStore'
+import AdRewardButton from '@/components/common/AdRewardButton.vue'
 
 const router = useRouter()
 const snackbar = useSnackbarStore()
 const loading = ref(false)
+const auth = useAuthStore()
+const user = computed(() => auth.user)
 
 const form = ref({
   title: '알바 요청',
@@ -62,9 +68,23 @@ const region = ref({
   depth3: '',
   longitude: null,
   latitude: null
-});
-const images = ref<File[]>([]);
-const hashtags = ref<string[]>([]);
+})
+const images = ref<File[]>([])
+const hashtags = ref<string[]>([])
+const ticket = ref<any>(null)
+
+const showAdButton = computed(() => {
+  return !user.value?.isPremium && ticket.value?.adRequired
+})
+
+onMounted(async () => {
+  try {
+    const res = await dealApi.getTicket()
+    ticket.value = res
+  } catch (e) {
+    console.warn('등록권 상태 불러오기 실패', e)
+  }
+})
 
 const submit = async () => {
   if (!form.value.description || !form.value.deadline || !form.value.title) {
@@ -79,10 +99,24 @@ const submit = async () => {
 
   loading.value = true
   try {
-    // // 이미지가 있다면 실제 URL 받아오는 부분
-    // const uploadedImages = images.value.length
-    //     ? await uploadImages(images.value) // 이미지 업로드 처리 함수 호출
-    //     : []
+    const res = await dealApi.checkDealRegistration()
+    if (!res.success) throw new Error(res.message)
+
+    if (!user.value?.isPremium && res.data?.adRequired) {
+      const { showRewardAd } = useAd()
+      const watched = await showRewardAd()
+
+      if (!watched) {
+        snackbar.show('광고를 끝까지 시청해야 등록할 수 있어요.', 'error')
+        return
+      }
+
+      await dealApi.notifyAdComplete()
+    }
+
+    const uploadedImages = images.value.length
+        ? images.value.map((_, i) => `https://s3.bucket/fake-${i}.jpg`)
+        : []
 
     const payload = {
       title: form.value.title,
@@ -90,25 +124,25 @@ const submit = async () => {
       type: 'parttime-request',
       startPrice: 0,
       currentPrice: 0,
-      deadline: new Date(form.value.deadline).toISOString(),  // 날짜 포맷 맞추기
+      deadline: new Date(form.value.deadline).toISOString(),
       region: region.value.full,
       regionDepth1: region.value.depth1,
       regionDepth2: region.value.depth2,
       regionDepth3: region.value.depth3,
       latitude: parseFloat(region.value.latitude),
       longitude: parseFloat(region.value.longitude),
-      // images: uploadedImages, // S3 업로드된 이미지 URL
+      images: uploadedImages,
       hashtags: hashtags.value
     }
 
     await dealApi.createDeal(payload)
     snackbar.show('등록 성공!', 'success')
-    router.push('/')
-  } catch (e) {
-    snackbar.show('등록 실패', 'error')
+    router.push('/deals/parttime-request')
+  } catch (e: any) {
+    snackbar.show(e?.message || '등록 실패', 'error')
+    console.error('❌ 등록 실패:', e)
   } finally {
     loading.value = false
   }
 }
-
 </script>

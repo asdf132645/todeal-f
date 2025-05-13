@@ -36,5 +36,9 @@ const formatTime = (time: string) => {
 
 const goToDetail = () => {
   router.push(`/deals/detail/${props.deal.id}`)
+  router.push({
+    path: `/deals/detail/${props.deal.id}`,
+    query: { type: props.deal.type }
+  })
 }
 </script>

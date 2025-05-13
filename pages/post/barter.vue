@@ -24,16 +24,21 @@
       <v-btn color="primary" class="mt-4" @click="submit" :loading="loading">
         등록하기
       </v-btn>
+      <AdRewardButton v-if="showAdButton" class="mt-4" />
+
     </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { useSnackbarStore } from '@/stores/snackbarStore'
+import { useAd } from '@/composables/useAd'
+import AdRewardButton from '~/components/common/AdRewardButton.vue'
+import { useAuthStore } from '@/stores/authStore'
 
 const router = useRouter()
 const snackbar = useSnackbarStore()
@@ -56,25 +61,25 @@ const region = ref({
 })
 
 const images = ref<File[]>([])
+const ticket = ref<any>(null)
+const auth = useAuthStore()
+const user = computed(() => auth.user)
 
-const onLocationSelected = (item: any) => {
-  region.value = {
-    full: item.address_name,
-    depth1: item.address_name.split(' ')[0],
-    depth2: item.address_name.split(' ')[1],
-    depth3: item.address_name.split(' ')[2] || '',
-    longitude: item.longitude,
-    latitude: item.latitude
+const showAdButton = computed(() => {
+  return !user.value?.isPremium && ticket.value?.adRequired
+})
+
+onMounted(async () => {
+  try {
+    const res = await dealApi.getTicket()
+    ticket.value = res
+  } catch (e) {
+    console.warn('등록권 상태 불러오기 실패', e)
   }
-}
+})
 
 const submit = async () => {
-  if (
-      !form.value.title ||
-      !form.value.description ||
-      !form.value.proposedItem ||
-      !form.value.deadline
-  ) {
+  if (!form.value.title || !form.value.description || !form.value.proposedItem || !form.value.deadline) {
     snackbar.show('모든 필수 항목을 입력해주세요.', 'error')
     return
   }
@@ -86,6 +91,20 @@ const submit = async () => {
 
   loading.value = true
   try {
+    const res = await dealApi.checkDealRegistration()
+
+    if (!user.value?.isPremium && res.data?.adRequired) {
+      const { showRewardAd } = useAd()
+      const watched = await showRewardAd()
+
+      if (!watched) {
+        snackbar.show('광고를 끝까지 시청해야 등록할 수 있어요.', 'error')
+        return
+      }
+
+      await dealApi.notifyAdComplete()
+    }
+
     const uploadedImages = images.value.length
         ? images.value.map((_, i) => `https://via.placeholder.com/300x200`)
         : []
@@ -109,9 +128,9 @@ const submit = async () => {
 
     await dealApi.createDeal(payload)
     snackbar.show('등록 성공!', 'success')
-    router.push('/post')
-  } catch (e) {
-    snackbar.show('등록 실패', 'error')
+    router.push('/deals/barter')
+  } catch (e: any) {
+    snackbar.show(e?.message || '등록 실패', 'error')
     console.error(e)
   } finally {
     loading.value = false

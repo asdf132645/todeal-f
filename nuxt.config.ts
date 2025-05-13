@@ -43,6 +43,10 @@ export default defineNuxtConfig({
           src: 'https://developers.kakao.com/sdk/js/kakao.js',
           defer: true,
         },
+        {
+          src: 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js',
+          async: true,
+        },
       ]
     },
   },

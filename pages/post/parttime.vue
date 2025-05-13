@@ -23,18 +23,27 @@
           persistent-hint
       />
 
+      <AdRewardButton v-if="showAdButton" class="mt-4" />
       <v-btn color="orange" class="mt-4" @click="submit">등록하기</v-btn>
     </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { dealApi } from '@/domains/deal/infrastructure/dealApi'
 import { useSnackbarStore } from '@/stores/snackbarStore'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
+import { useAd } from '@/composables/useAd'
+import { useAuthStore } from '@/stores/authStore'
+import AdRewardButton from '@/components/common/AdRewardButton.vue'
+import {useRouter} from "#vue-router";
+const router = useRouter()
 
 const snackbar = useSnackbarStore()
+const auth = useAuthStore()
+const user = computed(() => auth.user)
+
 const title = ref('')
 const description = ref('')
 const startPrice = ref<number | null>(null)
@@ -51,14 +60,23 @@ const region = ref({
   latitude: null
 })
 
+const ticket = ref<any>(null)
+
+const showAdButton = computed(() => {
+  return !user.value?.isPremium && ticket.value?.adRequired
+})
+
+onMounted(async () => {
+  try {
+    const res = await dealApi.getTicket()
+    ticket.value = res
+  } catch (e) {
+    console.warn('등록권 상태 불러오기 실패', e)
+  }
+})
+
 const submit = async () => {
-  if (
-      !title.value ||
-      !description.value ||
-      !startPrice.value ||
-      !deadline.value ||
-      !region.value.full
-  ) {
+  if (!title.value || !description.value || !startPrice.value || !deadline.value || !region.value.full) {
     snackbar.show('모든 필드를 입력하세요.', 'error')
     return
   }
@@ -68,32 +86,46 @@ const submit = async () => {
     return
   }
 
-
-  const uploadedUrls = images.value.map((_, i) => `https://s3.bucket/fake-${i}.jpg`)
-
-  const payload = {
-    title: title.value,
-    description: description.value,
-    region: region.value.full,
-    regionDepth1: region.value.depth1,
-    regionDepth2: region.value.depth2,
-    regionDepth3: region.value.depth3,
-    latitude: parseFloat(region.value.latitude),
-    longitude: parseFloat(region.value.longitude),
-    startPrice: startPrice.value,
-    deadline: deadline.value,
-    type: 'parttime',
-    images: uploadedUrls,
-    hashtags: hashtags.value
-  }
-
   try {
-    const res = await dealApi.createDeal(payload)
-    console.log('✅ 등록 성공:', res)
-    snackbar.show('등록 성공!', 'success')
-  } catch (e) {
+    const res = await dealApi.checkDealRegistration();
+
+    if (!user.value?.isPremium && res.data?.adRequired) {
+      const { showRewardAd } = useAd()
+      const watched = await showRewardAd()
+
+      if (!watched) {
+        snackbar.show('광고를 끝까지 시청해야 등록할 수 있어요.', 'error')
+        return
+      }
+
+      await dealApi.notifyAdComplete()
+    }
+
+    const uploadedUrls = images.value.map((_, i) => `https://s3.bucket/fake-${i}.jpg`)
+
+    const payload = {
+      title: title.value,
+      description: description.value,
+      region: region.value.full,
+      regionDepth1: region.value.depth1,
+      regionDepth2: region.value.depth2,
+      regionDepth3: region.value.depth3,
+      latitude: parseFloat(region.value.latitude),
+      longitude: parseFloat(region.value.longitude),
+      startPrice: startPrice.value,
+      deadline: deadline.value,
+      type: 'parttime',
+      images: uploadedUrls,
+      hashtags: hashtags.value
+    }
+
+    await dealApi.createDeal(payload)
+    snackbar.show('등록 성공!', 'success');
+    router.push('/deals/parttime')
+
+  } catch (e: any) {
     console.error('❌ 등록 실패:', e)
-    snackbar.show('등록 실패', 'error')
+    snackbar.show(e?.message || '등록 실패', 'error')
   }
 }
 </script>

@@ -2,7 +2,7 @@
   <v-container fluid class="py-6">
     <v-card class="pa-4 rounded-lg elevation-1">
       <div class="text-h6 font-weight-bold mb-2">중고 거래 등록</div>
-      <div class="text-caption text-grey-darken-1 mb-4">실시간 경매용 중고 거래를 등록하세요.</div>
+      <div class="text-caption text-grey-darken-1 mb-4">실시간 경매용 여러 종류의 중고 거래를 등록하세요.</div>
 
       <v-row dense class="mb-5">
         <v-col
@@ -69,18 +69,25 @@
         </v-card>
       </v-dialog>
 
+      <AdRewardButton v-if="showAdButton" class="mb-4" />
       <v-btn block color="primary" size="large" @click="submit">등록하기</v-btn>
     </v-card>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { useSnackbarStore } from '@/stores/snackbarStore'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
+import { useAd } from '@/composables/useAd'
+import { useAuthStore } from '@/stores/authStore'
+import AdRewardButton from '@/components/common/AdRewardButton.vue'
+import {useRouter} from "#vue-router";
 
 const snackbar = useSnackbarStore()
+const auth = useAuthStore()
+const user = computed(() => auth.user)
 
 const title = ref('')
 const description = ref('')
@@ -88,6 +95,7 @@ const startPrice = ref<number | null>(null)
 const hashtags = ref<string[]>([])
 const images = ref<(File | null)[]>([null, null, null, null, null])
 const fileInputs = ref<(HTMLInputElement | null)[]>([])
+const router = useRouter()
 
 const region = ref({
   full: '',
@@ -101,6 +109,20 @@ const region = ref({
 const deadlineDialog = ref(false)
 const deadlineDate = ref<Date | null>(null)
 const formattedDeadline = ref('')
+const ticket = ref<any>(null)
+
+const showAdButton = computed(() => {
+  return !user.value?.isPremium && ticket.value?.adRequired
+})
+
+onMounted(async () => {
+  try {
+    const res = await dealApi.getTicket()
+    ticket.value = res
+  } catch (e) {
+    console.warn('등록권 상태 불러오기 실패', e)
+  }
+})
 
 const assignInputRef = (el: Element | null, index: number) => {
   if (!el || el.tagName !== 'INPUT') return
@@ -163,34 +185,50 @@ const submit = async () => {
     return
   }
 
-  const uploadedUrls = images.value
-      .filter((img): img is File => !!img)
-      .map((_, idx) => `https://s3.bucket/fake-${idx}.jpg`)
-
-  const payload = {
-    title: title.value,
-    description: description.value,
-    startPrice: startPrice.value,
-    currentPrice: startPrice.value,
-    deadline: getDeadlineISO(),
-    region: region.value.full,
-    regionDepth1: region.value.depth1,
-    regionDepth2: region.value.depth2,
-    regionDepth3: region.value.depth3,
-    latitude: parseFloat(region.value.latitude),
-    longitude: parseFloat(region.value.longitude),
-    images: uploadedUrls,
-    hashtags: hashtags.value,
-    type: 'used'
-  }
-
   try {
-    const res = await dealApi.createDeal(payload)
-    console.log('✅ 등록 완료', res)
-    snackbar.show('등록 성공!', 'success')
-  } catch (err) {
+    const res = await dealApi.checkDealRegistration()
+    if (!res.success) throw new Error(res.message)
+
+    if (!user.value?.isPremium && res.data?.adRequired) {
+      const { showRewardAd } = useAd()
+      const watched = await showRewardAd()
+
+      if (!watched) {
+        snackbar.show('광고를 끝까지 시청해야 등록할 수 있어요.', 'error')
+        return
+      }
+
+      await dealApi.notifyAdComplete()
+    }
+
+    const uploadedUrls = images.value
+        .filter((img): img is File => !!img)
+        .map((_, idx) => `https://s3.bucket/fake-${idx}.jpg`)
+
+    const payload = {
+      title: title.value,
+      description: description.value,
+      startPrice: startPrice.value,
+      currentPrice: startPrice.value,
+      deadline: getDeadlineISO(),
+      region: region.value.full,
+      regionDepth1: region.value.depth1,
+      regionDepth2: region.value.depth2,
+      regionDepth3: region.value.depth3,
+      latitude: parseFloat(region.value.latitude),
+      longitude: parseFloat(region.value.longitude),
+      images: uploadedUrls,
+      hashtags: hashtags.value,
+      type: 'used'
+    }
+
+    await dealApi.createDeal(payload)
+    snackbar.show('등록 성공!', 'success');
+    router.push('/deals/used')
+
+  } catch (err: any) {
     console.error('등록 실패:', err)
-    snackbar.show('등록 실패', 'error')
+    snackbar.show(err?.message || '등록 실패', 'error')
   }
 }
 </script>

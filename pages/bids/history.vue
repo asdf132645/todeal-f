@@ -1,7 +1,6 @@
 // ✅ pages/bids/history.vue
 <template>
   <v-container fluid class="pa-4 pt-6" style="min-height: 100vh; background-color: #FAFAFA;">
-    <div class="text-h6 font-weight-bold mb-4">📋 입찰 내역</div>
 
     <v-tabs v-model="activeTab" fixed-tabs color="primary">
       <v-tab value="mine">내 입찰 목록</v-tab>

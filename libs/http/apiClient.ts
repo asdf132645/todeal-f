@@ -8,12 +8,23 @@ import {
     clearStoredTokens
 } from '~/composables/useToken'
 import { useAuthStore } from '@/stores/authStore'
+import { jwtDecode } from 'jwt-decode'
 
 function handleResponse<T>(res: ApiResponse<T>): T {
     if (!res.success) {
         throw new Error(res.message || '요청 실패')
     }
     return res.data as T
+}
+
+function isTokenExpired(token: string): boolean {
+    try {
+        const decoded: any = jwtDecode(token)
+        const now = Date.now() / 1000
+        return decoded.exp < now
+    } catch {
+        return true // 디코딩 실패 시 만료로 간주
+    }
 }
 
 async function clearTokensAndRedirect() {
@@ -43,19 +54,16 @@ async function request<T>(
         return handleResponse(res.data)
 
     } catch (error: any) {
-        // ✅ accessToken 만료 시
         if (error.response?.status === 401) {
             const refreshToken = getStoredRefreshToken()
 
-            // ⛔ refreshToken 조차 없음 → 즉시 로그아웃
-            if (!refreshToken) {
-                alert('⛔ 세션이 만료되었습니다. 다시 로그인해주세요.')
+            if (!refreshToken || isTokenExpired(refreshToken)) {
+                alert('⛔ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
                 await clearTokensAndRedirect()
                 return Promise.reject(error)
             }
 
             try {
-                // 🔄 refreshToken으로 accessToken 재발급
                 const refreshRes = await $axios.post<ApiResponse<{ accessToken: string }>>(
                     '/api/auth/refresh-token',
                     { refreshToken }
@@ -63,20 +71,17 @@ async function request<T>(
                 const newAccessToken = refreshRes.data.data.accessToken
                 saveAccessToken(newAccessToken)
 
-                // ✅ 유저 정보도 다시 세팅 (선택)
                 const userRes = await $axios.get<ApiResponse<any>>('/api/users/me', {
                     headers: { Authorization: `Bearer ${newAccessToken}` }
                 })
                 authStore.setUser(userRes.data.data)
 
-                // 🔁 원래 요청 재시도
                 config.headers.Authorization = `Bearer ${newAccessToken}`
                 const retryRes = await $axios.request<ApiResponse<T>>({ method, url, data, ...config })
                 return handleResponse(retryRes.data)
 
             } catch (refreshErr) {
-                // ⛔ refreshToken도 만료됨
-                alert('⛔ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
+                alert('⛔ 세션이 만료되었습니다. 다시 로그인해주세요.')
                 await clearTokensAndRedirect()
                 return Promise.reject(refreshErr)
             }

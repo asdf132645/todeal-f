@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -22,8 +23,14 @@ const props = defineProps<{ deal: any }>()
 const hourlyWage = ref(0)
 const bidding = ref(false)
 const auth = useAuthStore()
+const router = useRouter()
 
 const submitBid = async () => {
+  if (!auth.user) {
+    router.push('/auth/login')
+    return
+  }
+
   if (hourlyWage.value <= 0) {
     alert('시급은 0원 이상이어야 합니다.')
     return
