@@ -31,13 +31,13 @@
         color="grey-lighten-4"
     >
       <div class="text-caption text-grey-darken-2">
-        🕒 마감일: <strong>{{ formatDeadline(deal.deadline) }}</strong>
+        마감일: <strong>{{ formatDeadline(deal.deadline) }}</strong>
       </div>
       <div
           class="text-caption text-grey-darken-2 mt-1"
           v-if="deal.type !== 'barter'"
       >
-        💰 현재가: <strong>{{ deal.currentPrice.toLocaleString() }}원</strong>
+        현재가: <strong>{{ deal.currentPrice.toLocaleString() }}원</strong>
       </div>
     </v-card>
   </v-card>

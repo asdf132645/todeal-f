@@ -70,7 +70,7 @@ const pageTitle = computed(() => {
     '/post/parttime': '알바 모집 등록',
     '/post/parttime-request': '알바 요청 등록',
   }
-  return map[route.path] || '페이지'
+  return map[route.path] || ''
 })
 
 const LOCATION_KEY = 'locationConsent'
@@ -96,19 +96,29 @@ const connectNotificationSocket = () => {
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
+      alert(msg)
       if (msg.type === 'chat') {
         notification.add({
-          dealId: msg.dealId,
+          type: 'chat',
           chatRoomId: msg.chatRoomId,
-          dealTitle: msg.dealTitle
+          senderId: msg.senderId,
+          message: msg.message,
+          sentAt: msg.sentAt,
         })
-      } else if (msg.type === 'deal') {
-        notification.add({
-          dealId: msg.dealId,
-          isBarter: true,
-          dealTitle: msg.dealTitle
-        })
+        console.log('📩 채팅 알림 수신됨:', msg)
       }
+
+      if (msg.type === 'deal') {
+        notification.add({
+          type: 'deal',
+          dealId: msg.dealId,
+          isBarter: msg.isBarter ?? false,
+          dealTitle: msg.dealTitle,
+          sentAt: msg.sentAt,
+        })
+        console.log('📩 딜 알림 수신됨:', msg)
+      }
+
     } catch (e) {
       console.error('❌ 알림 메시지 파싱 실패:', e)
     }

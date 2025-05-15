@@ -23,7 +23,7 @@ function isTokenExpired(token: string): boolean {
         const now = Date.now() / 1000
         return decoded.exp < now
     } catch {
-        return true // 디코딩 실패 시 만료로 간주
+        return true
     }
 }
 
@@ -46,14 +46,22 @@ async function request<T>(
         const token = getStoredAccessToken()
         if (!config.headers) config.headers = {}
 
+        // ✅ accessToken 적용
         if (token && token.split('.').length === 3) {
             config.headers.Authorization = `Bearer ${token}`
+        }
+
+        // ✅ X-USER-ID 설정 (authStore 또는 sessionStorage에서 보완)
+        const userId = authStore.user?.id ?? localStorage.getItem('userId')
+        if (userId) {
+            config.headers['X-USER-ID'] = userId.toString()
         }
 
         const res = await $axios.request<ApiResponse<T>>({ method, url, data, ...config })
         return handleResponse(res.data)
 
     } catch (error: any) {
+        // ✅ accessToken 만료 대응
         if (error.response?.status === 401) {
             const refreshToken = getStoredRefreshToken()
 
@@ -68,15 +76,22 @@ async function request<T>(
                     '/api/auth/refresh-token',
                     { refreshToken }
                 )
+
                 const newAccessToken = refreshRes.data.data.accessToken
                 saveAccessToken(newAccessToken)
 
+                // ✅ 사용자 정보 재조회 후 authStore 저장 + sessionStorage 보완
                 const userRes = await $axios.get<ApiResponse<any>>('/api/users/me', {
                     headers: { Authorization: `Bearer ${newAccessToken}` }
                 })
-                authStore.setUser(userRes.data.data)
+                const user = userRes.data.data
+                authStore.setUser(user)
+                localStorage.setItem('userId', user.id)
 
+                // ✅ 재시도 요청 시 헤더 재설정
                 config.headers.Authorization = `Bearer ${newAccessToken}`
+                config.headers['X-USER-ID'] = user.id.toString()
+
                 const retryRes = await $axios.request<ApiResponse<T>>({ method, url, data, ...config })
                 return handleResponse(retryRes.data)
 

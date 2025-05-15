@@ -12,7 +12,7 @@
         </v-col>
       </v-row>
       <div v-else class="text-caption text-grey text-center py-6">
-        검색 결과가 없습니다 😢
+        검색 결과가 없습니다.
       </div>
     </div>
 

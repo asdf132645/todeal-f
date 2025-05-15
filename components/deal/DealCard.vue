@@ -9,9 +9,9 @@
       <div class="text-subtitle-2 font-weight-bold">{{ deal.title }}</div>
       <div class="text-body-2 grey--text">{{ deal.description }}</div>
       <div class="mt-2">
-        💰 <strong>{{ deal.currentPrice.toLocaleString() }}원</strong>
+        <strong>{{ deal.currentPrice.toLocaleString() }}원</strong>
         <br />
-        ⏰ {{ formatTime(deal.deadline) }}
+        {{ formatTime(deal.deadline) }}
       </div>
     </v-card-text>
     <v-card-actions>

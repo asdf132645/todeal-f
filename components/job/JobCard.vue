@@ -9,9 +9,9 @@
       <div class="text-subtitle-2 font-weight-bold">{{ job.title }}</div>
       <div class="text-body-2 grey--text">{{ job.description }}</div>
       <div class="mt-2">
-        💵 시급: <strong>{{ job.currentPrice.toLocaleString() }}원</strong>
+        시급: <strong>{{ job.currentPrice.toLocaleString() }}원</strong>
         <br />
-        📍 {{ address || '위치 미지정' }}
+        {{ address || '위치 미지정' }}
       </div>
     </v-card-text>
     <v-card-actions>

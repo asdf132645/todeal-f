@@ -21,7 +21,7 @@
 
           <div class="text-caption mt-1 text-grey-darken-1 flex justify-end" v-if="msg.senderId === userId">
             <span>{{ formatTime(msg.sentAt) }}</span>
-            <span class="ml-1">{{ msg.read ? '읽음' : '안 읽음' }}</span>
+<!--            <span class="ml-1">{{ msg.read ? '읽음' : '안 읽음' }}</span>-->
           </div>
 
           <div class="text-caption mt-1 text-grey-darken-1" v-else>

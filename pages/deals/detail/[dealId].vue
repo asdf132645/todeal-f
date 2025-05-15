@@ -81,7 +81,7 @@ onMounted(async () => {
         prominent
         class="mb-4"
     >
-      ⏰ 이 경매는 마감되었습니다.
+      이 경매는 마감되었습니다.
     </v-alert>
 
     <!-- 지역 정보 표시 -->

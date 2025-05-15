@@ -1,7 +1,7 @@
 <!-- ✅ components/search/SearchForm.vue -->
 <template>
   <v-sheet class="pa-4 mb-4" color="white" rounded>
-    <div class="text-subtitle-2 font-weight-bold mb-2">🔍 키워드 검색</div>
+    <div class="text-subtitle-2 font-weight-bold mb-2">키워드 검색</div>
     <v-row dense>
       <v-col cols="12">
         <v-text-field v-model="form.keyword" label="검색어 입력" clearable />

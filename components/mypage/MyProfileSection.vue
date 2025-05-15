@@ -7,10 +7,10 @@
     <div class="text-body-2">{{ user.email }}</div>
     <v-divider class="my-4" />
     <div>
-      <p>🪪 플랜: <strong>{{ user.isPremium ? '프리미엄' : '무료 사용자' }}</strong></p>
+      <p>플랜: <strong>{{ user.isPremium ? '프리미엄' : '무료 사용자' }}</strong></p>
       <p v-if="user.isPremium">⏳ 만료일: {{ formatDate(user.planExpireAt) }}</p>
-      <p>🎟 등록권: {{ user.ticketCount ?? 0 }}개</p>
-      <p>🎁 초대 보상: 등록권 {{ user.inviteRewardCount ?? 0 }}개</p>
+      <p>등록권: {{ user.ticketCount ?? 0 }}개</p>
+      <p>초대 보상: 등록권 {{ user.inviteRewardCount ?? 0 }}개</p>
     </div>
   </v-card>
 </template>

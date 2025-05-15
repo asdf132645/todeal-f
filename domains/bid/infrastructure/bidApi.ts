@@ -34,9 +34,17 @@ export const bidApi = {
     },
 
     /** 내가 입찰한 물건들 */
-    getMyBids() {
-        return apiClient.get('/api/bids/mine')
+    getMyBids(params: {
+        page: number
+        size?: number
+        type?: string | null
+        keyword?: string | null
+    }) {
+        return apiClient.get('/api/bids/mine', {
+            params
+        })
     },
+
 
     /** 내 물건에 입찰된 목록 */
     getBidsOnMyDeals() {
