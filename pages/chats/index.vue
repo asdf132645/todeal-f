@@ -17,10 +17,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { onMounted, ref } from 'vue'
-import { api } from '~/utils/api'
+import api from '~/utils/api'  // ✅ 이렇게!
 
 const chatRooms = ref<any[]>([])
-const userId = 1 // ❗ 실제 로그인된 사용자 ID 사용
+const userId = localStorage.getItem('userId'); // ❗ 실제 로그인된 사용자 ID 사용
 const router = useRouter()
 
 const goToRoom = (id: number) => {

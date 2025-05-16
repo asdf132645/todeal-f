@@ -30,21 +30,8 @@
     </v-btn>
   </v-app-bar>
 
-  <!-- 드로어 -->
-  <v-navigation-drawer v-model="drawer" temporary location="right">
-    <v-list nav dense>
-      <template v-if="auth.user">
-        <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
-        <v-list-item to="/bids/history" title="입찰내역" prepend-icon="mdi-gavel" />
-        <v-list-item to="/post" title="글 등록" prepend-icon="mdi-plus-box" />
-        <v-list-item to="/plan" title="유료 플랜" prepend-icon="mdi-currency-krw" />
-        <v-list-item @click="auth.logout" title="로그아웃" prepend-icon="mdi-logout" />
-      </template>
-      <template v-else>
-        <v-list-item to="/auth/login" title="로그인" prepend-icon="mdi-login" />
-      </template>
-    </v-list>
-  </v-navigation-drawer>
+  <!-- 공통 드로어 컴포넌트 -->
+  <AppDrawer v-model="drawer" />
 
   <!-- 위치 + 반경 선택 다이얼로그 -->
   <v-dialog v-model="locationDialog" max-width="400">
@@ -67,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import RadiusSelector from '@/components/common/RadiusSelector.vue'
 import NotificationBell from '@/components/common/NotificationBell.vue'
+import AppDrawer from "~/components/common/AppDrawer.vue";
 
 const drawer = ref(false)
 const locationDialog = ref(false)
@@ -92,7 +80,8 @@ const getRegionNameFromCoords = async () => {
     geocoder.coord2RegionCode(lng, lat, (result, status) => {
       if (status === kakao.maps.services.Status.OK) {
         const region = result.find(r => r.region_type === 'H')
-        regionName.value = region?.address_name || '알 수 없음'
+        regionName.value = region?.region_3depth_name || '알 수 없음'
+        localStorage.setItem('userRegion', regionName.value)
       }
     })
   })
@@ -100,6 +89,8 @@ const getRegionNameFromCoords = async () => {
 
 onMounted(() => {
   const stored = localStorage.getItem('userRadius')
+  localStorage.setItem('radius', '2')
+
   if (stored) radius.value = parseInt(stored)
   setTimeout(() => getRegionNameFromCoords(), 300)
 })

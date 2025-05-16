@@ -1,3 +1,4 @@
+// ✅ geoStore.ts - 기존 코드 보존 + regionDepth1~3 추가
 import { defineStore } from 'pinia'
 
 export const useGeoStore = defineStore('geo', {
@@ -7,6 +8,9 @@ export const useGeoStore = defineStore('geo', {
         initialized: false,
         error: null as string | null,
         regionName: '내 위치',
+        regionDepth1: '' as string,
+        regionDepth2: '' as string,
+        regionDepth3: '' as string,
     }),
 
     actions: {
@@ -44,13 +48,48 @@ export const useGeoStore = defineStore('geo', {
             })
         },
 
+        async fetchRegionInfo(lat: number, lng: number): Promise<void> {
+            return new Promise((resolve, reject) => {
+                const waitForKakao = () => {
+                    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
+                        try {
+                            const geocoder = new kakao.maps.services.Geocoder()
+                            const coord = new kakao.maps.LatLng(lat, lng)
+
+                            geocoder.coord2RegionCode(lng, lat, (result, status) => {
+                                if (status === kakao.maps.services.Status.OK) {
+                                    const region = result.find(r => r.region_type === 'H')
+                                    if (!region) return reject('주소 없음')
+
+                                    this.regionName = region.address_name || '알 수 없음'
+                                    const parts = region.address_name.split(' ')
+                                    this.regionDepth1 = parts[0] || ''
+                                    this.regionDepth2 = parts[1] || ''
+                                    this.regionDepth3 = parts[2] || ''
+                                    resolve()
+                                } else {
+                                    reject('주소 변환 실패')
+                                }
+                            })
+                        } catch {
+                            reject('Geocoder 오류')
+                        }
+                    } else {
+                        setTimeout(waitForKakao, 100)
+                    }
+                }
+
+                waitForKakao()
+            })
+        },
+
         async initLocationWithConsent(agree: boolean) {
             if (this.initialized) return
 
             if (!agree) {
                 this.setDefaultLocation()
                 try {
-                    this.regionName = await this.fetchRegionName(this.latitude!, this.longitude!)
+                    await this.fetchRegionInfo(this.latitude!, this.longitude!)
                 } catch {
                     this.regionName = '주소 확인 실패'
                 }
@@ -65,12 +104,12 @@ export const useGeoStore = defineStore('geo', {
                         this.longitude = pos.coords.longitude
                         this.initialized = true
                         this.error = null
-
+                        console.log(pos.coords)
                         localStorage.setItem('userLat', String(this.latitude))
                         localStorage.setItem('userLng', String(this.longitude))
 
                         try {
-                            this.regionName = await this.fetchRegionName(this.latitude, this.longitude)
+                            await this.fetchRegionInfo(this.latitude, this.longitude)
                         } catch {
                             this.regionName = '주소 확인 실패'
                         }
@@ -81,7 +120,7 @@ export const useGeoStore = defineStore('geo', {
                         this.setDefaultLocation()
                         this.error = '위치 권한을 거부하여 기본 위치(서울)가 적용됩니다.'
                         try {
-                            this.regionName = await this.fetchRegionName(this.latitude!, this.longitude!)
+                            await this.fetchRegionInfo(this.latitude!, this.longitude!)
                         } catch {
                             this.regionName = '주소 확인 실패'
                         }
@@ -105,14 +144,14 @@ export const useGeoStore = defineStore('geo', {
                 this.initialized = true
 
                 try {
-                    this.regionName = await this.fetchRegionName(lat, lng)
+                    await this.fetchRegionInfo(lat, lng)
                 } catch {
                     this.regionName = '주소 확인 실패'
                 }
             } else {
                 this.setDefaultLocation()
                 try {
-                    this.regionName = await this.fetchRegionName(this.latitude!, this.longitude!)
+                    await this.fetchRegionInfo(this.latitude!, this.longitude!)
                 } catch {
                     this.regionName = '주소 확인 실패'
                 }

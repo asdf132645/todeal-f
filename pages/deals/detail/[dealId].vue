@@ -4,6 +4,7 @@ import { onMounted, ref, computed } from 'vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 import { barterBidApi } from '~/domains/barterBid/infrastructure/barterBidApi'
+import { trustScoreApi } from '@/domains/trustscore/infrastructure/trustScoreApi'
 
 import DealDetailBase from '@/components/deal/DealDetailBase.vue'
 import UsedDealSection from '@/components/deal/UsedDealSection.vue'
@@ -15,9 +16,8 @@ const route = useRoute()
 const dealId = Number(route.params.dealId)
 const deal = ref<any>(null)
 const bids = ref<any[]>([])
-
-const myUserId = 1
-const isOwner = computed(() => deal.value?.userId === myUserId)
+const userId = ref('')
+const trustScores = ref<Record<number, number>>({})
 
 const type = (route.query.type as string)?.toLowerCase() || ''
 const sectionMap = {
@@ -45,6 +45,46 @@ const fetchBids = async () => {
   } else {
     bids.value = await bidApi.getBidListByDealId(dealId)
   }
+  await fetchTrustScores()
+}
+
+const fetchTrustScores = async () => {
+  const userIds = new Set<number>()
+
+  if (typeof deal.value?.userId === 'number') {
+    userIds.add(deal.value.userId)
+  }
+
+  bids.value.forEach((b: any) => {
+    if (typeof b.userId === 'number') {
+      userIds.add(b.userId)
+    }
+  })
+
+  const winnerBid = bids.value.find(b => b.id === deal.value?.winnerBidId)
+  if (winnerBid?.userId && typeof winnerBid.userId === 'number') {
+    userIds.add(winnerBid.userId)
+  }
+
+  const uniqueUserIds = Array.from(userIds)
+
+  try {
+    const result = await trustScoreApi.getUserScores(uniqueUserIds)
+    trustScores.value = result
+  } catch (e) {
+    console.warn('❌ 투딜지수 불러오기 실패', e)
+  }
+}
+
+const trustScoreWriter = computed(() => {
+  if (!deal.value) return null
+  const score = trustScores.value[deal.value.userId]
+  return typeof score === 'number' ? score.toFixed(1) + '점' : '-'
+})
+
+const getBidderScore = (userId: number) => {
+  const score = trustScores.value[userId]
+  return typeof score === 'number' ? score.toFixed(1) + '점' : '-'
 }
 
 const selectBid = async (bidId: number) => {
@@ -65,6 +105,7 @@ const handleBidComplete = async () => {
 }
 
 onMounted(async () => {
+  userId.value = localStorage.getItem('userId') || ''
   await fetchDeal()
   await fetchBids()
 })
@@ -72,7 +113,6 @@ onMounted(async () => {
 
 <template>
   <v-container v-if="deal" class="py-4">
-    <!-- 마감 안내 -->
     <v-alert
         v-if="isExpired"
         type="warning"
@@ -84,15 +124,16 @@ onMounted(async () => {
       이 경매는 마감되었습니다.
     </v-alert>
 
-    <!-- 지역 정보 표시 -->
     <v-card class="mb-4 pa-3" elevation="1">
       <div class="text-subtitle-2 font-weight-medium mb-1">📍 거래 지역</div>
-      <div class="text-body-2">
+      <div class="text-body-2 mb-1">
         {{ deal.regionDepth1 }} {{ deal.regionDepth2 }} {{ deal.regionDepth3 }}
+      </div>
+      <div class="text-caption text-grey">
+        작성자 투딜지수: {{ trustScoreWriter }}
       </div>
     </v-card>
 
-    <!-- 딜 상세 -->
     <DealDetailBase :deal="deal" />
     <component
         :is="currentSection"
@@ -102,7 +143,6 @@ onMounted(async () => {
         v-if="!isExpired"
     />
 
-    <!-- 입찰자 목록 -->
     <v-card class="mt-6 pa-4" v-if="bids.length > 0">
       <div class="text-subtitle-1 font-weight-bold mb-3">입찰자 목록</div>
       <v-list>
@@ -114,10 +154,16 @@ onMounted(async () => {
           <div v-if="type === 'barter'">
             제안 물품 <strong>{{ bid.proposedItem }}</strong><br />
             설명 {{ bid.description }}<br />
-            사용자 ID: {{ bid.userId }}
+            사용자 ID: {{ bid.userId }}<br />
+            <span class="text-caption text-grey">
+              입찰자 투딜지수: {{ getBidderScore(bid.userId) }}
+            </span>
           </div>
           <div v-else>
-            {{ bid.amount.toLocaleString() }}원 / [닉네임 : {{ bid.nickname }}]
+            {{ bid.amount.toLocaleString() }}원 / [닉네임 : {{ bid.nickname }}]<br />
+            <span class="text-caption text-grey">
+              입찰자 투딜지수: {{ getBidderScore(bid.userId) }}
+            </span>
           </div>
         </v-list-item>
       </v-list>

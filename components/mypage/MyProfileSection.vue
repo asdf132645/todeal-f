@@ -1,5 +1,6 @@
 <template>
   <v-card flat class="pa-4" v-if="user">
+    <UserTrustScore class="mt-4" /> <!-- ✅ 투딜지수 -->
     <v-avatar size="80" class="mb-3">
       <v-img :src="user.profileImageUrl || 'https://via.placeholder.com/80'" />
     </v-avatar>
@@ -16,6 +17,7 @@
 </template>
 
 <script setup lang="ts">
+import UserTrustScore from '~/components/trustscore/UserTrustScore.vue' // ✅ 추가
 import { useAuthStore } from '@/stores/authStore'
 import { storeToRefs } from 'pinia'
 

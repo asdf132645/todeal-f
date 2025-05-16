@@ -1,11 +1,9 @@
 <template>
   <v-container fluid class="pa-4" style="background-color: #F9FAFB">
-    <!-- ✅ 주의 문구 -->
     <v-alert type="warning" color="#FFE9C4" text-color="#8A6D1A" dense border="start" class="mb-4  text-body-2 text-sm-caption">
       마감된 지 7일 지난 경매글은 자동으로 삭제돼요.
     </v-alert>
 
-    <!-- 🔍 검색창 & 타입 필터 -->
     <v-row class="mb-4" align="center" dense>
       <v-col cols="12" sm="4">
         <v-select
@@ -52,6 +50,12 @@
           <div class="d-flex justify-space-between align-center mb-2">
             <div class="font-weight-bold cursor-pointer text-body-1 text-sm-subtitle-2" style="color: #2A2E9D">
               {{ bid.deal.title }}
+              <!-- ✅ 신고 텍스트 버튼 -->
+              <span
+                  class="ml-2 text-caption text-red clickable"
+                  style="text-decoration: underline"
+                  @click.stop="openReport(bid.deal.userId, bid.deal.id)"
+              >신고하기</span>
             </div>
             <v-chip
                 v-if="bid.deal.winnerBidId === null"
@@ -100,19 +104,44 @@
     <div v-else class="text-caption text-grey text-center py-6">
       입찰한 물건이 없습니다
     </div>
+
+    <!-- 신고 다이얼로그 -->
+    <v-dialog v-model="showReportDialog" max-width="480">
+      <v-card>
+        <v-card-title>🚨 작성자 신고</v-card-title>
+        <v-card-text>
+          <v-select
+              v-model="reportReason"
+              :items="reportReasons"
+              label="신고 사유"
+              required
+          />
+          <v-textarea
+              v-model="reportDetail"
+              label="상세 내용 (선택)"
+              rows="3"
+          />
+        </v-card-text>
+        <v-card-actions class="justify-end">
+          <v-btn text @click="showReportDialog = false">닫기</v-btn>
+          <v-btn color="red" text @click="submitReport">신고하기</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </v-container>
 </template>
-
-
 
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { bidApi } from '@/domains/bid/infrastructure/bidApi'
+import { apiClient } from '@/libs/http/apiClient'
 import { useDebounceFn } from '@vueuse/core'
+import { useSnackbarStore } from '@/stores/snackbarStore'
 
 const router = useRouter()
+const snackbar = useSnackbarStore()
 
 const bids = ref<any[]>([])
 const page = ref(0)
@@ -123,6 +152,39 @@ const isLoading = ref(false)
 const keyword = ref<string | null>(null)
 const keywordInput = ref('')
 const selectedType = ref<string | null>(null)
+
+const showReportDialog = ref(false)
+const reportTarget = ref<{ toUserId: number; dealId: number } | null>(null)
+const reportReason = ref('')
+const reportDetail = ref('')
+const reportReasons = ['욕설/비방', '사기 의심', '허위 정보', '기타']
+
+const openReport = (toUserId: number, dealId: number) => {
+  reportTarget.value = { toUserId, dealId }
+  reportReason.value = ''
+  reportDetail.value = ''
+  showReportDialog.value = true
+}
+
+const submitReport = async () => {
+  if (!reportTarget.value || !reportReason.value) {
+    snackbar.show('신고 사유를 입력해주세요.', 'error')
+    return
+  }
+
+  try {
+    await apiClient.post('/api/reports/submit', {
+      toUserId: reportTarget.value.toUserId,
+      dealId: reportTarget.value.dealId,
+      reason: reportReason.value,
+      detail: reportDetail.value
+    })
+    snackbar.show('신고가 접수되었습니다.')
+    showReportDialog.value = false
+  } catch (e) {
+    snackbar.show(e.response?.data?.message || '신고 실패', 'error')
+  }
+}
 
 const typeOptions = [
   { title: '전체', value: null },
@@ -154,9 +216,10 @@ const cancelBid = async (bidId: number) => {
     const isConfirmed = confirm("정말 이 입찰을 취소하시겠습니까?")
     if (!isConfirmed) return
     await bidApi.cancelBid(bidId)
-    alert("입찰이 취소되었습니다.")
+    snackbar.show('입찰이 취소되었습니다.')
     refreshBids()
   } catch (e) {
+    snackbar.show('입찰 취소 실패', 'error')
     console.error('입찰 취소 실패:', e)
   }
 }
@@ -176,6 +239,7 @@ const fetchBids = async () => {
     totalPages.value = res.totalPages
     page.value++
   } catch (e) {
+    snackbar.show('입찰 목록 불러오기 실패', 'error')
     console.error('입찰 목록 불러오기 실패:', e)
   } finally {
     isLoading.value = false

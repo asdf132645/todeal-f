@@ -4,7 +4,7 @@
 
     <v-tabs v-model="activeTab" fixed-tabs color="primary">
       <v-tab value="mine">내 입찰 목록</v-tab>
-      <v-tab value="on-my">내 경매에 입찰된 건</v-tab>
+      <v-tab value="on-my">내 경매 입찰자 목록</v-tab>
     </v-tabs>
 
     <v-window v-model="activeTab">

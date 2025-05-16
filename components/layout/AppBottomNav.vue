@@ -40,6 +40,12 @@
         <span class="text-caption">검색</span>
       </v-btn>
 
+      <v-btn to="/board" value="board"> <!-- ✅ 커뮤니티 추가 -->
+        <v-icon>mdi-forum-outline</v-icon>
+        <span class="text-caption">커뮤니티</span>
+      </v-btn>
+
+
       <v-btn @click="handleProtectedRoute('/bids/history')" value="bids">
         <v-icon>mdi-gavel</v-icon>
         <span class="text-caption">입찰내역</span>

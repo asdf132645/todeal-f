@@ -43,7 +43,7 @@ async function request<T>(
     const authStore = useAuthStore()
 
     try {
-        const token = getStoredAccessToken()
+        const token = process.client ? getStoredAccessToken() : ''
         if (!config.headers) config.headers = {}
 
         // ✅ accessToken 적용
@@ -51,8 +51,8 @@ async function request<T>(
             config.headers.Authorization = `Bearer ${token}`
         }
 
-        // ✅ X-USER-ID 설정 (authStore 또는 sessionStorage에서 보완)
-        const userId = authStore.user?.id ?? localStorage.getItem('userId')
+        // ✅ X-USER-ID 설정
+        const userId = authStore.user?.id ?? (process.client ? localStorage.getItem('userId') : null)
         if (userId) {
             config.headers['X-USER-ID'] = userId.toString()
         }
@@ -63,7 +63,7 @@ async function request<T>(
     } catch (error: any) {
         // ✅ accessToken 만료 대응
         if (error.response?.status === 401) {
-            const refreshToken = getStoredRefreshToken()
+            const refreshToken = process.client ? getStoredRefreshToken() : ''
 
             if (!refreshToken || isTokenExpired(refreshToken)) {
                 alert('⛔ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
@@ -80,15 +80,17 @@ async function request<T>(
                 const newAccessToken = refreshRes.data.data.accessToken
                 saveAccessToken(newAccessToken)
 
-                // ✅ 사용자 정보 재조회 후 authStore 저장 + sessionStorage 보완
+                // ✅ 사용자 정보 재조회 후 저장
                 const userRes = await $axios.get<ApiResponse<any>>('/api/users/me', {
                     headers: { Authorization: `Bearer ${newAccessToken}` }
                 })
                 const user = userRes.data.data
                 authStore.setUser(user)
-                localStorage.setItem('userId', user.id)
+                if (process.client) {
+                    localStorage.setItem('userId', user.id)
+                }
 
-                // ✅ 재시도 요청 시 헤더 재설정
+                // ✅ 재시도 요청
                 config.headers.Authorization = `Bearer ${newAccessToken}`
                 config.headers['X-USER-ID'] = user.id.toString()
 

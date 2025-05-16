@@ -1,148 +1,262 @@
 <template>
   <v-container class="d-flex justify-center align-center fill-height">
-    <v-card class="pa-6 rounded-lg" width="360" elevation="3">
+    <v-card class="pa-6" width="400" elevation="3">
       <div class="text-h6 font-weight-bold mb-6 text-center">회원가입</div>
 
+      <!-- 이메일 -->
       <v-text-field
           v-model="form.email"
           label="이메일"
+          placeholder="예: example@domain.com"
           outlined
           dense
-          class="mb-4"
-          type="email"
+          :error="errors.email"
+          class="mb-1"
+          @blur="checkEmailDuplicate"
       />
+      <span v-if="errors.email" class="text-error text-caption mt-1 mb-2 d-block">{{ emailErrorMessage }}</span>
+
+      <!-- 닉네임 -->
       <v-text-field
           v-model="form.nickname"
           label="닉네임"
+          placeholder="최대 12자"
           outlined
           dense
-          class="mb-4"
+          :error="errors.nickname"
+          class="mb-1"
+          counter="12"
+          maxlength="12"
+          @blur="checkNicknameDuplicate"
       />
+      <span v-if="errors.nickname" class="text-error text-caption mt-1 mb-2 d-block">{{ nicknameErrorMessage }}</span>
+
+      <!-- 전화번호 -->
       <v-text-field
           v-model="form.phone"
           label="전화번호"
+          placeholder="숫자만 입력"
           outlined
           dense
-          class="mb-4"
+          :error="errors.phone"
+          class="mb-1"
+          type="tel"
       />
+      <span v-if="errors.phone" class="text-error text-caption mt-1 mb-2 d-block">숫자만 입력해 주세요.</span>
+
+      <!-- 비밀번호 -->
       <v-text-field
           v-model="form.password"
           label="비밀번호"
           type="password"
+          placeholder="8자 이상"
           outlined
           dense
-          class="mb-4"
+          :error="errors.password"
+          class="mb-1"
+          @input="validatePassword"
       />
+      <span v-if="errors.password" class="text-error text-caption mt-1 mb-2 d-block">
+        비밀번호는 8자 이상이어야 합니다.
+      </span>
 
-      <v-checkbox
-          v-model="form.locationAgree"
-          label="위치 정보 제공에 동의합니다"
-          class="mb-2"
+      <!-- 비밀번호 확인 -->
+      <v-text-field
+          v-model="form.passwordConfirm"
+          label="비밀번호 재확인"
+          type="password"
+          outlined
+          dense
+          :error="errors.passwordConfirm"
+          class="mb-1"
+          @input="validatePasswordConfirm"
       />
+      <span v-if="errors.passwordConfirm" class="text-error text-caption mt-1 mb-2 d-block">
+        비밀번호가 일치하지 않습니다.
+      </span>
 
-      <!-- 이용약관 동의 + 링크 -->
-      <div class="d-flex align-center text-body-2 mb-4">
-        <v-checkbox
-            v-model="form.termsAgree"
-            class="ma-0 pa-0 mr-2"
-            hide-details
-        />
-        <span class="text-grey-darken-1">
-          <span>이용약관에 동의합니다.</span>
-          <v-btn variant="text" size="small" class="ml-2 px-1" @click="dialog = true" style="min-width: auto;">
-            <span class="text-primary text-decoration-underline">약관 보기</span>
+      <!-- 위치 동의 -->
+      <div class="d-flex align-center text-body-2 mb-1">
+        <v-checkbox v-model="form.locationAgree" :error="errors.location" class="ma-0 pa-0 mr-2" hide-details />
+        <span>
+          위치 정보 수집 및 이용에 동의합니다.
+          <v-btn variant="text" size="small" @click="openDialog('location')" class="ml-1 px-1" style="min-width:auto;">
+            <span class="text-primary text-decoration-underline">보기</span>
           </v-btn>
         </span>
       </div>
+      <span v-if="errors.location" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
 
-      <v-btn block color="primary" @click="handleSignup" large>
-        회원가입 완료
-      </v-btn>
+      <!-- 이용약관 -->
+      <div class="d-flex align-center text-body-2 mb-1">
+        <v-checkbox v-model="form.termsAgree" :error="errors.terms" class="ma-0 pa-0 mr-2" hide-details />
+        <span>
+          이용약관에 동의합니다.
+          <v-btn variant="text" size="small" @click="openDialog('terms')" class="ml-1 px-1" style="min-width:auto;">
+            <span class="text-primary text-decoration-underline">보기</span>
+          </v-btn>
+        </span>
+      </div>
+      <span v-if="errors.terms" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
+
+      <!-- 개인정보 -->
+      <div class="d-flex align-center text-body-2 mb-1">
+        <v-checkbox v-model="form.privacyAgree" :error="errors.privacy" class="ma-0 pa-0 mr-2" hide-details />
+        <span>
+          개인정보 수집 및 이용에 동의합니다.
+          <v-btn variant="text" size="small" @click="openDialog('privacy')" class="ml-1 px-1" style="min-width:auto;">
+            <span class="text-primary text-decoration-underline">보기</span>
+          </v-btn>
+        </span>
+      </div>
+      <span v-if="errors.privacy" class="text-error text-caption mt-1 mb-4 d-block">필수 항목입니다.</span>
+
+      <v-btn block color="primary" @click="handleSignup" large>회원가입 완료</v-btn>
     </v-card>
 
-    <!-- 약관 모달 -->
-    <v-dialog v-model="dialog" width="500">
-      <v-card>
-        <v-card-title class="font-weight-bold text-h6">이용약관</v-card-title>
-        <v-divider />
-        <v-card-text style="max-height: 400px; overflow-y: auto;">
-          <p class="text-body-2 mb-2">1. 본 서비스는 누구나 자유롭게 사용할 수 있습니다.</p>
-          <p class="text-body-2 mb-2">2. 운영자의 판단에 따라 부적절한 콘텐츠는 삭제될 수 있습니다.</p>
-          <p class="text-body-2 mb-2">3. 위치 기반 정보는 회원 동의 시에만 수집합니다.</p>
-          <p class="text-body-2 mb-2">4. 탈퇴 시 모든 개인정보는 즉시 파기됩니다.</p>
-          <p class="text-body-2">5. 기타 상세 내용은 별도 운영 정책을 따릅니다.</p>
-        </v-card-text>
-        <v-divider />
-        <v-card-actions class="justify-end">
-          <v-btn text @click="dialog = false">닫기</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- 모달 -->
+    <TermsDialog v-if="dialogType === 'terms' || dialogType === 'privacy'" v-model="dialog" :type="dialogType" />
+    <LocationConsentDialog v-if="dialogType === 'location'" v-model="dialog" />
   </v-container>
 </template>
 
 <script setup lang="ts">
+import { ref, reactive, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import TermsDialog from '@/components/common/TermsDialog.vue'
+import LocationConsentDialog from '@/components/common/LocationConsentDialog.vue'
+import { apiClient } from '~/libs/http/apiClient'
 import { useAuthStore } from '@/stores/authStore'
-import { useRoute, useRouter } from 'vue-router'
-import { reactive, ref, onMounted } from 'vue'
+import { useGeoStore } from '@/stores/geoStore'
 
-const auth = useAuthStore()
-const route = useRoute()
 const router = useRouter()
+const route = useRoute()
+const auth = useAuthStore()
+const geo = useGeoStore()
 
 const tempToken = route.query.tempToken as string
 const dialog = ref(false)
-import {apiClient} from "~/libs/http/apiClient";
-import {useGeoStore} from "~/stores/geoStore";
-const geo = useGeoStore()
+const dialogType = ref<'terms' | 'privacy' | 'location'>('terms')
 
 const form = reactive({
   email: '',
   nickname: '',
   phone: '',
   password: '',
+  passwordConfirm: '',
   locationAgree: false,
   termsAgree: false,
+  privacyAgree: false,
   latitude: null as number | null,
   longitude: null as number | null,
 })
 
-// ✅ 현재 위치 자동 설정
+const errors = reactive({
+  email: false,
+  nickname: false,
+  phone: false,
+  password: false,
+  passwordConfirm: false,
+  terms: false,
+  privacy: false,
+  location: false,
+})
+
+const emailErrorMessage = ref('')
+const nicknameErrorMessage = ref('')
+
+const openDialog = (type: 'terms' | 'privacy' | 'location') => {
+  dialogType.value = type
+  dialog.value = true
+}
+
 onMounted(() => {
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
         (pos) => {
           form.latitude = pos.coords.latitude
           form.longitude = pos.coords.longitude
-          // console.log('✅ 위치 설정됨:', form.latitude, form.longitude)
-          //여기서 위치 저장 API 호출
           apiClient.post('/users/location', {
             latitude: geo.latitude,
-            longitude: geo.longitude
+            longitude: geo.longitude,
           })
         },
-        (err) => {
-          console.warn('❌ 위치 가져오기 실패:', err)
-        }
+        (err) => console.warn('❌ 위치 가져오기 실패:', err)
     )
-  } else {
-    console.warn('❌ 브라우저에서 위치 정보를 지원하지 않습니다.')
   }
 })
 
-const handleSignup = async () => {
-  if (!form.email) {
-    alert('이메일을 입력해 주세요.')
-    return
-  }
-  if (!form.termsAgree) {
-    alert('이용약관에 동의해야 가입할 수 있습니다.')
+const validatePassword = () => {
+  errors.password = !form.password || form.password.length < 8
+  validatePasswordConfirm()
+}
+
+const validatePasswordConfirm = () => {
+  errors.passwordConfirm = form.passwordConfirm !== form.password
+}
+
+const checkEmailDuplicate = async () => {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!regex.test(form.email)) {
+    errors.email = true
+    emailErrorMessage.value = '올바른 이메일 형식이 아닙니다.'
     return
   }
 
+  try {
+    const res = await apiClient.get(`/api/users/check-email?email=${form.email}`)
+    if (res.exists) {
+      errors.email = true
+      emailErrorMessage.value = '이미 사용 중인 이메일입니다.'
+    } else {
+      errors.email = false
+      emailErrorMessage.value = ''
+    }
+  } catch {
+    errors.email = true
+    emailErrorMessage.value = '이메일 중복 확인 중 오류가 발생했습니다.'
+  }
+}
+
+const checkNicknameDuplicate = async () => {
+  if (!form.nickname || form.nickname.length > 12) {
+    errors.nickname = true
+    nicknameErrorMessage.value = '닉네임은 12자 이하로 입력해 주세요.'
+    return
+  }
+
+  try {
+    const res = await apiClient.get(`/api/users/check-nickname?nickname=${form.nickname}`)
+    if (res.exists) {
+      errors.nickname = true
+      nicknameErrorMessage.value = '이미 사용 중인 닉네임입니다.'
+    } else {
+      errors.nickname = false
+      nicknameErrorMessage.value = ''
+    }
+  } catch {
+    errors.nickname = true
+    nicknameErrorMessage.value = '닉네임 중복 확인 중 오류가 발생했습니다.'
+  }
+}
+
+const handleSignup = async () => {
+  const phoneRegex = /^[0-9]{9,12}$/
+
+  errors.email = !form.email || errors.email
+  errors.nickname = !form.nickname || form.nickname.length > 12 || errors.nickname
+  errors.phone = !phoneRegex.test(form.phone)
+  errors.password = !form.password || form.password.length < 8
+  validatePasswordConfirm()
+  errors.terms = !form.termsAgree
+  errors.privacy = !form.privacyAgree
+  errors.location = !form.locationAgree
+
+  if (Object.values(errors).some((v) => v)) return
+
   const payload = {
     ...form,
-    agreements: form.termsAgree ? ['terms'] : []
+    agreements: ['terms', 'privacy', ...(form.locationAgree ? ['location'] : [])],
   }
 
   try {
@@ -152,19 +266,19 @@ const handleSignup = async () => {
       await auth.signupBasic(payload)
     }
 
-    // ✅ 로그인 후 처리
-    const userInfo = await auth.fetchMyInfo?.() // 선택적 구현 (필요 없으면 제거)
-    if (userInfo) auth.setUser(userInfo)
+    const userInfo = await auth.fetchMyInfo?.()
+    if (userInfo) auth.setUser(userInfo);
+    await apiClient.post('/users/location', {
+      latitude: geo.latitude,
+      longitude: geo.longitude,
+    })
 
-    alert('회원가입이 완료되었습니다!')
     router.push('/')
-  } catch (err: any) {
-    alert(err.message || '회원가입 실패')
+  } catch (err) {
+    console.error('회원가입 실패', err)
   }
 }
-
 </script>
-
 
 <style scoped>
 .text-decoration-underline {

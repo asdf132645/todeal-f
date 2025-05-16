@@ -40,6 +40,9 @@ export const useAuthStore = defineStore('auth', () => {
             user: any
         }>('/api/users/login', { email, password })
         localStorage.setItem('userId',res.user.id);
+        localStorage.setItem('nickname',res.user.nickname);
+        localStorage.setItem('isPremium',res.user.isPremium);
+        console.log(res)
 
         accessToken.value = res.accessToken
         saveAccessToken(res.accessToken)

@@ -11,6 +11,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { bidApi } from '~/domains/bid/infrastructure/bidApi'
 import { useAuthStore } from '@/stores/authStore'
+import { useSnackbarStore } from '@/stores/snackbarStore'
 
 const props = defineProps<{ deal: any }>()
 const emit = defineEmits(['bid-complete'])
@@ -18,6 +19,7 @@ const emit = defineEmits(['bid-complete'])
 const bidAmount = ref(0)
 const bidding = ref(false)
 const auth = useAuthStore()
+const snackbar = useSnackbarStore()
 const router = useRouter()
 
 const submitBid = async () => {
@@ -27,7 +29,7 @@ const submitBid = async () => {
   }
 
   if (bidAmount.value <= props.deal.currentPrice) {
-    alert(`⛔ 현재 시급보다 높게 입력해야 합니다.\n(현재 시급: ${props.deal.currentPrice.toLocaleString()}원)`)
+    snackbar.show(`⛔ 현재 시급보다 높게 입력해야 합니다. (현재 시급: ${props.deal.currentPrice.toLocaleString()}원)`, 'error')
     return
   }
 
@@ -39,12 +41,12 @@ const submitBid = async () => {
       nickname: auth.user?.nickname || '알 수 없음'
     })
 
-    alert('✅ 지원 완료!')
+    snackbar.show('✅ 지원 완료!', 'success')
     emit('bid-complete')
 
     bidAmount.value = 0
   } catch {
-    alert('❌ 지원 실패! 다시 시도해주세요.')
+    snackbar.show('❌ 지원 실패! 다시 시도해주세요.', 'error')
   } finally {
     bidding.value = false
   }
