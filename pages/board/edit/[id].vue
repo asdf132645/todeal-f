@@ -1,7 +1,13 @@
 <template>
   <v-container>
     <!-- ✅ 카테고리 안내 -->
-    <v-alert type="warning" dense class="mb-3" text>
+    <v-alert
+        type="warning"
+        dense
+        class="mb-3 text-caption"
+        text
+        style="font-size: 0.8rem; line-height: 1.4;"
+    >
       커뮤니티 가이드라인에 어긋나는 내용은 사전 통보 없이 삭제될 수 있습니다.
     </v-alert>
     <div class="mb-1 text-caption text-grey-darken-1">글의 성격에 맞는 카테고리를 선택해주세요.</div>
@@ -16,10 +22,7 @@
         class="mb-4"
     />
 
-    <!-- ✅ 제목/내용 입력 -->
-    <div class="mb-1 text-caption text-grey-darken-1">내용을 명확하고 간결하게 수정해주세요.</div>
-    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
-    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
+
 
     <!-- ✅ 이미지 업로더 -->
     <div class="image-upload-wrapper mb-5">
@@ -49,12 +52,9 @@
       <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
     </div>
 
-    <!-- ✅ 번역 버튼 안내 -->
-    <div class="mb-1 text-caption text-grey-darken-1">다른 언어 사용자도 볼 수 있도록 번역 기능을 활용해보세요</div>
-    <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
-      <v-icon start>mdi-translate</v-icon>
-      {{ showTranslatePanel ? '번역 닫기' : '번역 도우미 열기' }}
-    </v-btn>
+    <!-- ✅ 제목/내용 입력 -->
+    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
+    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
 
     <!-- ✅ 번역 패널 -->
     <v-expand-transition>
@@ -96,36 +96,6 @@
         >
           번역 시작
         </v-btn>
-
-        <v-card
-            v-show="translatedTitle.trim().length > 0 || translatedContent.trim().length > 0"
-            class="pa-3 translated-box mb-3"
-        >
-          <div class="text-subtitle-2 mb-2">🔁 번역 결과 미리보기</div>
-          <v-text-field
-              v-if="translatedTitle"
-              v-model="translatedTitle"
-              label="번역된 제목"
-              readonly
-              dense
-              outlined
-              class="translated-field"
-          />
-          <v-textarea
-              v-if="translatedContent"
-              v-model="translatedContent"
-              label="번역된 내용"
-              readonly
-              rows="3"
-              auto-grow
-              outlined
-              class="mt-2 translated-field"
-          />
-        </v-card>
-
-        <v-btn block color="success" @click="applyTranslation">
-          번역 결과 적용하기
-        </v-btn>
       </v-card>
     </v-expand-transition>
 
@@ -165,8 +135,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
 const targetLang = ref('')
-const translatedTitle = ref('')
-const translatedContent = ref('')
 
 const langOptions = [
   { label: '한국어', value: 'ko' },
@@ -200,12 +168,10 @@ const load = async () => {
     sourceLang.value = res.language || 'ko'
   } catch (e) {
     alert('게시글을 불러올 수 없습니다.')
-    // router.push('/board')
   }
 }
 
 const triggerFileInput = () => fileInput.value?.click()
-
 const removeImage = (index: number) => imageUrls.value.splice(index, 1)
 
 const handleImageUpload = async (e: Event) => {
@@ -229,10 +195,6 @@ const handleImageUpload = async (e: Event) => {
 }
 
 const toggleTranslationPanel = () => showTranslatePanel.value = !showTranslatePanel.value
-const applyTranslation = () => {
-  title.value = translatedTitle.value
-  content.value = translatedContent.value
-}
 
 const runTranslation = async () => {
   if (!title.value || !content.value) {
@@ -252,8 +214,9 @@ const runTranslation = async () => {
         text: content.value
       })
     ])
-    translatedTitle.value = resTitle.data.translatedText
-    translatedContent.value = resContent.data.translatedText
+    title.value = resTitle.data.translatedText
+    content.value = resContent.data.translatedText
+    showTranslatePanel.value = false
   } catch (e) {
     console.error(e)
     alert('번역 중 오류가 발생했습니다.')
@@ -277,8 +240,8 @@ const submit = async () => {
       content: content.value,
       category: category.value,
       language: sourceLang.value,
-      translatedTitle: translatedTitle.value,
-      translatedContent: translatedContent.value,
+      translatedTitle: title.value,
+      translatedContent: content.value,
       latitude: originalPost.value.latitude,
       longitude: originalPost.value.longitude,
       nickname: originalPost.value.nickname,

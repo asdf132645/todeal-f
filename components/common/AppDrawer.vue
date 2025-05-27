@@ -43,6 +43,7 @@ import { ref } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { useThemeStore } from '@/stores/themeStore'
 import { useI18n } from 'vue-i18n'
+import { useNuxtApp } from '#app'
 
 const themeStore = useThemeStore()
 const auth = useAuthStore()
@@ -69,6 +70,10 @@ const languages = [
 const changeLocale = async (code: string) => {
   localStorage.setItem('lang', code)
   locale.value = code;
+  const nuxtApp = useNuxtApp()
+  // Nuxt i18n에서 제공하는 setLocale 함수 사용
+  await nuxtApp.$i18n.setLocale(code)
+
 }
 
 </script>

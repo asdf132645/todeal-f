@@ -65,9 +65,11 @@
       <div class="d-flex justify-space-between align-center mb-3">
         <div>
           <div class="text-h6 font-weight-bold mb-1 blink-text text-red-accent-2">
-            마감 임박! 실시간 경매
+            {{ _t('main.liveAuction') }}
           </div>
-          <div class="text-body-2">지금 가장 인기 있는 경매를 확인하세요.</div>
+          <div class="text-body-2">
+            {{ _t('main.liveAuction_subtitle') }}
+          </div>
         </div>
         <v-btn text size="small" color="red-accent-2" @click="router.push('/deals')">
           {{ _t('common.more') }}

@@ -27,7 +27,7 @@
     </template>
 
     <template v-else>
-      <div class="text-subtitle-1 font-weight-medium mb-3 color-black">정가 방식 방식입니다</div>
+      <div class="text-subtitle-1 font-weight-medium mb-3 color-black">정가 방식입니다</div>
 
       <v-btn
           color="green"

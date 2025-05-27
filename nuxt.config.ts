@@ -54,7 +54,7 @@ export default defineNuxtConfig({
       { code: 'ja', file: 'ja.json', name: '日本語' },
       { code: 'zh', file: 'zh.json', name: '中文' },
       { code: 'ru', file: 'ru.json', name: 'Русский' }
-    ]
+    ],
   },
   app: {
     baseURL: './',

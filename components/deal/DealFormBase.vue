@@ -31,7 +31,12 @@
         </div>
         <div class="text-caption text-grey-darken-1 mt-1">{{ images.length }} / 5</div>
       </div>
-
+      <!-- 번역 도우미 -->
+      <div class="mb-1 text-caption text-grey-darken-1">다른 언어 사용자도 볼 수 있도록 번역 기능을 활용해보세요</div>
+      <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
+        <v-icon start>mdi-translate</v-icon>
+        {{ showTranslatePanel ? '번역 닫기' : '번역 도우미 열기' }}
+      </v-btn>
       <div class="text-caption text-grey-darken-1 mb-1">제목은 최대 40자까지 입력할 수 있어요</div>
       <v-text-field
           v-model="form.title"
@@ -55,6 +60,45 @@
           class="mb-1 color-black"
           ref="descriptionInput"
       />
+
+      <v-expand-transition>
+        <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
+          <v-row dense class="mb-3">
+            <v-col cols="6">
+              <v-select
+                  v-model="sourceLang"
+                  :items="langOptions"
+                  label="원문 언어"
+                  item-title="label"
+                  item-value="value"
+                  dense
+                  outlined
+              />
+            </v-col>
+            <v-col cols="6">
+              <v-select
+                  v-model="targetLang"
+                  :items="langOptions"
+                  label="번역할 언어"
+                  item-title="label"
+                  item-value="value"
+                  dense
+                  outlined
+              />
+            </v-col>
+          </v-row>
+
+          <v-btn
+              :disabled="!sourceLang || !targetLang"
+              color="secondary"
+              block
+              :loading="loading"
+              @click="runTranslation"
+          >
+            번역 시작
+          </v-btn>
+        </v-card>
+      </v-expand-transition>
 
       <!-- 거래 방식 안내 및 선택 -->
       <div class="text-subtitle-2 font-weight-bold mt-4 mb-1">
@@ -123,6 +167,7 @@ import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
 import AdRewardButton from '@/components/common/AdRewardButton.vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
+import { apiClient } from '@/libs/http/apiClient'
 
 const { type } = defineProps<{ type: string }>()
 const router = useRouter()
@@ -152,6 +197,21 @@ const formattedDeadline = ref('')
 const tempDate = ref<Date | null>(null)
 const ticket = ref<any>(null)
 const loading = ref(false)
+
+const showTranslatePanel = ref(false)
+const sourceLang = ref('ko')
+const targetLang = ref('')
+
+const langOptions = [
+  { label: '한국어', value: 'ko' },
+  { label: '영어', value: 'en' },
+  { label: '일본어', value: 'ja' },
+  { label: '베트남어', value: 'vi' },
+  { label: '중국어 간체', value: 'zh-CN' },
+  { label: '중국어 번체', value: 'zh-TW' },
+  { label: '태국어', value: 'th' },
+  { label: '인도네시아어', value: 'id' }
+]
 
 const minDate = new Date()
 const maxDate = new Date()
@@ -217,6 +277,28 @@ const confirmDeadline = () => {
 
 const cancelDeadline = () => {
   deadlineDialog.value = false
+}
+
+const toggleTranslationPanel = () => {
+  showTranslatePanel.value = !showTranslatePanel.value
+}
+
+const runTranslation = async () => {
+  if (!form.value.title || !form.value.description) {
+    snackbar.show('제목과 설명을 먼저 입력해주세요.', 'error')
+    return
+  }
+  try {
+    const [resTitle, resDesc] = await Promise.all([
+      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: form.value.title }),
+      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: form.value.description })
+    ])
+    form.value.title = resTitle.translatedText
+    form.value.description = resDesc.translatedText
+    snackbar.show('번역이 적용되었습니다.', 'success')
+  } catch (e) {
+    snackbar.show('번역에 실패했습니다.', 'error')
+  }
 }
 
 const submit = async () => {

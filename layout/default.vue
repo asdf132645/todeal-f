@@ -93,7 +93,9 @@ const pageTitle = computed(() => {
     '/deals/barter': 'page.barter',
     '/deals/parttime': 'page.parttime_today',
     '/deals/used': 'page.used',
-    '/deals/parttime-request': 'page.parttime_offer'
+    '/deals/parttime-request': 'page.parttime_offer',
+    '/board': 'page.community',
+    '/board/write': 'page.write'
   }
   return map[path] || ''
 })

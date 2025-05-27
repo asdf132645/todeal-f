@@ -78,8 +78,10 @@ export const useAuthStore = defineStore('auth', () => {
         }
 
         await window.Kakao.Auth.login()
+
         const kakaoAccessToken = window.Kakao.Auth.getAccessToken()
         if (!kakaoAccessToken) {
+            // 사용자 취소 또는 인증 실패 등
             return { isNewUser: true, tempToken: null }
         }
 
@@ -93,6 +95,7 @@ export const useAuthStore = defineStore('auth', () => {
         })
 
         if (res.isNewUser) {
+            // 새 유저인 경우 tempToken으로 accessToken 전달
             return { isNewUser: true, tempToken: kakaoAccessToken }
         }
 

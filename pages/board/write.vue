@@ -1,24 +1,72 @@
 <template>
   <v-container>
-    <v-alert type="warning" dense class="mb-3" text>
-      커뮤니티 가이드라인에 어긋나는 내용은 사전 통보 없이 삭제될 수 있습니다.
+    <v-alert
+        type="warning"
+        dense
+        class="mb-3 text-caption"
+        text
+        style="font-size: 0.8rem; line-height: 1.4;"
+    >
+      {{ _t('board.guideline_warning') }}
     </v-alert>
 
     <!-- ✅ 카테고리 선택 -->
     <v-select
         v-model="category"
         :items="categoryOptions"
-        label="카테고리 선택"
+        :label="`${_t('board.category_select')}`"
         item-title="label"
         item-value="value"
         outlined
         clearable
         class="mb-4"
     />
+    <!-- ✅ 번역 버튼 안내 -->
+    <div class="mb-1 text-caption text-grey-darken-1">
+      {{ _t('board.translate_tip') }}
+    </div>
+    <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
+      <v-icon start>mdi-translate</v-icon>
+      {{ showTranslatePanel ? `${_t('board.closeTranslation')}` : `${_t('board.openTranslationHelper')}` }}
+    </v-btn>
 
-    <!-- ✅ 제목/내용 -->
-    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
-    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
+    <v-expand-transition>
+      <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
+        <v-row dense class="mb-3">
+          <v-col cols="6">
+            <v-select
+                v-model="sourceLang"
+                :items="langOptions"
+                item-title="label"
+                item-value="value"
+                :label="`${_t('board.originalLanguage')}`"
+                dense
+                outlined
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-select
+                v-model="targetLang"
+                :items="langOptions"
+                item-title="label"
+                item-value="value"
+                :label="`${_t('board.targetLanguage')}`"
+                dense
+                outlined
+            />
+          </v-col>
+        </v-row>
+        <v-btn
+            :disabled="!sourceLang || !targetLang"
+            color="secondary"
+            block
+            :loading="loading"
+            @click="runTranslation"
+        >
+          {{ _t('board.startTranslation') }}
+        </v-btn>
+      </v-card>
+    </v-expand-transition>
 
     <!-- ✅ 이미지 업로더 -->
     <div class="image-upload-wrapper mb-5">
@@ -47,50 +95,14 @@
       </div>
       <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
     </div>
+    <!-- ✅ 제목/내용 -->
+    <v-text-field v-model="title" :label="`${_t('board.title')}`" outlined clearable class="mb-3" />
+    <v-textarea v-model="content" :label="`${_t('board.content')}`" outlined rows="4" auto-grow class="mb-3" />
 
-    <!-- ✅ 번역 패널 -->
-    <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
-      <v-icon start>mdi-translate</v-icon>
-      {{ showTranslatePanel ? '번역 닫기' : '번역 도우미 열기' }}
-    </v-btn>
 
-    <v-expand-transition>
-      <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
-        <v-row dense class="mb-3">
-          <v-col cols="6">
-            <v-select v-model="sourceLang" :items="langOptions" label="원문 언어" dense outlined />
-          </v-col>
-          <v-col cols="6">
-            <v-select v-model="targetLang" :items="langOptions" label="번역할 언어" dense outlined />
-          </v-col>
-        </v-row>
-        <v-btn
-            :disabled="!sourceLang || !targetLang"
-            color="secondary"
-            block
-            :loading="loading"
-            @click="runTranslation"
-        >
-          번역 시작
-        </v-btn>
-        <v-card v-if="translatedTitle || translatedContent" class="pa-3 translated-box mt-4">
-          <v-text-field v-model="translatedTitle" label="번역된 제목" readonly dense outlined />
-          <v-textarea
-              v-model="translatedContent"
-              label="번역된 내용"
-              readonly
-              rows="3"
-              auto-grow
-              outlined
-              class="mt-2"
-          />
-        </v-card>
-        <v-btn block color="success" class="mt-3" @click="applyTranslation">번역 결과 적용하기</v-btn>
-      </v-card>
-    </v-expand-transition>
 
     <!-- ✅ 제출 버튼 -->
-    <v-btn block color="primary" :loading="loading" @click="submit">작성 완료</v-btn>
+    <v-btn block color="primary" :loading="loading" @click="submit">{{ _t("board.complete") }}</v-btn>
   </v-container>
 </template>
 
@@ -101,18 +113,18 @@ import { boardApi } from '@/domains/board/infrastructure/boardApi'
 import { apiClient } from '@/libs/http/apiClient'
 import { useGeoStore } from '@/stores/geoStore'
 import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
+import {useI18n} from "vue-i18n";
 
 const title = ref('')
 const content = ref('')
 const category = ref('')
 const imageUrls = ref<string[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
-const translatedTitle = ref('')
-const translatedContent = ref('')
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
 const targetLang = ref('')
 const loading = ref(false)
+const { t: _t, locale } = useI18n()
 
 const geo = useGeoStore()
 const router = useRouter()
@@ -140,13 +152,8 @@ const categoryOptions = [
   { label: '자유', value: 'free' }
 ]
 
-const triggerFileInput = () => {
-  fileInput.value?.click()
-}
-
-const removeImage = (index: number) => {
-  imageUrls.value.splice(index, 1)
-}
+const triggerFileInput = () => fileInput.value?.click()
+const removeImage = (index: number) => imageUrls.value.splice(index, 1)
 
 const handleImageUpload = async (event: Event) => {
   const files = (event.target as HTMLInputElement).files
@@ -170,12 +177,7 @@ const handleImageUpload = async (event: Event) => {
   if (fileInput.value) fileInput.value.value = ''
 }
 
-
 const toggleTranslationPanel = () => showTranslatePanel.value = !showTranslatePanel.value
-const applyTranslation = () => {
-  title.value = translatedTitle.value
-  content.value = translatedContent.value
-}
 
 const runTranslation = async () => {
   if (!title.value || !content.value) {
@@ -184,11 +186,20 @@ const runTranslation = async () => {
   }
   try {
     const [resTitle, resContent] = await Promise.all([
-      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: title.value }),
-      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: content.value })
+      apiClient.post('/api/translate', {
+        source: sourceLang.value,
+        target: targetLang.value,
+        text: title.value
+      }),
+      apiClient.post('/api/translate', {
+        source: sourceLang.value,
+        target: targetLang.value,
+        text: content.value
+      })
     ])
-    translatedTitle.value = resTitle.translatedText
-    translatedContent.value = resContent.translatedText
+    title.value = resTitle.translatedText
+    content.value = resContent.translatedText
+    showTranslatePanel.value = false
   } catch (e) {
     console.error(e)
     alert('번역 중 오류가 발생했습니다.')
@@ -206,8 +217,8 @@ const submit = async () => {
       content: content.value,
       category: category.value,
       language: sourceLang.value,
-      translatedTitle: translatedTitle.value,
-      translatedContent: translatedContent.value,
+      translatedTitle: title.value,
+      translatedContent: content.value,
       latitude: geo.latitude,
       longitude: geo.longitude,
       nickname,

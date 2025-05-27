@@ -46,6 +46,7 @@
 
       <!-- 비밀번호 -->
       <v-text-field
+          v-if="!tempToken"
           v-model="form.password"
           label="비밀번호"
           type="password"
@@ -55,10 +56,11 @@
           :error="errors.password"
           class="mb-1 color-black"
       />
-      <span v-if="errors.password" class="text-error text-caption mt-1 mb-2 d-block">비밀번호는 8자 이상이어야 합니다.</span>
+      <span v-if="!tempToken && errors.password" class="text-error text-caption mt-1 mb-2 d-block">비밀번호는 8자 이상이어야 합니다.</span>
 
       <!-- 비밀번호 확인 -->
       <v-text-field
+          v-if="!tempToken"
           v-model="form.passwordConfirm"
           label="비밀번호 재확인"
           type="password"
@@ -67,7 +69,7 @@
           :error="errors.passwordConfirm"
           class="mb-1 color-black"
       />
-      <span v-if="errors.passwordConfirm" class="text-error text-caption mt-1 mb-2 d-block">비밀번호가 일치하지 않습니다.</span>
+      <span v-if="!tempToken && errors.passwordConfirm" class="text-error text-caption mt-1 mb-2 d-block">비밀번호가 일치하지 않습니다.</span>
 
       <!-- 전체 동의 -->
       <v-checkbox
@@ -116,7 +118,6 @@
         <a @click.prevent="openTerms('privacy')" class="text-link">[자세히 보기]</a>
       </div>
       <span v-if="errors.privacy" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
-
 
       <v-btn :disabled="!form.agreeAll" block color="primary" @click="handleSignup" large>회원가입 완료</v-btn>
     </v-card>
@@ -184,8 +185,8 @@ const validateForm = () => {
   errors.email = !form.email || !emailRegex.test(form.email)
   errors.nickname = !form.nickname || form.nickname.length > 12
   errors.phone = !phoneRegex.test(form.phone)
-  errors.password = !form.password || form.password.length < 8
-  errors.passwordConfirm = form.passwordConfirm !== form.password
+  errors.password = tempToken ? false : !form.password || form.password.length < 8
+  errors.passwordConfirm = tempToken ? false : form.passwordConfirm !== form.password
   errors.terms = !form.termsAgree
   errors.privacy = !form.privacyAgree
   errors.location = !form.locationAgree
@@ -308,5 +309,4 @@ const handleSignup = async () => {
   text-decoration: underline;
   display: inline-block;
 }
-
 </style>

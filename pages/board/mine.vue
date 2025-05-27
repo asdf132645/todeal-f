@@ -4,7 +4,7 @@
     <div class="text-h6 font-weight-bold mb-4">내가 쓴 게시글</div>
     <v-list lines="three" density="comfortable">
       <v-list-item
-          v-for="post in posts"
+          v-for="(post, idx) in posts"
           :key="post.id"
           class="hoverable"
       >
@@ -14,21 +14,19 @@
           <v-list-item-subtitle class="text-caption text-grey">
             💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}
           </v-list-item-subtitle>
-          <!-- ✅ 이미지 썸네일 출력 -->
-          <v-row v-if="post.imageUrls?.length" class="mt-2" dense>
-            <v-col cols="4" v-for="(url, idx) in post.imageUrls" :key="idx">
-              <v-img :src="url" aspect-ratio="1" class="rounded"></v-img>
-            </v-col>
-          </v-row>
         </v-list-item-content>
+
         <template #append>
-          <v-btn size="small" variant="text" color="primary" @click.stop="editPost(post.id)">
-            수정
+          <v-btn icon size="small" @click.stop="editPost(post.id)" class="mr-2">
+            <v-icon>mdi-pencil-outline</v-icon>
           </v-btn>
-          <v-btn size="small" variant="text" color="error" @click.stop="deletePost(post.id)">
-            삭제
+          <v-btn icon size="small" color="error" @click.stop="deletePost(post.id)">
+            <v-icon>mdi-delete-outline</v-icon>
           </v-btn>
         </template>
+
+        <!-- ✅ 리스트 항목 간 구분선 -->
+        <v-divider v-if="idx !== posts.length - 1" class="my-2" />
       </v-list-item>
     </v-list>
   </v-container>

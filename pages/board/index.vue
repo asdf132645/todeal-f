@@ -2,9 +2,8 @@
   <v-container>
     <!-- ✅ 헤더: 커뮤니티 + 글쓰기 버튼 -->
     <div class="d-flex justify-space-between align-center mb-4">
-      <div class="text-h6 font-weight-bold">커뮤니티</div>
       <div class="d-flex gap-2">
-        <v-btn color="secondary" density="comfortable" @click="goToMine">
+        <v-btn color="secondary" density="comfortable" class="mr-2" @click="goToMine">
           내 글 보기
         </v-btn>
         <v-btn color="primary" density="comfortable" @click="goToWrite">
@@ -58,19 +57,28 @@
     </div>
 
 
-    <!-- ✅ 카테고리 탭 -->
-    <v-card flat class="mb-4">
-      <v-tabs v-model="category" bg-color="white" grow>
-        <v-tab value="all">전체</v-tab>
-        <v-tab value="local-life">우리 동네 생활</v-tab>
-        <v-tab value="trade-help">중고거래 도움</v-tab>
-        <v-tab value="parttime">알바 정보</v-tab>
-        <v-tab value="language-exchange">언어 교환</v-tab>
-        <v-tab value="culture">문화 교류</v-tab>
-        <v-tab value="qna">Q&A</v-tab>
-        <v-tab value="free">자유</v-tab>
-      </v-tabs>
-    </v-card>
+    <!-- ✅ 카테고리 필터 (태그형 칩 + 가로 스크롤) -->
+    <v-slide-group
+        v-model="category"
+        class="mb-4"
+        show-arrows
+    >
+      <v-slide-group-item
+          v-for="option in categoryOptions"
+          :key="option.value"
+          :value="option.value"
+      >
+        <v-chip
+            :color="category === option.value ? 'primary' : 'grey-lighten-3'"
+            class="ma-1"
+            variant="flat"
+            @click="category = option.value"
+        >
+          {{ option.label }}
+        </v-chip>
+      </v-slide-group-item>
+    </v-slide-group>
+
 
     <!-- ✅ 게시글 리스트 -->
     <template v-if="posts.length">
@@ -125,6 +133,16 @@ const searchFieldOptions = [
   { title: '제목', value: 'title' },
   { title: '내용', value: 'content' },
   { title: '닉네임', value: 'nickname' }
+]
+const categoryOptions = [
+  { label: '전체', value: 'all' },
+  { label: '우리 동네 생활', value: 'local-life' },
+  { label: '중고거래 도움', value: 'trade-help' },
+  { label: '알바 정보', value: 'parttime' },
+  { label: '언어 교환', value: 'language-exchange' },
+  { label: '문화 교류', value: 'culture' },
+  { label: 'Q&A', value: 'qna' },
+  { label: '자유', value: 'free' }
 ]
 
 // ✅ 상태 변경 시 쿼리 반영 (기존 위치 쿼리 포함)

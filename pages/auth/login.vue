@@ -84,14 +84,24 @@ const handleEmailLogin = async () => {
 const handleKakaoLogin = async () => {
   try {
     const result = await auth.loginWithKakao()
+
     if (result.isNewUser) {
-      router.push({ path: '/auth/signup', query: { tempToken: result.tempToken || '' } })
+      if (!result.tempToken) {
+        snackbar.show('카카오 인증 토큰이 없습니다. 다시 시도해 주세요.', 'error')
+        return
+      }
+
+      router.push({
+        path: '/auth/signup',
+        query: { tempToken: result.tempToken }
+      })
     } else {
       snackbar.show('로그인 성공!', 'success')
       router.push('/')
     }
   } catch (err: any) {
-    snackbar.show('카카오 로그인 중 문제가 발생했어요.', 'error')
+    console.error(err)
+    snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, 'error')
   }
 }
 
