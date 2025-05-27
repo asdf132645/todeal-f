@@ -18,12 +18,24 @@ export const boardApi = {
         return apiClient.get(`/api/board/${postId}`)
     },
 
-    /** 게시글 작성 (프론트에서 자동 번역 포함해서 보냄) */
-    createPost(payload: any) {
+    /** 게시글 작성 (이미지 포함) */
+    createPost(payload: {
+        title: string
+        content: string
+        category: string
+        language: string
+        translatedTitle?: string
+        translatedContent?: string
+        latitude: number
+        longitude: number
+        nickname: string
+        region?: string
+        imageUrls: string[]  // ✅ 추가됨
+    }) {
         return apiClient.post('/api/board', payload)
     },
 
-    /** 게시글 수정 (프론트에서 번역 포함해서 보냄) */
+    /** 게시글 수정 */
     updatePost(postId: number, payload: any) {
         return apiClient.patch(`/api/board/${postId}`, payload)
     },
@@ -38,7 +50,7 @@ export const boardApi = {
         return apiClient.get(`/api/board/${postId}/comments`)
     },
 
-    /** 댓글 작성 (프론트에서 자동 번역 포함해서 보냄) */
+    /** 댓글 작성 */
     createComment(payload: any) {
         return apiClient.post('/api/board/comments', payload)
     },

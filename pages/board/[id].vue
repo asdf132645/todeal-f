@@ -19,6 +19,13 @@
         {{ post.content }}
       </div>
 
+      <!-- ✅ 이미지 썸네일 출력 -->
+      <v-row v-if="post.imageUrls?.length" class="mt-3" dense>
+        <v-col cols="4" v-for="(url, idx) in post.imageUrls" :key="idx">
+          <v-img :src="url" aspect-ratio="1" class="rounded"></v-img>
+        </v-col>
+      </v-row>
+
       <div class="d-flex justify-end mt-6 color-black">
         <span class="text-caption text-grey">조회 {{ post.viewCount || 0 }}</span>
       </div>
@@ -70,7 +77,7 @@
           auto-grow
           class="color-black"
       />
-      <v-btn color="primary"   class="mt-2" @click="submitComment">댓글 작성</v-btn>
+      <v-btn color="primary" class="mt-2" @click="submitComment">댓글 작성</v-btn>
     </v-card>
   </v-container>
 </template>

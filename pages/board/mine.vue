@@ -14,9 +14,18 @@
           <v-list-item-subtitle class="text-caption text-grey">
             💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}
           </v-list-item-subtitle>
+          <!-- ✅ 이미지 썸네일 출력 -->
+          <v-row v-if="post.imageUrls?.length" class="mt-2" dense>
+            <v-col cols="4" v-for="(url, idx) in post.imageUrls" :key="idx">
+              <v-img :src="url" aspect-ratio="1" class="rounded"></v-img>
+            </v-col>
+          </v-row>
         </v-list-item-content>
         <template #append>
-          <v-btn size="small" variant="text" color="error" @click="deletePost(post.id)">
+          <v-btn size="small" variant="text" color="primary" @click.stop="editPost(post.id)">
+            수정
+          </v-btn>
+          <v-btn size="small" variant="text" color="error" @click.stop="deletePost(post.id)">
             삭제
           </v-btn>
         </template>
@@ -35,7 +44,7 @@ const router = useRouter()
 
 const load = async () => {
   const res = await boardApi.getMyPosts()
-  posts.value = res.data
+  posts.value = res
 }
 
 const deletePost = async (postId: number) => {
@@ -45,7 +54,9 @@ const deletePost = async (postId: number) => {
   }
 }
 
-onMounted(load)
 const goToPost = (id: number) => router.push(`/board/${id}`)
+const editPost = (id: number) => router.push(`/board/edit/${id}`)
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
+
+onMounted(load)
 </script>

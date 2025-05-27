@@ -23,25 +23,34 @@ import { useAuthStore } from '@/stores/authStore'
 import { trustScoreApi } from '@/domains/trustscore/infrastructure/trustScoreApi'
 
 const score = ref<number | null>(null)
-const typeScores = ref<Record<string, number>>({})
+const typeScores = ref<Record<string, number | null>>({})
 const { user } = useAuthStore()
+
+const REVIEW_PAGE_SIZE = 100
 
 onMounted(async () => {
   try {
     const res = await trustScoreApi.getUserScores([user.id])
     score.value = res[user.id] ?? null
 
-    // ✅ 타입별 점수 계산
+    // ✅ 병렬 처리
     const types = ['USED', 'PARTTIME', 'PARTTIME_REQUEST', 'BARTER']
-    for (const t of types) {
-      const reviews = await trustScoreApi.getUserReviews(user.id, { type: t, page: 0, size: 100 })
+    const promises = types.map(async (t) => {
+      const reviews = await trustScoreApi.getUserReviews(user.id, { type: t, page: 0, size: REVIEW_PAGE_SIZE })
       const total = reviews.content.length
       const positive = reviews.content.filter((r: any) => r.isPositive).length
       const result = total > 0 ? (positive / total) * 100 : null
-      typeScores.value[t] = result ?? -1
+      return { type: t, score: result }
+    })
+
+    const results = await Promise.all(promises)
+    for (const r of results) {
+      typeScores.value[r.type] = r.score
     }
-  } catch {
+  } catch (e) {
+    console.error('❌ 투딜지수 로딩 실패', e)
     score.value = null
+    typeScores.value = {}
   }
 })
 
@@ -67,14 +76,14 @@ const scoreTypes = [
 // ✅ 타입별 점수 표시
 const getTypeScoreDisplay = (type: string) => {
   const s = typeScores.value[type]
-  if (s === undefined || s < 0) return '-'
+  if (s === null || s === undefined) return '-'
   return `${s.toFixed(1)}점`
 }
 
 // ✅ 타입별 색상
 const getTypeColor = (type: string) => {
   const s = typeScores.value[type]
-  if (s === undefined || s < 0) return 'text-grey'
+  if (s === null || s === undefined) return 'text-grey'
   if (s >= 80) return 'text-success'
   if (s >= 60) return 'text-warning'
   return 'text-error'

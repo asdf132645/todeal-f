@@ -1,4 +1,3 @@
-// ✅ stores/authStore.ts
 import { defineStore } from 'pinia'
 import { apiClient } from '@/libs/http/apiClient'
 import {
@@ -56,14 +55,21 @@ export const useAuthStore = defineStore('auth', () => {
         saveAccessToken(res.accessToken)
         saveRefreshToken(res.refreshToken)
         setUser(res.user)
-        registerFcm(res.user.id)
+        await registerFcm(res.user.id)
     }
 
     const signupBasic = async (form: any) => {
-        const res = await apiClient.post<{ token: string }>('/api/users/signup', form)
-        accessToken.value = res.token
-        saveAccessToken(res.token)
-        await fetchMyInfo()
+        const res = await apiClient.post<{
+            accessToken: string
+            refreshToken: string
+            user: any
+        }>('/api/users/signup', form)
+
+        accessToken.value = res.accessToken
+        saveAccessToken(res.accessToken)
+        saveRefreshToken(res.refreshToken)
+        setUser(res.user)
+        await registerFcm(res.user.id)
     }
 
     const loginWithKakao = async () => {
@@ -77,8 +83,12 @@ export const useAuthStore = defineStore('auth', () => {
             return { isNewUser: true, tempToken: null }
         }
 
-
-        const res = await apiClient.post<any>('/api/auth/kakao-login', {
+        const res = await apiClient.post<{
+            accessToken: string
+            refreshToken: string
+            user: any
+            isNewUser?: boolean
+        }>('/api/auth/kakao-login', {
             accessToken: kakaoAccessToken
         })
 
@@ -90,17 +100,24 @@ export const useAuthStore = defineStore('auth', () => {
         saveAccessToken(res.accessToken)
         saveRefreshToken(res.refreshToken)
         setUser(res.user)
-        registerFcm(res.user.id)
+        await registerFcm(res.user.id)
         return { isNewUser: false }
     }
 
     const signupWithKakao = async (form: any, tempToken: string) => {
-        const res = await apiClient.post<{ token: string }>('/api/auth/signup', form, {
+        const res = await apiClient.post<{
+            accessToken: string
+            refreshToken: string
+            user: any
+        }>('/api/auth/signup', form, {
             headers: { Authorization: `Bearer ${tempToken}` }
         })
-        accessToken.value = res.token
-        saveAccessToken(res.token)
-        await fetchMyInfo()
+
+        accessToken.value = res.accessToken
+        saveAccessToken(res.accessToken)
+        saveRefreshToken(res.refreshToken)
+        setUser(res.user)
+        await registerFcm(res.user.id)
     }
 
     const refreshAccessToken = async () => {
@@ -116,7 +133,7 @@ export const useAuthStore = defineStore('auth', () => {
 
         accessToken.value = res.accessToken
         saveAccessToken(res.accessToken)
-        saveRefreshToken(res.refreshToken) // ✅ 새 refreshToken도 갱신 저장
+        saveRefreshToken(res.refreshToken)
         await fetchMyInfo()
     }
 

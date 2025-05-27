@@ -190,17 +190,14 @@
         class="mt-6 d-flex justify-center"
     />
 
-    <!-- 평가 다이얼로그 -->
-    <v-dialog v-model="showDialog" max-width="360">
-      <v-card>
-        <v-card-title>투딜 평가</v-card-title>
-        <v-card-text>해당 낙찰자에 대해 어떤 평가를 하시겠어요?</v-card-text>
-        <v-card-actions class="justify-end">
-          <v-btn text color="red" @click="submitEvaluation(false)">👎 비호감</v-btn>
-          <v-btn text color="green" @click="submitEvaluation(true)">👍 호감</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
+    <!-- 평가 다이얼로그 (컴포넌트로 분리) -->
+    <TrustScoreDialog
+        v-model="showDialog"
+        v-if="selectedEvaluation"
+        :to-user-id="selectedEvaluation.toUserId"
+        :deal-id="selectedEvaluation.dealId"
+    />
+
 
     <!-- 신고 다이얼로그 -->
     <v-dialog v-model="showReportDialog" max-width="480">
@@ -234,6 +231,7 @@ import { apiClient } from '@/libs/http/apiClient'
 import { useSnackbarStore } from '@/stores/snackbarStore'
 import { useAuthStore } from '~/stores/authStore'
 import { chatApi } from '~/domains/chat/infrastructure/chatApi'
+import TrustScoreDialog from '@/components/trustScore/TrustScoreDialog.vue'
 
 const router = useRouter()
 const snackbar = useSnackbarStore()
@@ -248,6 +246,7 @@ const reportTarget = ref<{ toUserId: number; dealId: number } | null>(null)
 const reportReason = ref('')
 const reportDetail = ref('')
 const reportReasons = ['욕설/비방', '사기 의심', '허위 정보', '기타']
+const evaluationComment = ref('')
 
 const page = ref(1)
 const totalPages = ref(1)
@@ -295,22 +294,6 @@ const selectWinner = async (bid: any, dealId: number) => {
 const openEvaluation = (toUserId: number, dealId: number) => {
   selectedEvaluation.value = { toUserId, dealId }
   showDialog.value = true
-}
-
-const submitEvaluation = async (isPositive: boolean) => {
-  try {
-    if (!selectedEvaluation.value) return
-    await trustScoreApi.submitScore(
-        selectedEvaluation.value.toUserId,
-        selectedEvaluation.value.dealId,
-        isPositive
-    )
-    snackbar.show('투딜 평가가 완료되었습니다!')
-    showDialog.value = false
-  } catch (e) {
-    snackbar.show(e.response?.data?.message ?? '평가 실패', 'error')
-    showDialog.value = false
-  }
 }
 
 const openReport = (toUserId: number, dealId: number) => {

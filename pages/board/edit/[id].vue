@@ -21,6 +21,34 @@
     <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
     <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
 
+    <!-- ✅ 이미지 업로더 -->
+    <div class="image-upload-wrapper mb-5">
+      <div class="image-grid">
+        <div
+            v-for="(img, index) in imageUrls"
+            :key="index"
+            class="upload-image-slot"
+            @click="removeImage(index)"
+        >
+          <v-img :src="img" cover max-width="100" max-height="100" class="rounded" />
+        </div>
+
+        <div v-if="imageUrls.length < 5" class="upload-image-slot add" @click="triggerFileInput">
+          <v-icon size="50">mdi-plus</v-icon>
+        </div>
+
+        <input
+            type="file"
+            ref="fileInput"
+            accept="image/*"
+            class="d-none"
+            multiple
+            @change="handleImageUpload"
+        />
+      </div>
+      <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
+    </div>
+
     <!-- ✅ 번역 버튼 안내 -->
     <div class="mb-1 text-caption text-grey-darken-1">다른 언어 사용자도 볼 수 있도록 번역 기능을 활용해보세요</div>
     <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
@@ -119,6 +147,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 import { apiClient } from '@/libs/http/apiClient'
+import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
 
 const route = useRoute()
 const router = useRouter()
@@ -129,6 +158,9 @@ const content = ref('')
 const category = ref('')
 const loading = ref(false)
 const originalPost = ref<any>(null)
+
+const imageUrls = ref<string[]>([])
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
@@ -160,19 +192,46 @@ const categoryOptions = [
 const load = async () => {
   try {
     const res = await boardApi.getPost(postId)
-    originalPost.value = res.data
-    title.value = res.data.title
-    content.value = res.data.content
-    category.value = res.data.category
-    sourceLang.value = res.data.language || 'ko'
+    originalPost.value = res
+    title.value = res.title
+    content.value = res.content
+    category.value = res.category
+    imageUrls.value = res.imageUrls || []
+    sourceLang.value = res.language || 'ko'
   } catch (e) {
     alert('게시글을 불러올 수 없습니다.')
-    router.push('/board')
+    // router.push('/board')
   }
 }
 
-const toggleTranslationPanel = () => {
-  showTranslatePanel.value = !showTranslatePanel.value
+const triggerFileInput = () => fileInput.value?.click()
+
+const removeImage = (index: number) => imageUrls.value.splice(index, 1)
+
+const handleImageUpload = async (e: Event) => {
+  const files = (e.target as HTMLInputElement).files
+  if (!files) return
+
+  const selected = Array.from(files).slice(0, 5 - imageUrls.value.length)
+  const uploaded: string[] = []
+
+  for (const file of selected) {
+    try {
+      const url = await uploadImage(file)
+      uploaded.push(url)
+    } catch (e) {
+      alert('이미지 업로드 실패')
+      console.error(e)
+    }
+  }
+  imageUrls.value.push(...uploaded)
+  if (fileInput.value) fileInput.value.value = ''
+}
+
+const toggleTranslationPanel = () => showTranslatePanel.value = !showTranslatePanel.value
+const applyTranslation = () => {
+  title.value = translatedTitle.value
+  content.value = translatedContent.value
 }
 
 const runTranslation = async () => {
@@ -180,7 +239,6 @@ const runTranslation = async () => {
     alert('제목과 내용을 먼저 입력해주세요.')
     return
   }
-
   try {
     const [resTitle, resContent] = await Promise.all([
       apiClient.post('/api/translate', {
@@ -200,11 +258,6 @@ const runTranslation = async () => {
     console.error(e)
     alert('번역 중 오류가 발생했습니다.')
   }
-}
-
-const applyTranslation = () => {
-  title.value = translatedTitle.value
-  content.value = translatedContent.value
 }
 
 const submit = async () => {
@@ -229,7 +282,8 @@ const submit = async () => {
       latitude: originalPost.value.latitude,
       longitude: originalPost.value.longitude,
       nickname: originalPost.value.nickname,
-      region: originalPost.value.region
+      region: originalPost.value.region,
+      imageUrls: imageUrls.value
     })
     router.push(`/board/view/${postId}`)
   } catch (e) {
@@ -242,3 +296,24 @@ const submit = async () => {
 
 onMounted(load)
 </script>
+
+<style scoped>
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.upload-image-slot {
+  width: 100px;
+  height: 100px;
+  border: 1px dashed #ccc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.upload-image-slot.add:hover {
+  background-color: #f5f5f5;
+}
+</style>

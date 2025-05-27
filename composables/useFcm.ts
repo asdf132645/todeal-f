@@ -2,6 +2,8 @@ import { PushNotifications } from '@capacitor/push-notifications'
 import { Capacitor } from '@capacitor/core'
 import axios from 'axios'
 
+let isRegistered = false // ✅ 리스너 중복 방지용
+
 export const useFcm = () => {
     const registerFcm = async (userId: number) => {
         if (!Capacitor.isNativePlatform()) {
@@ -12,12 +14,15 @@ export const useFcm = () => {
         await PushNotifications.requestPermissions()
         await PushNotifications.register()
 
+        if (isRegistered) return
+        isRegistered = true
+
         PushNotifications.addListener('registration', async (token) => {
             console.log('✅ FCM 등록 토큰:', token.value)
 
             try {
                 await axios.patch(
-                    `/api/users/me/fcm-token`,
+                    '/api/users/me/fcm-token',
                     { fcmToken: token.value },
                     { headers: { 'X-USER-ID': userId } }
                 )
@@ -36,7 +41,7 @@ export const useFcm = () => {
         if (!Capacitor.isNativePlatform()) return
 
         try {
-            await axios.delete(`/api/users/me/fcm-token`, {
+            await axios.delete('/api/users/me/fcm-token', {
                 headers: { 'X-USER-ID': userId ?? 0 }
             })
             console.log('🔌 서버 FCM 토큰 삭제 완료')
@@ -46,6 +51,8 @@ export const useFcm = () => {
 
         try {
             await PushNotifications.removeAllListeners()
+            await PushNotifications.unregister() // ✅ 명확히 unregister 호출
+            isRegistered = false
             console.log('🔕 FCM 리스너 제거 완료')
         } catch (err) {
             console.error('❌ FCM 리스너 제거 실패', err)

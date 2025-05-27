@@ -6,7 +6,7 @@
         cover
     />
 
-    <v-card-text class="pa-3">
+    <v-card-text class="pa-2">
       <!-- ✅ 거래 방식 뱃지 -->
       <v-chip
           small

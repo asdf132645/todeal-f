@@ -3,12 +3,17 @@
     <!-- ✅ 헤더: 커뮤니티 + 글쓰기 버튼 -->
     <div class="d-flex justify-space-between align-center mb-4">
       <div class="text-h6 font-weight-bold">커뮤니티</div>
-      <v-btn color="primary" density="comfortable" @click="goToWrite">
-        글쓰기
-      </v-btn>
+      <div class="d-flex gap-2">
+        <v-btn color="secondary" density="comfortable" @click="goToMine">
+          내 글 보기
+        </v-btn>
+        <v-btn color="primary" density="comfortable" @click="goToWrite">
+          글쓰기
+        </v-btn>
+      </div>
     </div>
     <!-- ✅ 탭 (내 동네 / 전체) -->
-    <v-card flat class="mb-4 d-flex justify-center">
+    <div flat class="mb-4 d-flex justify-center">
       <div class="custom-toggle">
         <button
             :class="['toggle-btn', tab === 'local' ? 'active' : '']"
@@ -23,7 +28,7 @@
           전체
         </button>
       </div>
-    </v-card>
+    </div>
 
 
     <div class="d-flex gap-2 mb-4">
@@ -167,6 +172,13 @@ const goToWrite = () => {
     router.push('/auth/login')
   } else {
     router.push('/board/write')
+  }
+}
+const goToMine = () => {
+  if (!localStorage.getItem('accessToken')) {
+    router.push('/auth/login')
+  } else {
+    router.push('/board/mine')
   }
 }
 
