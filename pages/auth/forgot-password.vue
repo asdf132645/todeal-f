@@ -1,7 +1,7 @@
 <template>
   <v-container class="fill-height d-flex align-center justify-center">
     <v-card width="400" class="pa-6" elevation="6">
-      <div class="text-h6 font-weight-bold mb-4">비밀번호 재설정 요청</div>
+      <div class="text-h6 font-weight-bold mb-4 color-black">비밀번호 재설정 요청</div>
 
       <v-alert v-if="message" type="success" dense class="mb-4">{{ message }}</v-alert>
       <v-alert v-if="error" type="error" dense class="mb-4">{{ error }}</v-alert>
@@ -13,7 +13,7 @@
           prepend-inner-icon="mdi-email"
           outlined
           dense
-          class="mb-3"
+          class="mb-3 color-black"
       />
 
       <v-btn :loading="loading" color="primary" block @click="submit">재설정 메일 보내기</v-btn>

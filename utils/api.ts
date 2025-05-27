@@ -2,7 +2,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-    baseURL: 'http://localhost:8080', // 여긴 니 백엔드 주소로 맞춰
+    baseURL: 'https://api.to-deal.com', // 실제 백엔드로 변경해야함
     headers: {
         'Content-Type': 'application/json'
     }

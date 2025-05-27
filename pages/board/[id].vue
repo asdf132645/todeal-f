@@ -4,29 +4,29 @@
     <v-card class="mb-4 pa-4">
       <div class="d-flex align-center mb-3">
         <div>
-          <div class="font-weight-medium">{{ post.nickname || '익명' }}</div>
-          <div class="text-caption grey--text">
+          <div class="font-weight-medium color-black">{{ post.nickname || '익명' }}</div>
+          <div class="text-caption grey--text color-black">
             {{ post.region || '지역정보 없음' }} ・ {{ formatDate(post.createdAt) }}
           </div>
         </div>
       </div>
 
-      <div class="text-h6 font-weight-bold mb-3">
+      <div class="text-h6 font-weight-bold mb-3 color-black">
         {{ post.title }}
       </div>
 
-      <div class="text-body-1" style="white-space: pre-line;">
+      <div class="text-body-1 color-black" style="white-space: pre-line;">
         {{ post.content }}
       </div>
 
-      <div class="d-flex justify-end mt-6">
+      <div class="d-flex justify-end mt-6 color-black">
         <span class="text-caption text-grey">조회 {{ post.viewCount || 0 }}</span>
       </div>
     </v-card>
 
     <!-- 💬 댓글 카드 -->
     <v-card class="pa-4 mb-4">
-      <div class="text-subtitle-2 font-weight-bold mb-3">
+      <div class="text-subtitle-2 font-weight-bold mb-3 color-black">
         댓글 {{ comments.length }}
       </div>
 
@@ -40,14 +40,14 @@
           >
             <v-list-item-content>
               <div class="d-flex align-center justify-space-between mb-1">
-                <span class="text-caption font-weight-medium">
+                <span class="text-caption font-weight-medium color-black">
                   {{ comment.nickname }}
                 </span>
-                <span class="text-caption text-grey-darken-1">
+                <span class="text-caption text-grey-darken-1 color-black">
                   {{ formatDate(comment.createdAt) }}
                 </span>
               </div>
-              <div class="text-body-2">
+              <div class="text-body-2 color-black">
                 {{ comment.content }}
               </div>
             </v-list-item-content>
@@ -57,7 +57,7 @@
 
       <!-- ❗ 댓글 없을 때 -->
       <template v-else>
-        <div class="text-caption text-grey text-center py-4">
+        <div class="text-caption text-grey text-center py-4 color-black">
           아직 댓글이 없어요<br />가장 먼저 댓글을 남겨보세요.
         </div>
       </template>
@@ -68,8 +68,9 @@
           placeholder="댓글을 입력하세요"
           rows="2"
           auto-grow
+          class="color-black"
       />
-      <v-btn color="primary" class="mt-2" @click="submitComment">댓글 작성</v-btn>
+      <v-btn color="primary"   class="mt-2" @click="submitComment">댓글 작성</v-btn>
     </v-card>
   </v-container>
 </template>
@@ -128,7 +129,7 @@ const formatDate = (iso: string) => {
 onMounted(load)
 </script>
 
-<style scoped>
+<style>
 .comment-list {
   padding: 0;
   border-top: 1px solid #eee;

@@ -1,0 +1,32 @@
+{
+  "location": {
+    "permission_title": "允许使用位置",
+    "permission_description": "我们使用您的位置信息来显示附近的二手交易和兼职信息。是否允许？"
+  },
+  "common": {
+    "deny": "拒绝",
+    "allow": "允许"
+  },
+  "page": {
+    "search_result": "搜索结果",
+    "deal_detail": "交易详情",
+    "post_used": "发布二手物品",
+    "post_barter": "发布以物易物",
+    "parttime_request": "请求兼职",
+    "parttime": "招聘兼职",
+    "chat": "实时聊天",
+    "plans": "付费计划",
+    "support": "客服中心",
+    "post": "发布",
+    "mypage": "我的页面",
+    "my_inquiries": "我的咨询",
+    "bids": "投标记录",
+    "settings": "设置",
+    "login": "登录",
+    "keyword_search": "关键词搜索",
+    "barter": "以物易物！",
+    "parttime_today": "今天找兼职！",
+    "used": "稀有物品拍卖",
+    "parttime_offer": "今天提供兼职！"
+  }
+}

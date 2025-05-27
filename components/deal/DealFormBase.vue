@@ -24,7 +24,6 @@
               type="file"
               ref="fileInput"
               accept="image/*"
-              capture="environment"
               class="d-none"
               multiple
               @change="onFileChange"
@@ -41,9 +40,10 @@
           :rules="[v => (v?.length <= 40) || '40자 이내로 입력해주세요.']"
           outlined
           dense
-          class="mb-1"
+          class="mb-1 color-black"
           ref="titleInput"
       />
+
       <div class="text-caption text-grey-darken-1 mb-1 mt-0">설명은 최대 500자까지 입력할 수 있어요</div>
       <v-textarea
           v-model="form.description"
@@ -52,8 +52,27 @@
           :rules="[v => (v?.length <= 500) || '500자 이내로 입력해주세요.']"
           outlined
           rows="4"
-          class="mb-1"
+          class="mb-1 color-black"
           ref="descriptionInput"
+      />
+
+      <!-- 거래 방식 안내 및 선택 -->
+      <div class="text-subtitle-2 font-weight-bold mt-4 mb-1">
+        가격 설정 방식
+      </div>
+      <div class="text-caption text-grey-darken-1 mb-2">
+        경매 방식은 여러 명이 입찰해서 가장 높은 금액에 판매되며, <br />
+        정가 방식는 내가 지정한 가격에 바로 거래돼요.
+      </div>
+      <v-select
+          v-model="form.pricingType"
+          :items="pricingTypeOptions"
+          label="가격 설정 방식"
+          item-title="label"
+          item-value="value"
+          outlined
+          dense
+          class="mb-4"
       />
 
       <KakaoLocationPicker v-model:region="region" />
@@ -65,7 +84,7 @@
           readonly
           outlined
           dense
-          class="mb-3"
+          class="mb-3 color-black"
           @click="deadlineDialog = true"
       />
 
@@ -103,9 +122,9 @@ import { useSnackbarStore } from '@/stores/snackbarStore'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
 import AdRewardButton from '@/components/common/AdRewardButton.vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
+import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
 
 const { type } = defineProps<{ type: string }>()
-
 const router = useRouter()
 const snackbar = useSnackbarStore()
 const auth = useAuthStore()
@@ -113,9 +132,17 @@ const user = computed(() => auth.user)
 
 const form = ref({
   title: '',
-  description: ''
+  description: '',
+  pricingType: 'BIDDING'
 })
+
+const pricingTypeOptions = [
+  { label: '경매 방식 (여러 명이 입찰)', value: 'BIDDING' },
+  { label: '정가 방식 (가격 고정)', value: 'FIXED' }
+]
+
 const images = ref<File[]>([])
+const uploadedImageUrls = ref<string[]>([])
 const fileInput = ref<HTMLInputElement | null>(null)
 const titleInput = ref<HTMLInputElement | null>(null)
 const descriptionInput = ref<HTMLInputElement | null>(null)
@@ -141,16 +168,6 @@ const region = ref({
 
 const showAdButton = computed(() => !user.value?.isPremium && ticket.value?.adRequired)
 
-const headerTitle = computed(() => {
-  switch (type) {
-    case 'used': return '중고 거래 등록'
-    case 'parttime': return '알바 등록'
-    case 'parttime-request': return '알바 요청 등록'
-    case 'barter': return '물물교환 등록'
-    default: return '등록'
-  }
-})
-
 onMounted(async () => {
   try {
     const res = await dealApi.getTicket()
@@ -164,16 +181,29 @@ const triggerFileInput = () => {
   if (fileInput.value) fileInput.value.click()
 }
 
-const onFileChange = (e: Event) => {
+const onFileChange = async (e: Event) => {
   const files = (e.target as HTMLInputElement).files
   if (!files) return
   const newFiles = Array.from(files).slice(0, 5 - images.value.length)
-  images.value.push(...newFiles)
+
+  for (const file of newFiles) {
+    try {
+      const url = await uploadImage(file)
+      if (!url) throw new Error('url is null')
+      uploadedImageUrls.value.push(url)
+      images.value.push(file)
+    } catch (e) {
+      snackbar.show('이미지 업로드 실패', 'error')
+      console.error('이미지 업로드 에러:', e)
+    }
+  }
+
   if (fileInput.value) fileInput.value.value = ''
 }
 
 const removeImage = (index: number) => {
   images.value.splice(index, 1)
+  uploadedImageUrls.value.splice(index, 1)
 }
 
 const getImageUrl = (file: File) => URL.createObjectURL(file)
@@ -190,27 +220,20 @@ const cancelDeadline = () => {
 }
 
 const submit = async () => {
-  if (!form.value.title) {
-    snackbar.show('제목을 입력해주세요.', 'error')
+  if (!form.value.title || form.value.title.length > 40) {
+    snackbar.show('제목을 올바르게 입력해주세요.', 'error')
     titleInput.value?.focus()
     return
   }
 
-  if (form.value.title.length > 40) {
-    snackbar.show('제목은 40자 이내로 입력해주세요.', 'error')
-    titleInput.value?.focus()
-    return
-  }
-
-  if (!form.value.description) {
-    snackbar.show('설명을 입력해주세요.', 'error')
+  if (!form.value.description || form.value.description.length > 500) {
+    snackbar.show('설명을 올바르게 입력해주세요.', 'error')
     descriptionInput.value?.focus()
     return
   }
 
-  if (form.value.description.length > 500) {
-    snackbar.show('설명은 500자 이내로 입력해주세요.', 'error')
-    descriptionInput.value?.focus()
+  if (!form.value.pricingType) {
+    snackbar.show('가격 설정 방식을 선택해주세요.', 'error')
     return
   }
 
@@ -224,25 +247,24 @@ const submit = async () => {
     return
   }
 
-  const formData = new FormData()
-  formData.append('type', type)
-  formData.append('title', form.value.title)
-  formData.append('description', form.value.description)
-  formData.append('deadline', deadlineDate.value.toISOString())
-  formData.append('region', region.value.full)
-  formData.append('regionDepth1', region.value.depth1)
-  formData.append('regionDepth2', region.value.depth2)
-  formData.append('regionDepth3', region.value.depth3)
-  formData.append('longitude', String(region.value.longitude))
-  formData.append('latitude', String(region.value.latitude))
-
-  images.value.forEach((file) => {
-    if (file) formData.append('images', file)
-  })
-
   loading.value = true
   try {
-    await dealApi.createDeal(formData)
+    const payload = {
+      type,
+      title: form.value.title,
+      description: form.value.description,
+      pricingType: form.value.pricingType,
+      deadline: deadlineDate.value.toISOString(),
+      region: region.value.full,
+      regionDepth1: region.value.depth1,
+      regionDepth2: region.value.depth2,
+      regionDepth3: region.value.depth3,
+      longitude: region.value.longitude,
+      latitude: region.value.latitude,
+      images: uploadedImageUrls.value
+    }
+
+    await dealApi.createDeal(payload)
     snackbar.show('등록이 완료되었습니다.', 'success')
     router.push(`/deals/${type}`)
   } catch (e) {
@@ -253,7 +275,7 @@ const submit = async () => {
 }
 </script>
 
-<style scoped>
+<style>
 .image-grid {
   display: flex;
   flex-wrap: wrap;

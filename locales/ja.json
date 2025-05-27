@@ -1,0 +1,32 @@
+{
+  "location": {
+    "permission_title": "位置情報の使用許可",
+    "permission_description": "近くの中古取引やアルバイト情報を表示するために位置情報を使用します。許可しますか？"
+  },
+  "common": {
+    "deny": "拒否",
+    "allow": "許可"
+  },
+  "page": {
+    "search_result": "検索結果",
+    "deal_detail": "取引詳細",
+    "post_used": "中古品を登録",
+    "post_barter": "物々交換を登録",
+    "parttime_request": "アルバイトを依頼",
+    "parttime": "アルバイトを募集",
+    "chat": "リアルタイムチャット",
+    "plans": "有料プラン",
+    "support": "サポートセンター",
+    "post": "投稿",
+    "mypage": "マイページ",
+    "my_inquiries": "自分の問い合わせ",
+    "bids": "入札履歴",
+    "settings": "設定",
+    "login": "ログイン",
+    "keyword_search": "キーワード検索",
+    "barter": "物々交換！",
+    "parttime_today": "今日のアルバイト募集！",
+    "used": "レア商品オークション",
+    "parttime_offer": "今日アルバイトします！"
+  }
+}

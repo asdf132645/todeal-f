@@ -96,7 +96,7 @@ const pay = async (planId: number) => {
 }
 </script>
 
-<style scoped>
+<style>
 ul {
   list-style: none;
   padding: 0;

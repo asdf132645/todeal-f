@@ -1,109 +1,120 @@
 <template>
-  <v-container fluid class="pa-0" style="background-color: #F9FAFB">
-    <!-- 1. 헤더 슬로건 -->
-    <v-sheet color="#F9FAFB" class="px-4 pt-8 pb-4">
-      <div style="font-size: 20px; font-weight: 700; color: #2A2E9D">
-        요즘 뜨는 동네 경매는 투딜에서 ✨
+  <v-container fluid class="pa-0 bg-app">
+    <!-- 1. 헤더 -->
+    <v-sheet class="header-sheet px-4 py-6 main">
+      <div class="header-title"  >
+        {{ _t('home.header_title') }} <span class="highlight-text">{{ _t('home.toDeal') }}</span>
       </div>
-      <div class="text-body-2" style="color: #777; font-size: 13px; margin-top: 4px">
-        단기알바부터 희귀템까지, 지금 내 주변에서 실시간 입찰 중!
-      </div>
+      <div class="header-subtitle">{{ _t('home.header_subtitle') }}</div>
     </v-sheet>
 
     <BannerArea />
 
-    <!-- 2. 카테고리 선택 -->
-    <v-row class="pa-4 pt-3" dense>
-      <v-col cols="6" v-for="(item, i) in categories" :key="i">
-        <v-card
-            class="pa-4 d-flex align-center"
-            style="border: 1px solid #E0E0E0; border-radius: 16px; background: #fff; box-shadow: none; cursor: pointer"
-            @click="goToCategory(item.route)"
-        >
-          <v-icon size="32" style="color: #2A2E9D; margin-right: 12px">{{ item.icon }}</v-icon>
-          <div>
-            <div class="font-weight-bold text-body-1" style="color: #111">{{ item.title }}</div>
-            <div class="text-caption mt-1" style="color: #999">{{ item.subtitle }}</div>
-          </div>
+
+
+
+    <!-- 오늘 급구 알바 + 구직 경매 -->
+    <v-sheet class="highlight-jobs px-4 py-6 my-4">
+      <!-- 급구 알바 -->
+      <div class="d-flex justify-space-between align-center mb-3">
+        <div>
+          <div class="text-h6 font-weight-bold mb-1">{{ _t('section.urgent_parttime_title') }}</div>
+          <div class="text-body-2">{{ _t('section.urgent_parttime_sub') }}</div>
+        </div>
+        <v-btn text size="small" @click="router.push('/deals/parttime-request')">{{ _t('common.more') }}</v-btn>
+      </div>
+      <v-slide-group show-arrows v-if="parttimeRequest.length > 0">
+        <v-slide-group-item v-for="job in parttimeRequest" :key="job.id">
+          <v-card class="job-card mx-2" width="220" flat>
+            <JobCard :job="job" />
+          </v-card>
+        </v-slide-group-item>
+      </v-slide-group>
+      <div v-else class="section-empty mt-3">{{ _t('section.urgent_parttime_empty') }}</div>
+
+      <!-- 구직 경매 -->
+      <div class="d-flex justify-space-between align-center my-5">
+        <div>
+          <div class="text-h6 font-weight-bold mb-1">{{ _t('section.recruit_title') }}</div>
+          <div class="text-body-2">{{ _t('section.recruit_sub') }}</div>
+        </div>
+        <v-btn text size="small" @click="router.push('/deals/parttime')">{{ _t('common.more') }}</v-btn>
+      </div>
+      <v-slide-group show-arrows v-if="jobs.length > 0">
+        <v-slide-group-item v-for="job in jobs" :key="job.id">
+          <v-card class="job-card mx-2" width="220" flat>
+            <JobCard :job="job" />
+          </v-card>
+        </v-slide-group-item>
+      </v-slide-group>
+      <div v-else class="section-empty mt-3">{{ _t('section.recruit_empty') }}</div>
+    </v-sheet>
+
+    <!-- 카테고리 -->
+    <v-row class="px-3 pt-3 pb-2" dense>
+      <v-col cols="6" sm="4" md="3" v-for="(item, i) in categories" :key="i">
+        <v-card class="category-card d-flex flex-column align-center justify-center pa-4" @click="goToCategory(item.route)">
+          <v-icon size="32" class="mb-2" color="#FFD54F">{{ item.icon }}</v-icon>
+          <div class="text-subtitle-2 font-weight-bold">{{ _t(item.title) }}</div>
+          <div class="text-caption mt-1 subtitle-text">{{ _t(item.subtitle) }}</div>
         </v-card>
       </v-col>
     </v-row>
-
-    <!-- 3. 해시태그 -->
-    <v-sheet color="#FFFFFF" class="mx-4 mb-4 px-3 pt-4 pb-4 rounded-xl">
-      <div style="font-weight: 600; font-size: 15px; color: #2A2E9D; margin-bottom: 10px">🔥 요즘 핫한 해시태그</div>
-      <v-slide-group show-arrows>
-        <v-slide-group-item v-for="tag in hashtags" :key="tag">
-          <v-chip class="ma-1" style="background-color: #F4F6FA; color: #2A2E9D; border-radius: 8px; font-size: 13px; padding: 4px 10px;" pill>
-            {{ tag }}
-          </v-chip>
+    <!-- 실시간 입찰 마감 임박 강조 -->
+    <v-sheet class="highlight-jobs urgent-highlight px-4 py-6 my-4">
+      <div class="d-flex justify-space-between align-center mb-3">
+        <div>
+          <div class="text-h6 font-weight-bold mb-1 blink-text text-red-accent-2">
+            마감 임박! 실시간 경매
+          </div>
+          <div class="text-body-2">지금 가장 인기 있는 경매를 확인하세요.</div>
+        </div>
+        <v-btn text size="small" color="red-accent-2" @click="router.push('/deals')">
+          {{ _t('common.more') }}
+        </v-btn>
+      </div>
+      <v-slide-group show-arrows v-if="deals.length > 0">
+        <v-slide-group-item v-for="deal in deals.slice(0, 8)" :key="deal.id">
+          <v-card class="job-card urgent-card mx-2" width="220" flat>
+            <DealCard :deal="deal" />
+          </v-card>
         </v-slide-group-item>
       </v-slide-group>
+      <div v-else class="section-empty mt-3">실시간 입찰 가능한 경매가 없습니다.</div>
     </v-sheet>
-
-    <!-- 4. 위치 안내 배너 -->
-    <v-sheet class="mx-4 mb-6 px-4 py-4 rounded-xl" style="background-color: #F1F5FF; border: 1px solid #D0DAF5">
+    <!-- 위치 안내 -->
+    <v-sheet class="location-banner px-4 py-3">
       <div class="d-flex justify-space-between align-center">
         <div>
-          <div style="font-size: 14px; font-weight: 600; color: #2A2E9D">
-            📍 내 주변 실시간 경매
-          </div>
-          <div style="font-size: 12px; color: #666">
-            반경 <strong>{{ userRadius }}km</strong> 안에 이런 꿀딜이?
-          </div>
-        </div>
-        <v-btn icon variant="plain" style="color: #2A2E9D" @click="refreshLocationData">
+          <div class="location-title">{{ _t('location.title') }}</div>
+          <div class="location-subtitle">
+            {{ _t('location.subtitle_prefix') }} <strong>{{ userRadius }}km</strong> {{ _t('location.subtitle_suffix') }}
+          </div>        </div>
+        <v-btn icon variant="plain" class="location-icon-btn" @click="refreshLocationData">
           <v-icon>mdi-crosshairs-gps</v-icon>
         </v-btn>
       </div>
     </v-sheet>
 
-    <!-- 5. 오늘 급구 알바 -->
-    <div class="px-4 mb-2 d-flex justify-space-between align-end">
-      <div>
-        <div class="font-weight-bold text-subtitle-1" style="color: #2A2E9D">오늘 급구 알바</div>
-        <div class="text-caption" style="color: #999">당일 출근도 OK, 짧고 빠른 알바 경매</div>
-      </div>
-      <div class="text-caption" style="color: #2A2E9D">{{ userRadius }}km 이내</div>
-    </div>
-    <v-row class="px-4" dense v-if="parttimeRequest.length > 0">
-      <v-col cols="12" sm="6" md="3" v-for="job in parttimeRequest" :key="job.id">
-        <JobCard :job="job" />
-      </v-col>
-    </v-row>
-    <div v-else class="text-caption text-grey text-center pb-4">아직 등록된 단기알바 경매가 없어요. ㅠㅠ 등록 좀 해주세요 ..</div>
-
-    <!-- 6. 희귀템 중고거래 -->
-    <div class="px-4 mt-6 mb-2 font-weight-bold text-subtitle-1" style="color: #2A2E9D">오늘의 희귀템 경매</div>
-    <v-row class="px-4" dense v-if="deals.length > 0">
-      <v-col cols="12" sm="6" md="3" v-for="deal in deals" :key="deal.id">
-        <DealCard :deal="deal" />
-      </v-col>
-    </v-row>
-    <div v-else class="text-caption text-grey text-center pb-6">근처에 희귀템 중고 경매가 아직 없어요</div>
-
-    <!-- 7. 물물교환 -->
-    <div class="px-4 mt-6 mb-2 font-weight-bold text-subtitle-1" style="color: #2A2E9D">오늘의 물물교환</div>
-    <v-row class="px-4" dense v-if="barters.length > 0">
+    <!-- 빌려드려요 -->
+    <div class="section-title px-4 mt-6 mb-2">{{ _t('section.barter_title') }}</div>
+    <v-row class="section-row px-3" dense v-if="barters.length > 0">
       <v-col cols="12" sm="6" md="3" v-for="barter in barters" :key="barter.id">
         <DealCard :deal="barter" />
       </v-col>
     </v-row>
-    <div v-else class="text-caption text-grey text-center pb-6">주변에 교환 가능한 물건이 아직 없어요 🧺</div>
+    <div v-else class="section-empty">{{ _t('section.barter_empty') }}</div>
 
-    <!-- 8. 구직 경매 -->
-    <div class="px-4 mt-6 mb-2 font-weight-bold text-subtitle-1" style="color: #2A2E9D">오늘의 구직 경매</div>
-    <v-row class="px-4" dense v-if="jobs.length > 0">
-      <v-col cols="12" sm="6" md="3" v-for="job in jobs" :key="job.id">
-        <JobCard :job="job" />
+    <!-- 희귀템 -->
+    <div class="section-title px-4 mt-6 mb-2">{{ _t('section.rare_item_title') }}</div>
+    <v-row class="section-row px-3" dense v-if="deals.length > 0">
+      <v-col cols="12" sm="6" md="3" v-for="deal in deals" :key="deal.id">
+        <DealCard :deal="deal" />
       </v-col>
     </v-row>
-    <div v-else class="text-caption text-grey text-center pb-6">구직 중인 이웃이 아직 없어요</div>
+    <div v-else class="section-empty">{{ _t('section.rare_item_empty') }}</div>
   </v-container>
 </template>
-
-
-
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
@@ -115,48 +126,28 @@ import { hashtagApi } from '@/domains/hashtag/infrastructure/hashtagApi'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import { useGeoStore } from '@/stores/geoStore'
 import { useRouter } from '#vue-router'
+import {useI18n} from "vue-i18n";
+const { t: _t, locale } = useI18n()
 
 const jobs = ref<Deal[]>([])
 const deals = ref<Deal[]>([])
 const barters = ref<Deal[]>([])
 const parttimeRequest = ref<Deal[]>([])
 const hashtags = ref<string[]>([])
-const locationLabel = ref('위치 정보 없음')
 const geo = useGeoStore()
 const router = useRouter()
 const userRadius = ref('')
 
 const defaultHashtags = [
-  '#알바구함', '#중고거래', '#희귀템', '#오늘출근', '#물물교환', '#유물', '#서울', '#신림동'
+  '#알바구함', '#중고거래', '#희귀템', '#오늘출근', '#빌려드려요', '#유물', '#서울', '#신림동'
 ]
 
 const categories = [
-  {
-    title: '희귀템 경매',
-    subtitle: '레어한 중고, 실시간 입찰!',
-    icon: 'mdi-bag-personal-outline',
-    route: '/deals/used'
-  },
-  {
-    title: '오늘 알바 구함!',
-    subtitle: '시급 쎈 단기알바 모음',
-    icon: 'mdi-storefront-outline',
-    route: '/deals/parttime'
-  },
-  {
-    title: '구직도 경매다',
-    subtitle: '내 시간, 누가 사갈래?',
-    icon: 'mdi-account-tie-outline',
-    route: '/deals/parttime-request'
-  },
-  {
-    title: '물건 맞교환',
-    subtitle: '돈 없이 물건만 바꾸자!',
-    icon: 'mdi-arrow-left-right',
-    route: '/deals/barter'
-  }
+  { title: 'category.barter_title', subtitle: 'category.barter_subtitle', icon: 'mdi-arrow-left-right', route: '/deals/barter' },
+  { title: 'category.used_title', subtitle: 'category.used_subtitle', icon: 'mdi-bag-personal-outline', route: '/deals/used' },
+  { title: 'category.parttime_title', subtitle: 'category.parttime_subtitle', icon: 'mdi-storefront-outline', route: '/deals/parttime' },
+  { title: 'category.parttime_request_title', subtitle: 'category.parttime_request_subtitle', icon: 'mdi-account-tie-outline', route: '/deals/parttime-request' }
 ]
-
 
 const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'parttime-request') => {
   try {
@@ -170,7 +161,6 @@ const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'pa
     else if (type === 'used') deals.value = res
     else if (type === 'barter') barters.value = res
     else if (type === 'parttime-request') parttimeRequest.value = res
-    else jobs.value = res
   } catch (e) {
     console.error(`위치 기반 ${type} 조회 실패:`, e)
   }
@@ -178,7 +168,7 @@ const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'pa
 
 const fetchPopularHashtags = async () => {
   try {
-    const res = await hashtagApi.fetchPopularHashtags()
+    const res = await hashtagApi.fetchAllHashtags()
     hashtags.value = res.length > 0 ? res : defaultHashtags
   } catch (e) {
     console.error('인기 해시태그 조회 실패:', e)
@@ -186,15 +176,9 @@ const fetchPopularHashtags = async () => {
   }
 }
 
-const fetchLocationLabel = async (lat: number, lng: number): Promise<string> => {
-  if (lat >= 37.5 && lng >= 126.9) return '서울 강남구'
-  return '내 위치'
-}
-
 const refreshLocationData = async () => {
   await geo.initLocationOnce()
   if (geo.latitude && geo.longitude) {
-    locationLabel.value = await fetchLocationLabel(geo.latitude, geo.longitude)
     await fetchNearbyDealsByType('parttime')
     await fetchNearbyDealsByType('used')
     await fetchNearbyDealsByType('barter')
@@ -208,7 +192,23 @@ const goToCategory = (path: string) => {
 
 onMounted(() => {
   userRadius.value = localStorage.getItem('userRadius') || '5'
-  fetchPopularHashtags()
   refreshLocationData()
 })
 </script>
+
+<style scoped>
+.highlight-jobs {
+  background-color: #2C2D30;
+  border-radius: 16px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+.job-card {
+  background-color: #1A1B1D;
+  border-radius: 12px;
+}
+.section-empty {
+  text-align: center;
+  color: #999;
+  padding: 20px;
+}
+</style>

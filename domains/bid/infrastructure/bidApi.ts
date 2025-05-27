@@ -47,8 +47,14 @@ export const bidApi = {
 
 
     /** 내 물건에 입찰된 목록 */
-    getBidsOnMyDeals() {
-        return apiClient.get('/api/bids/on-my-deals')
+    getBidsOnMyDeals(params: { page?: number; size?: number; keyword?: string } = {}) {
+        return apiClient.get('/api/bids/on-my-deals', {
+            params: {
+                page: params.page ?? 0,
+                size: params.size ?? 10,
+                keyword: params.keyword?.trim() || undefined
+            }
+        })
     },
     // 입찰 취소
     cancelBid(bidId: number): Promise<void> {

@@ -6,6 +6,9 @@ export const boardApi = {
         latitude?: number
         longitude?: number
         distance?: number
+        category?: string
+        keyword?: string
+        field?: 'title' | 'content' | 'nickname'
     }) {
         return apiClient.get('/api/board', { params })
     },
@@ -15,21 +18,13 @@ export const boardApi = {
         return apiClient.get(`/api/board/${postId}`)
     },
 
-    /** 게시글 작성 */
-    createPost(payload: {
-        title: string
-        content: string
-        latitude: number
-        longitude: number
-    }) {
+    /** 게시글 작성 (프론트에서 자동 번역 포함해서 보냄) */
+    createPost(payload: any) {
         return apiClient.post('/api/board', payload)
     },
 
-    /** 게시글 수정 */
-    updatePost(postId: number, payload: {
-        title: string
-        content: string
-    }) {
+    /** 게시글 수정 (프론트에서 번역 포함해서 보냄) */
+    updatePost(postId: number, payload: any) {
         return apiClient.patch(`/api/board/${postId}`, payload)
     },
 
@@ -43,15 +38,10 @@ export const boardApi = {
         return apiClient.get(`/api/board/${postId}/comments`)
     },
 
-    /** 댓글 작성 */
-    createComment(payload: {
-        postId: number
-        content: string
-        nickname: string
-    }) {
+    /** 댓글 작성 (프론트에서 자동 번역 포함해서 보냄) */
+    createComment(payload: any) {
         return apiClient.post('/api/board/comments', payload)
     },
-
 
     /** 내가 쓴 게시글 목록 */
     getMyPosts() {

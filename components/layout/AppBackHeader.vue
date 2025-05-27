@@ -1,10 +1,10 @@
 <template>
-  <v-app-bar flat color="white">
-    <v-btn icon @click="router.back()">
+  <v-app-bar flat style="background-color: #1A1B1D; color: #F2F3F4">
+    <v-btn icon @click="router.back()" style="color: #F2F3F4">
       <v-icon>mdi-arrow-left</v-icon>
     </v-btn>
 
-    <v-toolbar-title class="ml-2 text-subtitle-1 font-weight-medium">
+    <v-toolbar-title class="ml-2 text-subtitle-1 font-weight-medium" style="color: #F2F3F4">
       {{ title }}
     </v-toolbar-title>
 
@@ -14,13 +14,13 @@
     <NotificationBell />
 
     <!-- ☰ 햄버거 메뉴 -->
-    <v-btn icon @click="drawer = !drawer">
+    <v-btn icon  @click="toggleDrawer" style="color: #F2F3F4">
       <v-icon>mdi-menu</v-icon>
     </v-btn>
   </v-app-bar>
 
   <!-- 공통 드로어 컴포넌트 -->
-  <AppDrawer v-model="drawer" />
+  <AppDrawer v-if="drawer" v-model="drawer" />
 </template>
 
 <script setup lang="ts">
@@ -35,10 +35,15 @@ defineProps<{ title: string }>()
 
 const router = useRouter()
 const auth = useAuthStore()
-const drawer = ref(false)
+const drawer = ref(false);
+
+const toggleDrawer = () => {
+  drawer.value = !drawer.value
+}
+
 </script>
 
-<style scoped>
+<style>
 .v-toolbar-title {
   cursor: default;
 }

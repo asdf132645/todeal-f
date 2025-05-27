@@ -1,23 +1,22 @@
 // ✅ ~/domains/trustscore/infrastructure/trustScoreApi.ts
 import { apiClient } from '@/libs/http/apiClient'
+import type { TrustScoreType } from './trustScoreType'
 
 export const trustScoreApi = {
-    submitScore(toUserId: number, dealId: number, isPositive: boolean): Promise<void> {
-        return apiClient.post('/api/trust-scores/submit', {
-            toUserId,
-            dealId,
-            isPositive
-        })
+    // ✅ 후기 리스트 조회 (페이징 + 타입 필터링)
+    async getUserReviews(userId: number, params?: {
+        page?: number
+        size?: number
+        type?: TrustScoreType
+    }) {
+        const response = await apiClient.get(`/trust-scores/user/${userId}/reviews`, { params })
+        return response?.data
     },
 
-    // ✅ 다중 사용자 투딜지수 조회
-    getUserScores(userIds: number[]): Promise<Record<number, number>> {
-        const params = new URLSearchParams()
-        userIds.forEach(id => params.append('userIds', id.toString()))
-
-        return apiClient.get(`/api/trust-scores?${params.toString()}`)
-            .then(res => res.data)
-    }
-
-
+    // 기존 평점 조회도 유지
+    async getUserScores(userIds: number[]) {
+        const response = await apiClient.get('/trust-scores', { params: { userIds } })
+        return response?.data
+    },
 }
+

@@ -11,6 +11,6 @@ export interface Job {
 
 export const jobApi = {
     fetchTodayJobs: (): Promise<Job[]> => {
-        return apiClient.get<Job[]>('/deals?type=parttime&sort=latest')
+        return apiClient.get<Job[]>('/api/deals?type=parttime&sort=latest')
     }
 }

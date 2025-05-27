@@ -7,14 +7,14 @@ let weeklyCache: { data: string[], expires: number } | null = null
 const TTL_MS = 5 * 60 * 1000 // 5분
 
 export const hashtagApi = {
-    async fetchPopularHashtags(limit = 10): Promise<string[]> {
+    async fetchAllHashtags(limit = 50): Promise<string[]> {
         const now = Date.now()
 
         if (popularCache && now < popularCache.expires) {
             return popularCache.data
         }
 
-        const result = await apiClient.get<string[]>('/api/hashtags/popular', {
+        const result = await apiClient.get<string[]>('/api/hashtags', {
             params: { limit }
         })
         popularCache = { data: result, expires: now + TTL_MS }
@@ -35,3 +35,4 @@ export const hashtagApi = {
         return result
     }
 }
+

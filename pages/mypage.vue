@@ -4,7 +4,7 @@
       <v-tabs v-model="tab" background-color="white" grow>
         <v-tab>내 정보</v-tab>
         <v-tab>내 글</v-tab>
-        <v-tab>입찰 내역</v-tab>
+        <v-tab>내 거래 내역</v-tab>
         <v-tab>내 경매 입찰자 목록</v-tab>
       </v-tabs>
 

@@ -1,6 +1,5 @@
-<!--// ✅ pages/deals/search.vue-->
 <template>
-  <v-container fluid class="pa-4 pt-6" style="background-color: #F5F7FA; min-height: 100vh;">
+  <v-container fluid class="pa-4 pt-6" style="min-height: 100vh; background-color: #0E0F10; color: #F2F3F4">
     <!-- 헤더에서 자연스럽게 이어지는 부분 -->
     <SearchForm @search="resetAndSearch" />
     <RecentSearch @select="resetAndSearch" />
@@ -11,7 +10,7 @@
           <DealCard :deal="deal" />
         </v-col>
       </v-row>
-      <div v-else class="text-caption text-grey text-center py-6">
+      <div v-else class="text-caption text-center py-6" style="color: #888">
         검색 결과가 없습니다.
       </div>
     </div>
@@ -20,7 +19,7 @@
     <v-progress-circular
         v-if="loadingMore"
         indeterminate
-        color="primary"
+        color="#9EBEFF"
         class="d-block mx-auto my-4"
     />
   </v-container>

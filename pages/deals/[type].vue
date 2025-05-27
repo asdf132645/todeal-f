@@ -1,6 +1,6 @@
 <template>
   <v-container class="py-2 px-2">
-    <v-row dense>
+    <v-row v-if="items.length > 0" dense>
       <v-col cols="12" v-for="item in items" :key="item.id" class="pb-1">
         <v-sheet
             class="d-flex align-start pa-2"
@@ -8,7 +8,7 @@
             @click.stop="goDetail(item.id)"
         >
           <v-img
-              :src="item.images?.[0] || 'https://via.placeholder.com/80'"
+              :src="item.images?.[0] || 'https://via.placeholder.com/80?text=No+Image'"
               width="80"
               height="80"
               class="rounded-lg"
@@ -19,7 +19,7 @@
               {{ item.title }}
             </div>
             <div class="text-caption text-grey-darken-1 mb-1">
-              {{ formatLocationInfo() }} · {{ formatTimeAgo(item.createdAt) }}
+              {{ item.region }} · {{ formatTimeAgo(item.createdAt) }}
             </div>
             <div class="text-body-2 font-weight-bold">
               {{ item.currentPrice.toLocaleString() }}원
@@ -28,7 +28,9 @@
         </v-sheet>
       </v-col>
     </v-row>
-
+    <div v-else class="text-caption text-grey text-center py-10">
+      등록된 항목이 없습니다.
+    </div>
     <div ref="infiniteScrollTarget" class="text-center py-2">
       <v-progress-circular indeterminate v-if="loading" />
     </div>
@@ -36,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick  } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 import { useGeoStore } from '@/stores/geoStore'
@@ -45,7 +47,7 @@ const route = useRoute()
 const router = useRouter()
 const geo = useGeoStore()
 
-const type = route.params.type as string
+const type = (route.params.type as string) || 'used'
 const items = ref<any[]>([])
 const page = ref(0)
 const pageSize = 10
@@ -64,28 +66,33 @@ const formatTimeAgo = (iso: string) => {
   const days = Math.floor(hours / 24)
   return `${days}일 전`
 }
-
-const formatLocationInfo = () => {
-  return geo.regionName || '내 위치'
+const refreshDeals = async () => {
+  page.value = 0
+  hasMore.value = true
+  items.value = []
+  await loadDeals()
 }
 
 const goDetail = (id: number) => {
   router.push({
     path: `/deals/detail/${id}`,
-    query: { type } // ← type을 쿼리로 넘김
+    query: { type }
   })
 }
 
-
 const loadDeals = async () => {
-  if (loading.value || !hasMore.value) return
-  loading.value = true
+  loading.value = true;
+  const userRadius = process.client ? localStorage.getItem('userRadius') : null
   try {
     const res = await dealApi.getList({
       type,
       page: page.value,
-      pageSize
+      pageSize,
+      lat: geo.latitude,
+      lng: geo.longitude,
+      radius : Number(userRadius)
     })
+
     if (res.length < pageSize) hasMore.value = false
     items.value.push(...res)
     page.value++
@@ -96,17 +103,28 @@ const loadDeals = async () => {
   }
 }
 
+
+
 onMounted(async () => {
-  await geo.initLocationOnce()
+  await nextTick() // DOM 렌더링 이후 보장
+  await refreshDeals() // ✅ 초기 로딩
 
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && hasMore.value) {
+      console.log('🔁 스크롤 감지됨 → loadDeals 실행')
       loadDeals()
     }
   }, { threshold: 1 })
 
-  if (infiniteScrollTarget.value) observer.observe(infiniteScrollTarget.value)
+  if (infiniteScrollTarget.value) {
+    observer.observe(infiniteScrollTarget.value)
+    console.log('✅ observer 연결됨')
+  } else {
+    console.log('❌ infiniteScrollTarget 렌더 안 됨')
+  }
 
-  await loadDeals()
 })
+
+
+
 </script>

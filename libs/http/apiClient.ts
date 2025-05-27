@@ -1,18 +1,25 @@
-// ✅ libs/http/apiClient.ts
 import type { ApiResponse } from './apiResponse'
-import { useNuxtApp, useRouter } from '#app'
 import {
-    getStoredRefreshToken,
     getStoredAccessToken,
+    getStoredRefreshToken,
     saveAccessToken,
-    clearStoredTokens
+    clearStoredTokens,
 } from '~/composables/useToken'
-import { useAuthStore } from '@/stores/authStore'
 import { jwtDecode } from 'jwt-decode'
+import { useAuthStore } from '@/stores/authStore'
+
+let _nuxtApp: ReturnType<typeof useNuxtApp> | null = null
+let _router: ReturnType<typeof useRouter> | null = null
+
+export function initApiClient() {
+    _nuxtApp = useNuxtApp()
+    _router = useRouter()
+}
 
 function handleResponse<T>(res: ApiResponse<T>): T {
     if (!res.success) {
-        throw new Error(res.message || '요청 실패')
+        const msg = typeof res.message === 'string' ? res.message : JSON.stringify(res.message)
+        throw new Error(msg || '요청 실패')
     }
     return res.data as T
 }
@@ -23,14 +30,26 @@ function isTokenExpired(token: string): boolean {
         const now = Date.now() / 1000
         return decoded.exp < now
     } catch {
-        return true
+        return true // malformed token도 만료로 간주
     }
 }
 
-async function clearTokensAndRedirect() {
-    clearStoredTokens()
-    const router = useRouter()
-    await router.push('/auth/login')
+async function reissueAccessToken(): Promise<string | null> {
+    const refreshToken = getStoredRefreshToken()
+    if (!refreshToken || !_nuxtApp) return null
+
+    try {
+        const res = await _nuxtApp.$axios.post('/api/auth/reissue', { refreshToken })
+        const newAccessToken = res.data.data.accessToken
+        saveAccessToken(newAccessToken)
+        return newAccessToken
+    } catch (err: any) {
+        if (err.response?.status === 403) {
+            const auth = useAuthStore()
+            auth.logout() // 토큰 초기화 + 라우터 이동 포함
+        }
+        return null
+    }
 }
 
 async function request<T>(
@@ -39,72 +58,45 @@ async function request<T>(
     data?: any,
     config: any = {}
 ): Promise<T> {
-    const { $axios } = useNuxtApp()
-    const authStore = useAuthStore()
+    if (!_nuxtApp || !_router) throw new Error('apiClient 사용 전 initApiClient() 먼저 호출해야 합니다.')
+
+    let accessToken = getStoredAccessToken()
+
+    // ✅ accessToken 만료 시 자동 재발급
+    if (accessToken && isTokenExpired(accessToken)) {
+        const newToken = await reissueAccessToken()
+        if (!newToken) {
+            clearStoredTokens()
+            await _router.push('/auth/login')
+            throw new Error('토큰 만료: 로그인 다시 필요')
+        }
+        accessToken = newToken
+    }
 
     try {
-        const token = process.client ? getStoredAccessToken() : ''
-        if (!config.headers) config.headers = {}
+        const userId = process.client ? localStorage.getItem('userId') : null
 
-        // ✅ accessToken 적용
-        if (token && token.split('.').length === 3) {
-            config.headers.Authorization = `Bearer ${token}`
+        const headers = {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            ...(userId ? { 'X-USER-ID': userId } : {}),
+            ...(config.headers || {}),
         }
 
-        // ✅ X-USER-ID 설정
-        const userId = authStore.user?.id ?? (process.client ? localStorage.getItem('userId') : null)
-        if (userId) {
-            config.headers['X-USER-ID'] = userId.toString()
-        }
+        const res = await _nuxtApp.$axios.request<ApiResponse<T>>({
+            method,
+            url,
+            data,
+            ...config,
+            headers,
+        })
 
-        const res = await $axios.request<ApiResponse<T>>({ method, url, data, ...config })
         return handleResponse(res.data)
-
-    } catch (error: any) {
-        // ✅ accessToken 만료 대응
-        if (error.response?.status === 401) {
-            const refreshToken = process.client ? getStoredRefreshToken() : ''
-
-            if (!refreshToken || isTokenExpired(refreshToken)) {
-                alert('⛔ 로그인 세션이 만료되었습니다. 다시 로그인해주세요.')
-                await clearTokensAndRedirect()
-                return Promise.reject(error)
-            }
-
-            try {
-                const refreshRes = await $axios.post<ApiResponse<{ accessToken: string }>>(
-                    '/api/auth/refresh-token',
-                    { refreshToken }
-                )
-
-                const newAccessToken = refreshRes.data.data.accessToken
-                saveAccessToken(newAccessToken)
-
-                // ✅ 사용자 정보 재조회 후 저장
-                const userRes = await $axios.get<ApiResponse<any>>('/api/users/me', {
-                    headers: { Authorization: `Bearer ${newAccessToken}` }
-                })
-                const user = userRes.data.data
-                authStore.setUser(user)
-                if (process.client) {
-                    localStorage.setItem('userId', user.id)
-                }
-
-                // ✅ 재시도 요청
-                config.headers.Authorization = `Bearer ${newAccessToken}`
-                config.headers['X-USER-ID'] = user.id.toString()
-
-                const retryRes = await $axios.request<ApiResponse<T>>({ method, url, data, ...config })
-                return handleResponse(retryRes.data)
-
-            } catch (refreshErr) {
-                alert('⛔ 세션이 만료되었습니다. 다시 로그인해주세요.')
-                await clearTokensAndRedirect()
-                return Promise.reject(refreshErr)
-            }
+    } catch (err: any) {
+        if (err.response?.status === 401) {
+            const auth = useAuthStore()
+            auth.logout()
         }
-
-        throw error
+        throw err
     }
 }
 

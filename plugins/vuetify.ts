@@ -22,7 +22,7 @@ export default defineNuxtPlugin((nuxtApp) => {
             messages: { ko },
         },
         theme: {
-            defaultTheme: 'light',
+            defaultTheme: 'dark',
             themes: {
                 light: {
                     // dark: false,
@@ -38,6 +38,10 @@ export default defineNuxtPlugin((nuxtApp) => {
                     // },
                 },
                 dark: {
+                    colors: {
+                        primary: '#FFD54F',
+                        onPrimary: '#000', // primary 버튼 안의 글자색
+                    },
                     // dark: true,
                     // colors: {
                     //     background: '#121212',

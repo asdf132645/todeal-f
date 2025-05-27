@@ -13,57 +13,96 @@ export function useChatSocket(
             return
         }
 
-        // ✅ chatRoomId + userId 함께 전달
-        const url = `ws://localhost:8080/ws/chat?chatRoomId=${chatRoomId}&userId=${userId}`
+        if (socket.value && socket.value.readyState === WebSocket.OPEN) {
+            console.log('🟡 WebSocket 이미 연결됨 - connect 생략')
+            return
+        }
+
+        const url = `wss://app.to-deal.com/ws/chat?chatRoomId=${chatRoomId}&userId=${userId}`
+        // const url = `ws://localhost:8080/ws/chat?chatRoomId=${chatRoomId}&userId=${userId}`
         socket.value = new WebSocket(url)
 
         socket.value.onopen = () => {
-            console.log('✅ WebSocket connected')
+            console.log('✅ WebSocket 연결됨')
 
-            // 읽음 처리용 메시지 전송 (선택적)
-            socket.value?.send(
-                JSON.stringify({
-                    type: 'read',
-                    chatRoomId,
-                    userId
-                })
-            )
+            const payload = {
+                type: 'read',
+                chatRoomId,
+                userId
+            }
+
+            socket.value?.send(JSON.stringify(payload))
         }
 
         socket.value.onmessage = (event) => {
-            const msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
-            onReceive(msg)
+            // console.log('📩 수신 메시지', event.data)
+            const type = JSON.parse(event.data).type;
+            if (type === 'chatNoti'){
+                return;
+            }
+            try {
+                const msg = typeof event.data === 'string' ? JSON.parse(event.data) : event.data
+
+                // 메시지 구조가 유효할 경우만 onReceive 콜백 실행
+                if (msg && typeof msg === 'object') {
+                    onReceive(msg)
+                } else {
+                    console.warn('⚠️ 잘못된 WebSocket 메시지 구조:', msg)
+                }
+            } catch (err) {
+                console.error('❌ WebSocket 메시지 파싱 에러', err)
+            }
         }
 
-        socket.value.onclose = () => {
-            console.warn('🔌 WebSocket closed')
+        socket.value.onclose = (e) => {
+            console.warn('🔌 WebSocket 연결 종료됨', e)
+            console.trace('🔍 연결 종료 추적')
         }
 
         socket.value.onerror = (e) => {
-            console.error('❌ WebSocket error', e)
+            console.error('❌ WebSocket 에러 발생', e)
         }
     }
 
-    const sendMessage = (text: string) => {
+    const disconnect = () => {
+        if (socket.value && socket.value.readyState === WebSocket.OPEN) {
+            console.log('🔻 WebSocket 연결 닫는 중...')
+            socket.value.close()
+        }
+    }
+
+    const sendMessage = (text: string, receiverId: number) => {
+        const content = text.trim()
+        if (!content) return
         if (socket.value?.readyState === WebSocket.OPEN) {
             const payload = {
                 type: 'text',
                 chatRoomId,
                 senderId: userId,
-                message: text,
+                receiverId,
+                message: content,
                 createdAt: new Date().toISOString()
             }
+
+            // console.log('📤 WebSocket 메시지 전송:', payload)
             socket.value.send(JSON.stringify(payload))
         } else {
-            console.warn('WebSocket is not open. Message not sent.')
+            console.warn('⚠️ WebSocket 연결되지 않음. 메시지 전송 실패')
         }
     }
 
-    onMounted(connect)
-    onBeforeUnmount(() => socket.value?.close())
+    onMounted(() => {
+        connect()
+    })
+
+    onBeforeUnmount(() => {
+        disconnect()
+    })
 
     return {
         sendMessage,
-        socket
+        socket,
+        disconnect,
+        connect
     }
 }

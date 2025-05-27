@@ -104,7 +104,6 @@ export const useGeoStore = defineStore('geo', {
                         this.longitude = pos.coords.longitude
                         this.initialized = true
                         this.error = null
-                        console.log(pos.coords)
                         localStorage.setItem('userLat', String(this.latitude))
                         localStorage.setItem('userLng', String(this.longitude))
 

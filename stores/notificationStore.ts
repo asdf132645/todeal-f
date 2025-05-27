@@ -14,14 +14,11 @@ export const useNotificationStore = defineStore('notification', {
 
     actions: {
         add(msg: AlertMessage) {
-            // 중복 방지
             const exists = this.unreadMessages.some(existing =>
                 (msg.chatRoomId && existing.chatRoomId === msg.chatRoomId) ||
                 (msg.dealId && existing.dealId === msg.dealId && msg.isBarter)
             )
-            if (!exists) {
-                this.unreadMessages.push(msg)
-            }
+            if (!exists) this.unreadMessages.push(msg)
         },
 
         clear(msg: AlertMessage) {
@@ -31,5 +28,7 @@ export const useNotificationStore = defineStore('notification', {
         clearAll() {
             this.unreadMessages = []
         }
-    }
+    },
+
+    persist: true  // ✅ 이 줄만 있으면 localStorage에 자동 저장됨
 })

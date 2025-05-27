@@ -1,7 +1,7 @@
 <template>
   <v-container class="d-flex justify-center align-center fill-height">
     <v-card class="pa-6" width="400" elevation="3">
-      <div class="text-h6 font-weight-bold mb-6 text-center">회원가입</div>
+      <div class="text-h6 font-weight-bold mb-6 text-center color-black">회원가입</div>
 
       <!-- 이메일 -->
       <v-text-field
@@ -11,7 +11,7 @@
           outlined
           dense
           :error="errors.email"
-          class="mb-1"
+          class="mb-1 color-black"
           @blur="checkEmailDuplicate"
       />
       <span v-if="errors.email" class="text-error text-caption mt-1 mb-2 d-block">{{ emailErrorMessage }}</span>
@@ -24,7 +24,7 @@
           outlined
           dense
           :error="errors.nickname"
-          class="mb-1"
+          class="mb-1 color-black"
           counter="12"
           maxlength="12"
           @blur="checkNicknameDuplicate"
@@ -39,7 +39,7 @@
           outlined
           dense
           :error="errors.phone"
-          class="mb-1"
+          class="mb-1 color-black"
           type="tel"
       />
       <span v-if="errors.phone" class="text-error text-caption mt-1 mb-2 d-block">숫자만 입력해 주세요.</span>
@@ -53,12 +53,9 @@
           outlined
           dense
           :error="errors.password"
-          class="mb-1"
-          @input="validatePassword"
+          class="mb-1 color-black"
       />
-      <span v-if="errors.password" class="text-error text-caption mt-1 mb-2 d-block">
-        비밀번호는 8자 이상이어야 합니다.
-      </span>
+      <span v-if="errors.password" class="text-error text-caption mt-1 mb-2 d-block">비밀번호는 8자 이상이어야 합니다.</span>
 
       <!-- 비밀번호 확인 -->
       <v-text-field
@@ -68,75 +65,79 @@
           outlined
           dense
           :error="errors.passwordConfirm"
-          class="mb-1"
-          @input="validatePasswordConfirm"
+          class="mb-1 color-black"
       />
-      <span v-if="errors.passwordConfirm" class="text-error text-caption mt-1 mb-2 d-block">
-        비밀번호가 일치하지 않습니다.
-      </span>
+      <span v-if="errors.passwordConfirm" class="text-error text-caption mt-1 mb-2 d-block">비밀번호가 일치하지 않습니다.</span>
+
+      <!-- 전체 동의 -->
+      <v-checkbox
+          v-model="form.agreeAll"
+          class="ma-0 pa-0 mb-2 color-black"
+          label="모든 약관에 동의합니다."
+          hide-details
+          @change="toggleAllAgreements"
+      />
 
       <!-- 위치 동의 -->
-      <div class="d-flex align-center text-body-2 mb-1">
-        <v-checkbox v-model="form.locationAgree" :error="errors.location" class="ma-0 pa-0 mr-2" hide-details />
-        <span>
-          위치 정보 수집 및 이용에 동의합니다.
-          <v-btn variant="text" size="small" @click="openDialog('location')" class="ml-1 px-1" style="min-width:auto;">
-            <span class="text-primary text-decoration-underline">보기</span>
-          </v-btn>
-        </span>
+      <v-checkbox
+          v-model="form.locationAgree"
+          :error="errors.location"
+          class="ma-0 pa-0 mb-0 color-black"
+          label="위치 정보 수집 및 이용에 동의합니다."
+          hide-details
+      />
+      <div class="terms-link-wrapper">
+        <a @click.prevent="openTerms('privacy')" class="text-link">[자세히 보기]</a>
       </div>
       <span v-if="errors.location" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
 
-      <!-- 이용약관 -->
-      <div class="d-flex align-center text-body-2 mb-1">
-        <v-checkbox v-model="form.termsAgree" :error="errors.terms" class="ma-0 pa-0 mr-2" hide-details />
-        <span>
-          이용약관에 동의합니다.
-          <v-btn variant="text" size="small" @click="openDialog('terms')" class="ml-1 px-1" style="min-width:auto;">
-            <span class="text-primary text-decoration-underline">보기</span>
-          </v-btn>
-        </span>
+      <!-- 이용약관 동의 -->
+      <v-checkbox
+          v-model="form.termsAgree"
+          :error="errors.terms"
+          class="ma-0 pa-0 mb-0 color-black"
+          label="이용약관에 동의합니다."
+          hide-details
+      />
+      <div class="terms-link-wrapper">
+        <a @click.prevent="openTerms('terms')" class="text-link">[자세히 보기]</a>
       </div>
       <span v-if="errors.terms" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
 
-      <!-- 개인정보 -->
-      <div class="d-flex align-center text-body-2 mb-1">
-        <v-checkbox v-model="form.privacyAgree" :error="errors.privacy" class="ma-0 pa-0 mr-2" hide-details />
-        <span>
-          개인정보 수집 및 이용에 동의합니다.
-          <v-btn variant="text" size="small" @click="openDialog('privacy')" class="ml-1 px-1" style="min-width:auto;">
-            <span class="text-primary text-decoration-underline">보기</span>
-          </v-btn>
-        </span>
+      <!-- 개인정보 수집 동의 -->
+      <v-checkbox
+          v-model="form.privacyAgree"
+          :error="errors.privacy"
+          class="ma-0 pa-0 mb-0 color-black"
+          label="개인정보 수집 및 이용에 동의합니다."
+          hide-details
+      />
+      <div class="terms-link-wrapper mb-2">
+        <a @click.prevent="openTerms('privacy')" class="text-link">[자세히 보기]</a>
       </div>
-      <span v-if="errors.privacy" class="text-error text-caption mt-1 mb-4 d-block">필수 항목입니다.</span>
+      <span v-if="errors.privacy" class="text-error text-caption mt-1 mb-2 d-block">필수 항목입니다.</span>
 
-      <v-btn block color="primary" @click="handleSignup" large>회원가입 완료</v-btn>
+
+      <v-btn :disabled="!form.agreeAll" block color="primary" @click="handleSignup" large>회원가입 완료</v-btn>
     </v-card>
 
-    <!-- 모달 -->
-    <TermsDialog v-if="dialogType === 'terms' || dialogType === 'privacy'" v-model="dialog" :type="dialogType" />
-    <LocationConsentDialog v-if="dialogType === 'location'" v-model="dialog" />
+    <!-- 이용약관 / 개인정보 모달 -->
+    <TermsDialog :model-value="showTermsDialog" :type="termsType" @update:model-value="showTermsDialog = $event"/>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import {ref, reactive, onMounted} from 'vue'
+import {useRouter, useRoute} from 'vue-router'
+import {apiClient} from '~/libs/http/apiClient'
+import {useAuthStore} from '@/stores/authStore'
 import TermsDialog from '@/components/common/TermsDialog.vue'
-import LocationConsentDialog from '@/components/common/LocationConsentDialog.vue'
-import { apiClient } from '~/libs/http/apiClient'
-import { useAuthStore } from '@/stores/authStore'
-import { useGeoStore } from '@/stores/geoStore'
 
 const router = useRouter()
 const route = useRoute()
 const auth = useAuthStore()
-const geo = useGeoStore()
 
 const tempToken = route.query.tempToken as string
-const dialog = ref(false)
-const dialogType = ref<'terms' | 'privacy' | 'location'>('terms')
 
 const form = reactive({
   email: '',
@@ -147,8 +148,7 @@ const form = reactive({
   locationAgree: false,
   termsAgree: false,
   privacyAgree: false,
-  latitude: null as number | null,
-  longitude: null as number | null,
+  agreeAll: false,
 })
 
 const errors = reactive({
@@ -165,44 +165,36 @@ const errors = reactive({
 const emailErrorMessage = ref('')
 const nicknameErrorMessage = ref('')
 
-const openDialog = (type: 'terms' | 'privacy' | 'location') => {
-  dialogType.value = type
-  dialog.value = true
+const showTermsDialog = ref(false)
+const termsType = ref<'terms' | 'privacy'>('terms')
+
+const toggleAllAgreements = () => {
+  form.termsAgree = form.privacyAgree = form.locationAgree = form.agreeAll
 }
 
-onMounted(() => {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          form.latitude = pos.coords.latitude
-          form.longitude = pos.coords.longitude
-          apiClient.post('/users/location', {
-            latitude: geo.latitude,
-            longitude: geo.longitude,
-          })
-        },
-        (err) => console.warn('❌ 위치 가져오기 실패:', err)
-    )
-  }
-})
+const openTerms = (type: 'terms' | 'privacy') => {
+  termsType.value = type
+  showTermsDialog.value = true
+}
 
-const validatePassword = () => {
+const validateForm = () => {
+  const phoneRegex = /^[0-9]{9,12}$/
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  errors.email = !form.email || !emailRegex.test(form.email)
+  errors.nickname = !form.nickname || form.nickname.length > 12
+  errors.phone = !phoneRegex.test(form.phone)
   errors.password = !form.password || form.password.length < 8
-  validatePasswordConfirm()
-}
-
-const validatePasswordConfirm = () => {
   errors.passwordConfirm = form.passwordConfirm !== form.password
+  errors.terms = !form.termsAgree
+  errors.privacy = !form.privacyAgree
+  errors.location = !form.locationAgree
+
+  return Object.values(errors).every(v => !v)
 }
 
 const checkEmailDuplicate = async () => {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  if (!regex.test(form.email)) {
-    errors.email = true
-    emailErrorMessage.value = '올바른 이메일 형식이 아닙니다.'
-    return
-  }
-
+  if (!form.email) return
   try {
     const res = await apiClient.get(`/api/users/check-email?email=${form.email}`)
     if (res.exists) {
@@ -224,7 +216,6 @@ const checkNicknameDuplicate = async () => {
     nicknameErrorMessage.value = '닉네임은 12자 이하로 입력해 주세요.'
     return
   }
-
   try {
     const res = await apiClient.get(`/api/users/check-nickname?nickname=${form.nickname}`)
     if (res.exists) {
@@ -241,21 +232,13 @@ const checkNicknameDuplicate = async () => {
 }
 
 const handleSignup = async () => {
-  const phoneRegex = /^[0-9]{9,12}$/
-
-  errors.email = !form.email || errors.email
-  errors.nickname = !form.nickname || form.nickname.length > 12 || errors.nickname
-  errors.phone = !phoneRegex.test(form.phone)
-  errors.password = !form.password || form.password.length < 8
-  validatePasswordConfirm()
-  errors.terms = !form.termsAgree
-  errors.privacy = !form.privacyAgree
-  errors.location = !form.locationAgree
-
-  if (Object.values(errors).some((v) => v)) return
+  if (!validateForm()) return
 
   const payload = {
-    ...form,
+    email: form.email,
+    nickname: form.nickname,
+    phone: form.phone,
+    password: form.password,
     agreements: ['terms', 'privacy', ...(form.locationAgree ? ['location'] : [])],
   }
 
@@ -267,11 +250,7 @@ const handleSignup = async () => {
     }
 
     const userInfo = await auth.fetchMyInfo?.()
-    if (userInfo) auth.setUser(userInfo);
-    await apiClient.post('/users/location', {
-      latitude: geo.latitude,
-      longitude: geo.longitude,
-    })
+    if (userInfo) auth.setUser(userInfo)
 
     router.push('/')
   } catch (err) {
@@ -280,8 +259,54 @@ const handleSignup = async () => {
 }
 </script>
 
-<style scoped>
+<style>
 .text-decoration-underline {
   text-decoration: underline;
+  cursor: pointer;
 }
+
+.text-h6 {
+  font-size: clamp(1.125rem, 1.8vw, 1.5rem);
+}
+
+.text-caption {
+  font-size: clamp(0.6rem, 1.4vw, 0.875rem);
+  line-height: 1.4;
+}
+
+.v-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.v-text-field,
+.v-checkbox {
+  font-size: 0.95rem;
+}
+
+.v-btn {
+  font-size: 0.8rem;
+  padding-top: 0.8rem;
+  padding-bottom: 0.8rem;
+}
+
+.v-checkbox .v-label {
+  font-size: 0.875rem !important;
+  line-height: 1.4;
+}
+
+/* 아래로 분리된 링크 스타일 */
+.terms-link-wrapper {
+  margin-top: -6px;
+  margin-bottom: 0px;
+  padding-left: 40px;
+}
+
+.text-link {
+  font-size: 12px;
+  color: #A6A9AD;
+  text-decoration: underline;
+  display: inline-block;
+}
+
 </style>

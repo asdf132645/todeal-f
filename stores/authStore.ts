@@ -14,8 +14,22 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<any>(null)
     const accessToken = ref<string | null>(getStoredAccessToken())
 
+    // 🔁 새로고침 시 로컬스토리지에 저장된 유저 정보 복원
+    if (typeof window !== 'undefined') {
+        const savedUser = localStorage.getItem('user')
+        if (savedUser) {
+            user.value = JSON.parse(savedUser)
+        }
+    }
+
     const setUser = (userData: any) => {
         user.value = userData
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(userData))
+            localStorage.setItem('userId', userData.id)
+            localStorage.setItem('nickname', userData.nickname)
+            localStorage.setItem('isPremium', userData.isPremium)
+        }
     }
 
     const { registerFcm, unregisterFcm } = useFcm()
@@ -23,7 +37,6 @@ export const useAuthStore = defineStore('auth', () => {
     const fetchMyInfo = async () => {
         try {
             const res = await apiClient.get('/api/users/me')
-            // console.log(res)
             setUser(res)
             await registerFcm(res?.id)
         } catch (e) {
@@ -32,17 +45,12 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    // ✅ 일반 로그인
     const loginBasic = async (email: string, password: string) => {
         const res = await apiClient.post<{
             accessToken: string
             refreshToken: string
             user: any
         }>('/api/users/login', { email, password })
-        localStorage.setItem('userId',res.user.id);
-        localStorage.setItem('nickname',res.user.nickname);
-        localStorage.setItem('isPremium',res.user.isPremium);
-        console.log(res)
 
         accessToken.value = res.accessToken
         saveAccessToken(res.accessToken)
@@ -51,7 +59,6 @@ export const useAuthStore = defineStore('auth', () => {
         registerFcm(res.user.id)
     }
 
-    // ✅ 일반 회원가입
     const signupBasic = async (form: any) => {
         const res = await apiClient.post<{ token: string }>('/api/users/signup', form)
         accessToken.value = res.token
@@ -59,7 +66,6 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchMyInfo()
     }
 
-    // ✅ 카카오 로그인
     const loginWithKakao = async () => {
         if (typeof window === 'undefined' || !window.Kakao?.isInitialized?.()) {
             throw new Error('Kakao SDK not available')
@@ -67,7 +73,10 @@ export const useAuthStore = defineStore('auth', () => {
 
         await window.Kakao.Auth.login()
         const kakaoAccessToken = window.Kakao.Auth.getAccessToken()
-        if (!kakaoAccessToken) throw new Error('카카오 토큰 없음')
+        if (!kakaoAccessToken) {
+            return { isNewUser: true, tempToken: null }
+        }
+
 
         const res = await apiClient.post<any>('/api/auth/kakao-login', {
             accessToken: kakaoAccessToken
@@ -85,7 +94,6 @@ export const useAuthStore = defineStore('auth', () => {
         return { isNewUser: false }
     }
 
-    // ✅ 카카오 회원가입
     const signupWithKakao = async (form: any, tempToken: string) => {
         const res = await apiClient.post<{ token: string }>('/api/auth/signup', form, {
             headers: { Authorization: `Bearer ${tempToken}` }
@@ -95,28 +103,33 @@ export const useAuthStore = defineStore('auth', () => {
         await fetchMyInfo()
     }
 
-    // ✅ 리프레시 토큰으로 accessToken 재발급 + 유저 정보 갱신
     const refreshAccessToken = async () => {
         const refreshToken = getStoredRefreshToken()
         if (!refreshToken) throw new Error('리프레시 토큰 없음')
 
-        const res = await apiClient.post<{ accessToken: string }>('/api/auth/refresh-token', {
+        const res = await apiClient.post<{
+            accessToken: string
+            refreshToken: string
+        }>('/api/auth/refresh-token', {
             refreshToken
         })
+
         accessToken.value = res.accessToken
         saveAccessToken(res.accessToken)
-
-        // ✅ 유저 정보 다시 불러오기
+        saveRefreshToken(res.refreshToken) // ✅ 새 refreshToken도 갱신 저장
         await fetchMyInfo()
     }
 
-    // ✅ 로그아웃 (FCM 해제 포함)
     const logout = () => {
         unregisterFcm()
         clearStoredTokens()
         accessToken.value = null
         user.value = null
         if (typeof window !== 'undefined') {
+            localStorage.removeItem('user')
+            localStorage.removeItem('userId')
+            localStorage.removeItem('nickname')
+            localStorage.removeItem('isPremium')
             window.location.href = '/auth/login'
         }
     }

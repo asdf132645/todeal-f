@@ -9,21 +9,21 @@ export const barterBidApi = {
         description: string
         images: string[]
     }) {
-        return apiClient.post('/barter-bids', payload)
+        return apiClient.post('/api/barter-bids', payload)
     },
 
     /** 해당 거래의 제안 목록 조회 */
     getListByDealId(dealId: number) {
-        return apiClient.get(`/barter-bids/deal/${dealId}`)
+        return apiClient.get(`/api/barter-bids/deal/${dealId}`)
     },
 
     /** 제안 수락 */
     accept(bidId: number) {
-        return apiClient.post(`/barter-bids/${bidId}/accept`)
+        return apiClient.post(`/api/barter-bids/${bidId}/accept`)
     },
 
     /** 제안 거절 */
     reject(bidId: number) {
-        return apiClient.post(`/barter-bids/${bidId}/reject`)
+        return apiClient.post(`/api/barter-bids/${bidId}/reject`)
     }
 }

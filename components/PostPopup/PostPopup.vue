@@ -21,7 +21,7 @@
 <script setup lang="ts">
 const postOptions = [
   {
-    title: '물물교환 등록',
+    title: '빌려드려요 등록',
     subtitle: '물건끼리 맞교환 경매 등록하기',
     to: '/post/barter',
   },
@@ -43,7 +43,7 @@ const postOptions = [
 ]
 </script>
 
-<style scoped>
+<style>
 .post-popup-card {
   position: fixed;
   bottom: 160px;

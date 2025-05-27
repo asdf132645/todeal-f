@@ -1,13 +1,13 @@
 <template>
   <v-card class="mt-6 pa-4">
-    <div class="text-subtitle-1 font-weight-bold mb-3">입찰자 목록</div>
+    <div class="text-subtitle-1 font-weight-bold mb-3 color-black">입찰자 목록</div>
     <v-list>
       <v-list-item
           v-for="bid in bids"
           :key="bid.id"
           class="d-flex justify-space-between align-center"
       >
-        <div>
+        <div class="color-black">
           {{ bid.nickname }} - {{ bid.amount.toLocaleString() }}원
           <span
               v-if="bid.id === winnerBidId"
@@ -21,6 +21,7 @@
             v-if="!winnerBidId"
             color="primary"
             size="small"
+            class="color-black"
             @click="selectBid(bid.id)"
         >
           낙찰하기

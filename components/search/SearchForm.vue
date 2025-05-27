@@ -1,10 +1,20 @@
-<!-- ✅ components/search/SearchForm.vue -->
 <template>
-  <v-sheet class="pa-4 mb-4" color="white" rounded>
+  <v-sheet class="pa-4 mb-4" rounded>
     <div class="text-subtitle-2 font-weight-bold mb-2">키워드 검색</div>
     <v-row dense>
       <v-col cols="12">
-        <v-text-field v-model="form.keyword" label="검색어 입력" clearable />
+        <v-text-field
+            v-model="form.keyword"
+            label="검색어 입력"
+            clearable
+        />
+      </v-col>
+      <v-col cols="12">
+        <v-text-field
+            v-model="form.exclude"
+            label="제외할 키워드 (예: 택배)"
+            clearable
+        />
       </v-col>
       <v-col cols="12">
         <v-select
@@ -23,14 +33,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useSearchStore } from '@/stores/searchStore'
-import { useRoute } from 'vue-router'
-import {useRouter} from "#vue-router";
+import { useRouter } from 'vue-router'
 
 const emit = defineEmits(['search'])
 const store = useSearchStore()
 
 const form = ref({
   keyword: '',
+  exclude: '',     // ✅ 추가됨
   type: 'used'
 })
 
@@ -38,9 +48,10 @@ const typeOptions = [
   { label: '중고거래', value: 'used' },
   { label: '알바 급해요!', value: 'parttime' },
   { label: '구직 급해요!', value: 'parttime-request' },
-  { label: '물물교환', value: 'barter' }
+  { label: '빌려드려요', value: 'barter' }
 ]
-const router = useRouter();
+
+const router = useRouter()
 
 const submit = () => {
   store.addRecentSearch(form.value)

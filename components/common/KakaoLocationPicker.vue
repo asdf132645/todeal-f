@@ -8,7 +8,7 @@
         outlined
         hide-details
         @click="openPostcode"
-        class="rounded-lg"
+        class="rounded-lg color-black"
     />
 
     <div v-if="region.latitude && region.longitude" class="mt-2 text-caption text-grey-darken-1">
@@ -19,8 +19,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 
-const emit = defineEmits<{
-  (e: 'update:region', region: {
+const props = defineProps<{
+  region: {
     full: string
     depth1: string
     depth2: string
@@ -28,18 +28,18 @@ const emit = defineEmits<{
     zonecode: string
     latitude: number
     longitude: number
-  }): void
+    x: number
+    y: number
+  }
 }>()
 
-const region = ref({
-  full: '',
-  depth1: '',
-  depth2: '',
-  depth3: '',
-  zonecode: '',
-  latitude: 0,
-  longitude: 0
-})
+const emit = defineEmits<{
+  (e: 'update:region', region: typeof props.region): void
+}>()
+
+
+const region = toRef(props, 'region') // 또는 그냥 props.region 직접 사용
+
 
 const openPostcode = () => {
   if (typeof window === 'undefined') return
@@ -71,17 +71,17 @@ const launchPostcode = () => {
           const lat = parseFloat(result[0].y)
           const lng = parseFloat(result[0].x)
 
-          region.value = {
+          emit('update:region', {
             full: `${depth1} ${depth2} ${depth3}`,
             depth1,
             depth2,
             depth3,
             zonecode,
             latitude: lat,
-            longitude: lng
-          }
-
-          emit('update:region', region.value)
+            longitude: lng,
+            x: lng,
+            y: lat
+          })
         } else {
           console.error('❌ 주소 → 좌표 변환 실패')
         }

@@ -1,7 +1,8 @@
 // plugins/axios.ts
 import { defineNuxtPlugin, useRuntimeConfig } from '#app'
 import axios from 'axios'
-import { useAuthStore } from '@/stores/authStore'
+import { initApiClient } from '@/libs/http/apiClient'
+import { useAuthStore } from '@/stores/authStore' // 🔥 auth store import 필요
 
 export default defineNuxtPlugin((nuxtApp) => {
     const config = useRuntimeConfig()
@@ -13,7 +14,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         }
     })
 
-    // ✅ 로그인된 유저 ID를 동적으로 헤더에 넣음
+    // 인터셉터에 사용자 ID 헤더 추가
     axiosInstance.interceptors.request.use((req) => {
         const auth = useAuthStore()
         if (auth.user?.id) {
@@ -22,6 +23,9 @@ export default defineNuxtPlugin((nuxtApp) => {
         return req
     })
 
-    // 전역 주입
+    // ✅ $axios 인스턴스를 Nuxt에 등록
     nuxtApp.provide('axios', axiosInstance)
+
+    // ✅ apiClient 내부에서도 이 인스턴스 쓸 수 있도록 초기화
+    initApiClient(axiosInstance)
 })

@@ -75,7 +75,7 @@ const handleConsent = async (accepted: boolean) => {
 
   if (accepted) {
     try {
-      await apiClient.post('/users/location', {
+      await apiClient.post('/api/users/location', {
         latitude: geo.latitude,
         longitude: geo.longitude,
       })
@@ -87,7 +87,7 @@ const handleConsent = async (accepted: boolean) => {
 }
 </script>
 
-<style scoped>
+<style>
 .w-100 {
   width: 100%;
 }

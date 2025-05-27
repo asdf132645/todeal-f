@@ -24,7 +24,7 @@
 <script setup lang="ts">
 const postOptions = [
   {
-    title: '물물교환 등록',
+    title: '빌려드려요 등록',
     subtitle: '물건끼리 맞교환 경매 등록하기',
     to: '/post/barter',
   },
@@ -46,7 +46,7 @@ const postOptions = [
 ]
 </script>
 
-<style scoped>
+<style>
 .hover-sheet:hover {
   background-color: #f5f5f5;
   transition: background-color 0.2s ease;

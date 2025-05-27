@@ -1,0 +1,75 @@
+{
+  "location": {
+    "permission_title": "Allow Location Access",
+    "permission_description": "We use your location to show nearby secondhand deals and part-time jobs. Do you allow access?",
+    "title": "📍 Real-Time Auctions Near You",
+    "subtitle": "Amazing deals within {km}km radius?"
+  },
+  "common": {
+    "deny": "Deny",
+    "allow": "Allow",
+    "more": "+ More"
+  },
+  "page": {
+    "search_result": "Search Result",
+    "deal_detail": "Deal Detail",
+    "post_used": "Post Used Deal",
+    "post_barter": "Post Barter Deal",
+    "parttime_request": "Post Part-Time Request",
+    "parttime": "Post Part-Time Job",
+    "chat": "Live Chat",
+    "plans": "Premium Plans",
+    "support": "Support Center",
+    "post": "Post Deal",
+    "mypage": "My Page",
+    "my_inquiries": "My Inquiries",
+    "bids": "Bid History",
+    "settings": "Settings",
+    "login": "Login",
+    "keyword_search": "Keyword Search",
+    "barter": "Barter Deals!",
+    "parttime_today": "Looking for Part-Time Today!",
+    "used": "Rare Item Auction",
+    "parttime_offer": "Offering Part-Time Today!"
+  },
+  "log": {
+    "socket_connected": "✅ Notification socket connected",
+    "socket_disconnected": "🔌 Notification socket disconnected - reconnecting in 3 seconds",
+    "socket_error": "❌ Notification socket error",
+    "socket_parse_error": "❌ Failed to parse notification message",
+    "socket_already_connected": "🟡 Notification socket already connected",
+    "chat_received": "📩 Chat notification received",
+    "deal_received": "📩 Deal notification received",
+    "missing_user_id": "❌ User ID missing - skipping socket connection"
+  },
+  "home": {
+    "header_title": "Hot local auctions are on",
+    "toDeal": "ToDeal ✨",
+    "header_subtitle": "Struggling to find quick part-time jobs? Do it easily with ToDeal!"
+  },
+  "section": {
+    "urgent_parttime_title": "Urgent Part-Time Jobs",
+    "urgent_parttime_sub": "Jobs you can start right now are available",
+    "urgent_parttime_empty": "No urgent part-time auctions yet. 😢",
+
+    "recruit_title": "Job Seeker Auctions",
+    "recruit_sub": "Hire workers through auctions",
+    "recruit_empty": "No job seekers nearby yet 😅",
+
+    "barter_title": "Barter Deals!",
+    "barter_empty": "No items available for barter nearby 🧺",
+
+    "rare_item_title": "Today's Rare Item Auctions",
+    "rare_item_empty": "No rare secondhand auctions nearby yet"
+  },
+  "category": {
+    "barter_title": "Barter Deals!",
+    "barter_subtitle": "Don't buy it, borrow it!",
+    "used_title": "Rare Item Auction",
+    "used_subtitle": "Bid on rare used items!",
+    "parttime_title": "Looking for Part-Time Today!",
+    "parttime_subtitle": "High-paying short-term jobs",
+    "parttime_request_title": "Offering Part-Time Today!",
+    "parttime_request_subtitle": "Who wants to buy my time?"
+  }
+}

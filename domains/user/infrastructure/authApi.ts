@@ -37,8 +37,10 @@ export const authApi = {
 
     // ✅ 액세스 토큰 재발급
     refreshAccessToken: async (refreshToken: string) => {
-        return await apiClient.post<{ accessToken: string }>('/api/auth/refresh-token', {
-            refreshToken
-        })
+        return await apiClient.post<{ accessToken: string; refreshToken: string }>(
+            '/api/auth/refresh-token',
+            { refreshToken }
+        )
     }
+
 }

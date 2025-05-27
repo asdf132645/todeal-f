@@ -26,6 +26,17 @@ export const chatApi = {
         return apiClient.post('/api/chats/room', payload)
     },
 
+    /** ✅ 채팅방 존재 여부 확인 (추가됨) */
+    checkChatRoomExist(payload: {
+        dealId: number
+        userId1: number
+        userId2: number
+    }) {
+        return apiClient.get('/api/chats/room/exist', {
+            params: payload
+        })
+    },
+
     /** 메시지 전송 (REST API 방식, WebSocket fallback용) */
     sendMessage(payload: {
         chatRoomId: number

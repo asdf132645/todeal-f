@@ -6,25 +6,32 @@
 </template>
 
 <script setup lang="ts">
-import Default from "~/layout/default.vue";
-import AppSnackbar from "~/components/common/AppSnackbar.vue";
+import Default from '~/layout/default.vue'
+import AppSnackbar from '~/components/common/AppSnackbar.vue'
 
+import { onMounted } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
-import {
-  getStoredRefreshToken,
-} from '~/composables/useToken'
+import { getStoredRefreshToken, saveAccessToken, saveRefreshToken } from '~/composables/useToken'
+import { authApi } from '@/domains/user/infrastructure/authApi'
+
 onMounted(async () => {
-  const auth = useAuthStore();
-  if (!auth.accessToken && getStoredRefreshToken()) {
+  const auth = useAuthStore()
+
+  const refreshToken = getStoredRefreshToken()
+
+  if (!auth.accessToken && refreshToken) {
     try {
-      await auth.fetchMyInfo();
-      await auth.refreshAccessToken();
-    } catch (e) {
-      alert('⛔ 세션이 만료되었습니다. 다시 로그인해주세요.')
+      const { accessToken, refreshToken: newRefreshToken } =
+          await authApi.refreshAccessToken(refreshToken)
+
+      saveAccessToken(accessToken)
+      saveRefreshToken(newRefreshToken)
+      auth.accessToken = accessToken
+
+      await auth.fetchMyInfo()
+    } catch {
       auth.logout()
     }
   }
 })
-
-
 </script>

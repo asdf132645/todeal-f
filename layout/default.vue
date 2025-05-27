@@ -1,38 +1,38 @@
 <template>
-  <v-app>
-    <!-- ✅ 메인일 때만 AppHeader 보이게 -->
-    <template v-if="isMainPage">
+  <v-app :class="{ 'light-mode': !themeStore.isDark }">
+    <template v-if="!isIntroPage && isMainPage">
       <AppHeader />
     </template>
-    <template v-else>
-      <AppBackHeader :title="pageTitle" />
+    <template v-else-if="!isIntroPage">
+      <AppBackHeader :title="resolvedTitle" />
     </template>
 
     <v-main class="pb-16 px-4">
       <NuxtPage />
     </v-main>
 
-    <!-- ✅ 하단 내비는 항상 보여줌 -->
-    <AppBottomNav class="bottom-nav-fixed" />
+    <AppBottomNav v-if="!isIntroPage" class="bottom-nav-fixed" />
 
-    <!-- 위치 허용 여부 안내 -->
     <v-dialog v-model="showConsentDialog" persistent max-width="400">
       <v-card>
         <v-card-title class="text-h6 font-weight-bold">
-          위치 사용 허용
+          {{ _t('location.permission_title') }}
         </v-card-title>
         <v-card-text>
-          내 주변의 중고 거래와 알바를 보기 위해 위치 정보를 사용합니다. 허용하시겠습니까?
+          {{ _t('location.permission_description') }}
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn color="grey" text @click="handleConsent(false)">거부</v-btn>
-          <v-btn color="primary" @click="handleConsent(true)">허용</v-btn>
+          <v-btn color="grey" text @click="handleConsent(false)">
+            {{ _t('common.deny') }}
+          </v-btn>
+          <v-btn color="primary" @click="handleConsent(true)">
+            {{ _t('common.allow') }}
+          </v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
-    <!-- 에러 안내 -->
     <v-snackbar v-model="showLocationError" color="red" timeout="5000">
       {{ geo.error }}
     </v-snackbar>
@@ -45,67 +45,100 @@ import { useRoute } from 'vue-router'
 import { useGeoStore } from '@/stores/geoStore'
 import { useAuthStore } from '@/stores/authStore'
 import { useNotificationStore } from '@/stores/notificationStore'
+import { useI18n } from 'vue-i18n'
 
 import AppHeader from '~/components/layout/AppHeader.vue'
 import AppBottomNav from '~/components/layout/AppBottomNav.vue'
 import AppBackHeader from '~/components/layout/AppBackHeader.vue'
 
+const { t: _t, locale } = useI18n()
 const route = useRoute()
+
+const isIntroPage = computed(() => route.path === '/intro')
+const isMainPage = computed(() => route.path === '/')
+
 const geo = useGeoStore()
 const auth = useAuthStore()
 const notification = useNotificationStore()
 
-const isMainPage = computed(() => route.path === '/')
-const pageTitle = computed(() => {
-  const map: Record<string, string> = {
-    '/plans': '유료 플랜',
-    '/post': '글 등록',
-    '/mypage': '마이페이지',
-    '/bids/history': '입찰내역',
-    '/settings': '설정',
-    '/auth/login': '로그인',
-    '/deals/search': '키워드 검색',
-    '/post/used': '중고 거래 등록',
-    '/post/barter': '물물교환 등록',
-    '/post/parttime': '알바 모집 등록',
-    '/post/parttime-request': '알바 요청 등록',
-  }
-  return map[route.path] || ''
-})
-
 const LOCATION_KEY = 'locationConsent'
 const showConsentDialog = ref(false)
 const showLocationError = ref(false)
+
 const socket = ref<WebSocket | null>(null)
-let reconnectTimeout: any = null
+let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
+
+const themeStore = useThemeStore()
+themeStore.initTheme()
+
+const pageTitle = computed(() => {
+  const path = route.path
+  const map: Record<string, string> = {
+    '/deals/search-result': 'page.search_result',
+    '/deals/detail': 'page.deal_detail',
+    '/post/used': 'page.post_used',
+    '/post/barter': 'page.post_barter',
+    '/post/parttime-request': 'page.parttime_request',
+    '/post/parttime': 'page.parttime',
+    '/chats': 'page.chat',
+    '/plans': 'page.plans',
+    '/support': 'page.support',
+    '/post': 'page.post',
+    '/mypage': 'page.mypage',
+    '/support/help/my-inquiries': 'page.my_inquiries',
+    '/bids/history': 'page.bids',
+    '/settings': 'page.settings',
+    '/auth/login': 'page.login',
+    '/deals/search': 'page.keyword_search',
+    '/deals/barter': 'page.barter',
+    '/deals/parttime': 'page.parttime_today',
+    '/deals/used': 'page.used',
+    '/deals/parttime-request': 'page.parttime_offer'
+  }
+  return map[path] || ''
+})
+
+const resolvedTitle = computed(() => _t(pageTitle.value))
+
+const getUserId = (): number => {
+  return auth.user?.id || Number(localStorage.getItem('userId') || 0)
+}
 
 const connectNotificationSocket = () => {
-  const userId = auth.user?.id
-  if (!userId) return
+  const userId = getUserId()
+  if (!userId) {
+    console.warn(_t('log.missing_user_id'))
+    return
+  }
 
-  if (socket.value && socket.value.readyState === WebSocket.OPEN) return
+  if (socket.value && socket.value.readyState === WebSocket.OPEN) {
+    console.log(_t('log.socket_already_connected'))
+    return
+  }
 
-  const ws = new WebSocket(`ws://localhost:8080/ws/notify?userId=${userId}`)
+  const ws = new WebSocket(`wss://app.to-deal.com/ws/notify?userId=${userId}`)
   socket.value = ws
 
   ws.onopen = () => {
-    console.log('✅ 알림 소켓 연결됨', userId)
-    clearTimeout(reconnectTimeout)
+    console.log(_t('log.socket_connected'), userId)
+    if (reconnectTimeout) clearTimeout(reconnectTimeout)
   }
 
   ws.onmessage = (event) => {
     try {
       const msg = JSON.parse(event.data)
-      alert(msg)
-      if (msg.type === 'chat') {
+      const userId = getUserId()
+      if (msg.senderId === userId) return
+
+      if (msg.type === 'chatNoti') {
         notification.add({
-          type: 'chat',
+          type: 'chatNoti',
           chatRoomId: msg.chatRoomId,
           senderId: msg.senderId,
           message: msg.message,
           sentAt: msg.sentAt,
         })
-        console.log('📩 채팅 알림 수신됨:', msg)
+        console.log(_t('log.chat_received'), msg)
       }
 
       if (msg.type === 'deal') {
@@ -116,39 +149,24 @@ const connectNotificationSocket = () => {
           dealTitle: msg.dealTitle,
           sentAt: msg.sentAt,
         })
-        console.log('📩 딜 알림 수신됨:', msg)
+        console.log(_t('log.deal_received'), msg)
       }
-
     } catch (e) {
-      console.error('❌ 알림 메시지 파싱 실패:', e)
+      console.error(_t('log.socket_parse_error'), e)
     }
   }
 
   ws.onclose = () => {
-    console.warn('🔌 알림 소켓 종료됨, 3초 후 재연결 시도...')
+    console.warn(_t('log.socket_disconnected'))
     socket.value = null
-    reconnectTimeout = setTimeout(() => connectNotificationSocket(), 3000)
+    reconnectTimeout = setTimeout(connectNotificationSocket, 3000)
   }
 
   ws.onerror = (e) => {
-    console.error('❌ 알림 소켓 오류:', e)
-    ws.close()
+    console.error(_t('log.socket_error'), e)
+    socket.value?.close()
   }
 }
-
-onMounted(async () => {
-  const consent = localStorage.getItem(LOCATION_KEY)
-
-  if (consent === 'true') {
-    await geo.initLocationWithConsent(true)
-  } else if (consent === 'false') {
-    await geo.initLocationWithConsent(false)
-  } else {
-    showConsentDialog.value = true
-  }
-
-  connectNotificationSocket()
-})
 
 const handleConsent = async (agree: boolean) => {
   localStorage.setItem(LOCATION_KEY, String(agree))
@@ -159,11 +177,21 @@ const handleConsent = async (agree: boolean) => {
     localStorage.setItem('userLat', String(geo.latitude))
     localStorage.setItem('userLng', String(geo.longitude))
     localStorage.setItem('userRegionName', geo.regionName)
-
-
   }
 }
 
+onMounted(async () => {
+  const consent = localStorage.getItem(LOCATION_KEY)
+  if (consent === 'true') {
+    await geo.initLocationWithConsent(true)
+  } else if (consent === 'false') {
+    await geo.initLocationWithConsent(false)
+  } else {
+    showConsentDialog.value = true
+  }
+
+  connectNotificationSocket()
+})
 
 watch(() => geo.error, (val) => {
   if (val) showLocationError.value = true

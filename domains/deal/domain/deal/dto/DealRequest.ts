@@ -1,3 +1,5 @@
+export type PricingType = 'BIDDING' | 'FIXED'
+
 export interface DealRequest {
     title: string
     description: string
@@ -6,6 +8,7 @@ export interface DealRequest {
     deadline: string // ISO 8601
     region: string
     regionDepth1: string
+    pricingType: PricingType // ✅ 추가
     regionDepth2: string
     regionDepth3: string
     latitude: number

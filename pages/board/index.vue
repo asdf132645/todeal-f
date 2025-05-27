@@ -1,71 +1,167 @@
 <template>
   <v-container>
-    <div class="d-flex justify-space-between align-center mb-2">
+    <!-- ✅ 헤더: 커뮤니티 + 글쓰기 버튼 -->
+    <div class="d-flex justify-space-between align-center mb-4">
       <div class="text-h6 font-weight-bold">커뮤니티</div>
-      <v-btn
-          color="primary"
-          density="comfortable"
-          size="small"
-          @click="goToWrite"
-      >
-        ✏️ 글쓰기
+      <v-btn color="primary" density="comfortable" @click="goToWrite">
+        글쓰기
       </v-btn>
     </div>
+    <!-- ✅ 탭 (내 동네 / 전체) -->
+    <v-card flat class="mb-4 d-flex justify-center">
+      <div class="custom-toggle">
+        <button
+            :class="['toggle-btn', tab === 'local' ? 'active' : '']"
+            @click="tab = 'local'"
+        >
+          내 동네
+        </button>
+        <button
+            :class="['toggle-btn', tab === 'all' ? 'active' : '']"
+            @click="tab = 'all'"
+        >
+          전체
+        </button>
+      </div>
+    </v-card>
 
-    <v-tabs v-model="tab" bg-color="white" class="mb-4">
-      <v-tab value="local">내 동네</v-tab>
-      <v-tab value="all">전체</v-tab>
-    </v-tabs>
 
-    <v-list lines="three" density="comfortable">
-      <v-list-item
-          v-for="post in posts"
-          :key="post.id"
-          @click="goToPost(post.id)"
-          class="hoverable"
-      >
-        <v-list-item-title class="font-weight-bold">{{ post.title }}</v-list-item-title>
-        <v-list-item-subtitle class="text-truncate">{{ post.content }}</v-list-item-subtitle>
-        <v-list-item-subtitle class="text-caption text-grey">
-          💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}
-        </v-list-item-subtitle>
-      </v-list-item>
-    </v-list>
+    <div class="d-flex gap-2 mb-4">
+      <!-- 검색 대상 선택 -->
+      <v-select
+          v-model="searchField"
+          :items="searchFieldOptions"
+          dense
+          variant="outlined"
+          hide-details
+          style="max-width: 120px"
+          class="mr-3"
+      />
+
+      <!-- 검색어 입력 -->
+      <v-text-field
+          v-model="keyword"
+          label="검색어"
+          variant="outlined"
+          dense
+          clearable
+          hide-details
+          prepend-inner-icon="mdi-magnify"
+          @keyup.enter="fetchPosts"
+          class="flex-grow-1"
+      />
+    </div>
+
+
+    <!-- ✅ 카테고리 탭 -->
+    <v-card flat class="mb-4">
+      <v-tabs v-model="category" bg-color="white" grow>
+        <v-tab value="all">전체</v-tab>
+        <v-tab value="local-life">우리 동네 생활</v-tab>
+        <v-tab value="trade-help">중고거래 도움</v-tab>
+        <v-tab value="parttime">알바 정보</v-tab>
+        <v-tab value="language-exchange">언어 교환</v-tab>
+        <v-tab value="culture">문화 교류</v-tab>
+        <v-tab value="qna">Q&A</v-tab>
+        <v-tab value="free">자유</v-tab>
+      </v-tabs>
+    </v-card>
+
+    <!-- ✅ 게시글 리스트 -->
+    <template v-if="posts.length">
+      <v-list lines="three" density="comfortable">
+        <template v-for="(post, idx) in posts" :key="post.id">
+          <v-list-item
+              @click="goToPost(post.id)"
+              class="hoverable px-3 py-3"
+          >
+            <v-list-item-title class="font-weight-bold">
+              {{ post.title }}
+            </v-list-item-title>
+            <v-list-item-subtitle class="text-truncate">
+              {{ post.content }}
+            </v-list-item-subtitle>
+            <v-list-item-subtitle class="text-caption text-grey">
+              💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}
+            </v-list-item-subtitle>
+          </v-list-item>
+
+          <v-divider v-if="idx !== posts.length - 1" class="my-1" />
+        </template>
+      </v-list>
+    </template>
+
+    <!-- ❌ 글이 없을 경우 -->
+    <v-container class="text-center py-16" v-else>
+      <v-icon size="56" color="grey">mdi-chat-remove</v-icon>
+      <div class="text-subtitle-1 font-weight-bold mt-4">아직 글이 없어요</div>
+      <div class="text-body-2 text-grey mt-1">첫 번째 글을 남겨보세요!</div>
+      <v-btn color="primary" class="mt-6" @click="goToWrite">글쓰기</v-btn>
+    </v-container>
   </v-container>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { useGeoStore } from '@/stores/geoStore'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 
 const posts = ref([])
-const tab = ref('local')
 const router = useRouter()
-const geo = useGeoStore()
+const route = useRoute()
 
+// ✅ 쿼리에서 tab/category 복원
+const tab = ref(route.query.tab?.toString() || 'local')
+const category = ref(route.query.category?.toString() || 'all')
+const keyword = ref('')
+const searchField = ref('title') // 기본값: 제목
+
+const searchFieldOptions = [
+  { title: '제목', value: 'title' },
+  { title: '내용', value: 'content' },
+  { title: '닉네임', value: 'nickname' }
+]
+
+// ✅ 상태 변경 시 쿼리 반영 (기존 위치 쿼리 포함)
+watch([tab, category], ([newTab, newCategory]) => {
+  router.replace({
+    query: {
+      ...route.query,
+      tab: newTab,
+      category: newCategory
+    }
+  })
+})
+
+// ✅ 게시글 불러오기
 const fetchPosts = async () => {
-  const lat = geo.latitude
-  const lng = geo.longitude
-  const radius = process.client
-      ? Number(localStorage.getItem('radius') || 0)
-      : 0
-  const params = tab.value === 'local' && typeof lat === 'number' && typeof lng === 'number'
-      ? {
-        latitude: lat,
-        longitude: lng,
-        distance: radius // ← 기본 5km
-      }
-      : {}
+  const lat = Number(localStorage.getItem('userLat'))
+  const lng = Number(localStorage.getItem('userLng'))
+  const radius = Number(localStorage.getItem('userRadius') || 5)
+
+  const params: any =
+      tab.value === 'local' && !isNaN(lat) && !isNaN(lng)
+          ? { latitude: lat, longitude: lng, distance: radius }
+          : {}
+
+  if (category.value !== 'all') {
+    params.category = category.value
+  }
+
+  if (keyword.value.trim()) {
+    params.keyword = keyword.value.trim()
+    params.field = searchField.value // ✅ 검색 대상 전달
+  }
 
   const res = await boardApi.getPosts(params)
   posts.value = res
 }
 
-watch(tab, fetchPosts, { immediate: true })
+
+watch([tab, category], fetchPosts, { immediate: true })
 
 const goToPost = (id: number) => router.push(`/board/${id}`)
+
 const goToWrite = () => {
   if (!localStorage.getItem('accessToken')) {
     router.push('/auth/login')
@@ -73,5 +169,41 @@ const goToWrite = () => {
     router.push('/board/write')
   }
 }
+
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
+
 </script>
+<style>
+.custom-toggle {
+  display: flex;
+  gap: 4px;
+  background: #2a2a2a;
+  padding: 4px;
+  border-radius: 999px;
+  max-width: 240px;
+  width: 100%;
+}
+
+.toggle-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: #ccc;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 999px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.toggle-btn:hover {
+  background-color: #3a3a3a;
+  color: #fff;
+}
+
+.toggle-btn.active {
+  background-color: #f1c40f; /* primary 색상 */
+  color: #000;
+  font-weight: 600;
+}
+</style>

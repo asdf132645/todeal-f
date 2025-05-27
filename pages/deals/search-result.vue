@@ -1,7 +1,7 @@
 <!--// ✅ pages/deals/search-result.vue-->
 <template>
-  <v-container fluid class="pa-4 pt-6" style="background-color: #F5F7FA; min-height: 100vh;">
-    <div class="text-h6 font-weight-bold mb-3">🔍 검색 결과</div>
+  <v-container fluid class="pa-4 pt-6" style="min-height: 100vh;">
+    <div class="text-h6 font-weight-bold mb-3">검색 결과</div>
 
     <v-row v-if="results.length > 0" dense>
       <v-col cols="6" v-for="deal in results" :key="deal.id">
@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref,  watch } from 'vue'
 import { useRoute } from 'vue-router'
 import DealCard from '@/components/deal/DealCard.vue'
 import { dealApi } from '@/domains/deal/infrastructure/dealApi'
@@ -40,6 +40,7 @@ const fetchPage = async () => {
     const res = await dealApi.searchDeals({
       type: route.query.type,
       keyword: route.query.keyword,
+      exclude: route.query.exclude, // ✅ 여기에 추가
       page: page.value
     })
     if (res.length === 0) {
@@ -60,7 +61,6 @@ const loadMore = () => {
 }
 
 watch(() => route.query, () => {
-  // 쿼리 변경 시 초기화 후 재검색
   results.value = []
   page.value = 1
   hasNext.value = true

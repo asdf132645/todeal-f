@@ -1,0 +1,305 @@
+/* ---------- 전체 배경 / 기본 글자색 ---------- */
+body.light-mode {
+    background-color: #F9FAFB !important;
+    color: #1E1E1E !important;
+}
+
+/* ---------- 앱 전체 ---------- */
+.light-mode .v-app {
+    background-color: #F9FAFB !important;
+    color: #1E1E1E !important;
+}
+
+/* ---------- 앱바(Header 등) ---------- */
+.light-mode .v-app-bar {
+    background-color: #2A2E9D !important;
+    color: #1E1E1E !important;
+    border-bottom: 1px solid #E0E0E0 !important;
+}
+/* 플로팅 버튼 */
+body.light-mode .fab-circle {
+    background-color: #ffffff !important;
+    border: 1px solid #2A2E9D !important;
+    box-shadow: 0 4px 10px rgba(42, 46, 157, 0.2);
+}
+
+body.light-mode .fab-circle .v-icon {
+    color: #2A2E9D !important;
+}
+
+/* 플로팅 메뉴 */
+body.light-mode .floating-menu .menu-option {
+    background-color: #ffffff !important;
+    border: 1px solid #2A2E9D !important;
+    box-shadow: 0 2px 6px rgba(42, 46, 157, 0.1);
+}
+
+body.light-mode .floating-menu .menu-option:hover {
+    background-color: #f4f6ff !important;
+}
+
+body.light-mode .floating-menu .icon {
+    color: #2A2E9D !important;
+}
+
+body.light-mode .floating-menu .label {
+    color: #2A2E9D !important;
+}
+
+/* 하단 네비게이션 */
+body.light-mode .bottom-nav-dark {
+    background-color: #ffffff !important;
+    border-top: 1px solid #e0e0e0 !important;
+}
+.light-mode .text-caption{
+    color: #141414 !important;
+}
+body.light-mode .v-btn.active .v-icon,
+body.light-mode .v-btn.active span {
+    color: #2A2E9D !important;
+}
+
+/* ---------- 카드 ---------- */
+.light-mode .v-card {
+    background-color: #FFFFFF !important;
+    /*color: #56565f !important;*/
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E0E0E0 !important;
+}
+.light-mode .light-mode .v-card.main {
+    background: #535353 !important;
+}
+.light-mode .v-btn__content.main {
+    color: #0E0F10!important;
+}
+.light-mode .v-card-actions.main span {
+    color: #0E0F10!important;
+}
+.light-mode .light-mode .v-btn.main .text-caption {
+    color: #FFFFFF !important;
+}
+.light-mode .header-sheet.main {
+    border: none;
+}
+.light-mode .v-container {
+    background-color: #FFFFFF !important;
+}
+
+.light-mode .v-sheet {
+        background: #fff;
+        color: #000;
+        border: 1px solid #dedede;
+}
+
+.light-mode .header-title {
+    color: #1E1E1E !important;
+}
+.light-mode .v-application {
+    background-color: #FFFFFF !important;
+}
+.light-mode .location-subtitle{
+    color: #1E1E1E !important;
+}
+.light-mode .location-title {
+    color: #1E1E1E !important;
+}
+/* ---------- 버튼 ---------- */
+.light-mode .v-btn {
+    background-color: #2A2E9D !important;
+    color: #FFFFFF !important;
+}
+
+.light-mode .v-btn.text,
+.light-mode .v-btn--variant-text {
+    background-color: transparent !important;
+    color: #2A2E9D !important;
+}
+
+/* ---------- 입력창 ---------- */
+.light-mode .v-text-field input,
+.light-mode .v-input input {
+    background-color: #FFFFFF !important;
+    color: #1E1E1E !important;
+}
+
+/* ---------- 리스트 ---------- */
+.light-mode .v-list-item {
+    background-color: #FFFFFF !important;
+    color: #1E1E1E !important;
+    border-bottom: 1px solid #E0E0E0;
+}
+.light-mode .v-list {
+    background: #FFFFFF !important;
+}
+/* ---------- 탭 ---------- */
+.light-mode .v-tabs {
+    background-color: #FFFFFF !important;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+.light-mode .v-tab {
+    color: #2A2E9D !important;
+}
+
+/* ---------- 아이콘 ---------- */
+.light-mode .v-icon {
+    color: #2A2E9D !important;
+}
+
+/* ---------- 푸터(하단 네비게이션) ---------- */
+.light-mode .bottom-nav-fixed {
+    background-color: #FFFFFF !important;
+    border-top: 1px solid #E0E0E0;
+}
+
+.light-mode .bottom-nav-fixed .v-btn {
+    background-color: transparent !important;
+    color: #2A2E9D !important;
+}
+
+/* ---------- 드로어(오른쪽 메뉴) ---------- */
+.light-mode .v-navigation-drawer {
+    background-color: #FFFFFF !important;
+    color: #1E1E1E !important;
+    border-left: 1px solid #E0E0E0 !important;
+}
+
+/* ---------- 배너 / 강조영역 ---------- */
+.light-mode .highlight-banner {
+    background-color: #FFF8E1 !important;
+    color: #1E1E1E !important;
+    border: 1px solid #FFECB3;
+}
+
+/* ---------- 다이얼로그 ---------- */
+.light-mode .v-dialog .v-card {
+    background-color: #FFFFFF !important;
+    color: #1E1E1E !important;
+}
+
+/* ---------- 스낵바 / 토스트 ---------- */
+.light-mode .v-snackbar {
+    background-color: #323232 !important;
+    color: #fff !important;
+}
+
+/* ---------- 기타 강조 색상 ---------- */
+.light-mode .text-primary {
+    color: #2A2E9D !important;
+}
+
+.light-mode .bg-primary {
+    background-color: #2A2E9D !important;
+    color: #fff !important;
+}
+
+/* ✅ 라이트 모드용 전체 헤더 */
+body.light-mode .v-app-bar {
+    background-color: #ffffff !important;
+    color: #1E1E1E !important;
+    border-bottom: 1px solid #E0E0E0;
+}
+
+/* ✅ "toDEAL" 타이틀 */
+body.light-mode .v-app-bar .v-toolbar-title {
+    color: #2A2E9D !important;
+}
+body.light-mode .v-toolbar-title span {
+    color: #FFD54F !important;
+}
+
+/* ✅ 위치 버튼 */
+body.light-mode .v-app-bar .v-btn.location-button {
+    background-color: #f5f5f5 !important;
+    color: #1E1E1E !important;
+}
+body.light-mode .v-app-bar .v-btn.location-button .text-caption {
+    color: #1E1E1E !important;
+}
+body.light-mode .v-app-bar .v-btn.location-button .v-icon {
+    color: #FFB74D !important;
+}
+body.light-mode .v-app-bar .v-btn.location-button .v-icon:last-child {
+    color: #888888 !important;
+}
+
+/* ✅ 메뉴 버튼 */
+body.light-mode .v-app-bar .v-btn.menu-button {
+    color: #1E1E1E !important;
+}
+
+/* ✅ 다이얼로그 (지역설정) */
+body.light-mode .v-dialog .v-card {
+    background-color: #ffffff !important;
+    color: #1E1E1E !important;
+    border-radius: 12px;
+}
+body.light-mode #map {
+    border-radius: 8px !important;
+}
+/* 전체 배경 */
+body.light-mode .bg-app {
+    background-color: #f9fafb !important;
+}
+
+/* 헤더 */
+body.light-mode .header-sheet {
+    background-color: #ffffff !important;
+    color: #1E1E1E !important;
+}
+body.light-mode .highlight-text {
+    color: #FFD54F !important;
+}
+
+/* highlight-jobs */
+body.light-mode .highlight-jobs {
+    background-color: #ffffff !important;
+    color: #1E1E1E !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-radius: 16px !important;
+}
+
+/* job-card */
+body.light-mode .job-card {
+    background-color: #f5f5f5 !important;
+    color: #1E1E1E !important;
+    border-radius: 12px !important;
+}
+
+/* category 카드 */
+body.light-mode .category-card {
+    background-color: #ffffff !important;
+    color: #1E1E1E !important;
+}
+body.light-mode .subtitle-text {
+    color: #888888 !important;
+}
+
+/* 위치 안내 배너 */
+body.light-mode .location-banner {
+    background-color: #fff8e1 !important;
+    color: #1E1E1E !important;
+    border: 1px solid #ffe082 !important;
+}
+
+/* 공통 텍스트 */
+body.light-mode .section-title {
+    color: #1E1E1E !important;
+}
+body.light-mode .section-empty {
+    color: #999999 !important;
+    background-color: transparent !important;
+}
+
+.light-mode .color-black {
+    color: #1E1E1E !important;
+}
+
+.light-mode .color-blue {
+    color: #2A2E9D !important;
+}
+
+.light-mode .color-white {
+    color: #FFFFFF !important;
+}

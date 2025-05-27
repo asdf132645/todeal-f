@@ -10,7 +10,7 @@ export const dealApi = {
         type: 'used' | 'parttime',
         sort: 'distance' | 'deadline' | 'latest'
     ): Promise<Deal[]> {
-        return apiClient.get<Deal[]>(`/deals?type=${type}&sort=${sort}`)
+        return apiClient.get<Deal[]>(`/api/deals?type=${type}&sort=${sort}`)
     },
 
     async createDeal(payload: DealRequest): Promise<DealResponse> {
@@ -45,7 +45,7 @@ export const dealApi = {
         radius: number
         type: 'used' | 'parttime'
     }) {
-        return apiClient.get<Deal[]>('/deals/nearby', {
+        return apiClient.get<Deal[]>('/api/deals/nearby', {
             params: { lat, lng, radius, type }
         })
     },
@@ -54,16 +54,26 @@ export const dealApi = {
     getList({
                 type,
                 page,
-                pageSize
+                pageSize,
+                lat,
+                lng,
+                radius, // ✅ 추가
             }: {
         type: 'used' | 'parttime' | 'barter'
         page: number
         pageSize: number
+        lat?: number
+        lng?: number
+        radius?: number   // ✅ 선택값 또는 필수값으로 설정
     }): Promise<DealResponse[]> {
+        console.log('🚀 getList 호출됨:', { type, page, pageSize, lat, lng, radius })
+
         return apiClient.get<DealResponse[]>('/api/deals', {
-            params: { type, page, pageSize }
+            params: { type, page, pageSize, lat, lng, radius } // ✅ 포함
         })
     },
+
+
 
     searchDeals(params: {
         type: string

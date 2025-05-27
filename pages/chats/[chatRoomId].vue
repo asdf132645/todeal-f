@@ -2,33 +2,25 @@
   <v-container class="pa-4">
     <v-card elevation="2" class="rounded-lg">
       <v-card-title class="text-h6 font-weight-bold">💬 실시간 채팅</v-card-title>
-
       <v-divider />
 
       <v-card-text class="chat-window">
-        <div v-if="isTyping" class="text-caption text-grey mb-2">상대방이 입력 중입니다...</div>
-
         <div
             v-for="(msg, idx) in messages"
             :key="msg.id || idx"
             :class="['chat-bubble', msg.senderId === userId ? 'mine' : 'theirs']"
         >
           <div class="text-caption grey--text mb-1">
-            {{ msg.senderId === userId ? '나' : '상대방' }}`
+            {{ msg.senderId === userId ? '나' : '상대방' }}
           </div>
-
           <div>{{ msg.message }}</div>
-
-          <div class="text-caption mt-1 text-grey-darken-1 flex justify-end" v-if="msg.senderId === userId">
-            <span>{{ formatTime(msg.sentAt) }}</span>
-<!--            <span class="ml-1">{{ msg.read ? '읽음' : '안 읽음' }}</span>-->
-          </div>
-
-          <div class="text-caption mt-1 text-grey-darken-1" v-else>
+          <div
+              class="text-caption mt-1 text-grey-darken-1"
+              :class="msg.senderId === userId ? 'flex justify-end' : ''"
+          >
             {{ formatTime(msg.sentAt) }}
           </div>
         </div>
-
         <div ref="bottomAnchor" />
       </v-card-text>
 
@@ -50,33 +42,31 @@
 </template>
 
 <script setup lang="ts">
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { ref, onMounted, nextTick, watch } from 'vue'
-import { useChatSocket } from '@/composables/useChatSocket'
 import { useChatMessages } from '@/composables/useChatMessages'
-import { format, isToday } from 'date-fns'
 import { chatApi } from '@/domains/chat/infrastructure/chatApi'
-import { useAuthStore } from '@/stores/authStore'
+import { format, isToday } from 'date-fns'
+import { useChatSocketStore } from '@/stores/chatSocketStore'
 
 const route = useRoute()
-const router = useRouter()
-const auth = useAuthStore()
-
 const chatRoomId = Number(route.params.chatRoomId)
-const userId = auth.user?.id
+const receiverId = Number(route.query.receiverId || 0)
+const userId = process.client ? Number(localStorage.getItem('userId') || 0) : 0
 
 const text = ref('')
+const bottomAnchor = ref<HTMLElement | null>(null)
 const isTyping = ref(false)
 const typingTimeout = ref<NodeJS.Timeout | null>(null)
-const bottomAnchor = ref<HTMLElement | null>(null)
 
-const { messages, loadMessages, isLoading, hasMore } = useChatMessages(chatRoomId)
+const { messages, loadMessages } = useChatMessages(chatRoomId)
+const chatSocketStore = useChatSocketStore()
 
-watch(messages, () => {
-  scrollToBottom()
-})
+watch(messages, () => scrollToBottom())
 
-const handleMessage = async (msg: any) => {
+function handleMessage(msg: any) {
+  if (msg?.source === 'notify') return
+
   const data = typeof msg === 'string' ? JSON.parse(msg) : msg
 
   if (data.type === 'typing' && data.senderId !== userId) {
@@ -86,69 +76,77 @@ const handleMessage = async (msg: any) => {
     return
   }
 
-  messages.value.push({
-    id: data.id,
-    chatRoomId: data.chatRoomId,
-    senderId: data.senderId,
-    message: data.messageContent || data.message,
-    read: data.read ?? false,
-    sentAt: data.sentAt,
-    receiverId: data.receiverId ?? null,
-  })
-  messages.value.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime())
+  if (data.senderId === userId && data.type === 'text') return
 
-  await markMessagesAsRead()
+  messages.value.push({
+    id: data.id ?? Date.now(),
+    chatRoomId: data.chatRoomId ?? chatRoomId,
+    senderId: data.senderId,
+    message: data.message || data.messageContent || '[메시지 없음]',
+    read: data.read ?? false,
+    sentAt: data.sentAt || new Date().toISOString(),
+    receiverId: data.receiverId ?? receiverId
+  })
+
+  messages.value.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime())
+  markMessagesAsRead()
   scrollToBottom()
 }
-
-const { sendMessage: send, socket } = useChatSocket(chatRoomId, userId, handleMessage)
 
 onMounted(async () => {
   await loadMessages()
   await markMessagesAsRead()
+
+  // ✅ 이미 연결된 경우 connectOnce는 생략, BUT enterRoom은 꼭 호출해야 함
+  const isConnected =
+      chatSocketStore.socket?.readyState === WebSocket.OPEN &&
+      chatSocketStore.currentRoomId === chatRoomId &&
+      chatSocketStore.userId === userId
+
+  if (!isConnected) {
+    chatSocketStore.connectOnce(userId, chatRoomId)
+  }
+
+  chatSocketStore.enterRoom(chatRoomId, handleMessage)
   scrollToBottom()
 })
 
+
 function scrollToBottom() {
   nextTick(() => {
-    if (bottomAnchor.value) {
-      bottomAnchor.value.scrollIntoView({ behavior: 'smooth', block: 'end' })
-    }
+    bottomAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
   })
 }
 
-async function sendMessage() {
-  if (text.value.trim()) {
-    if (socket.value?.readyState === WebSocket.OPEN) {
-      const messageText = text.value
-      send(messageText)
-      text.value = ''
+function sendMessage() {
+  if (!text.value.trim()) return
 
-      const latestMessages = await chatApi.getRecentMessages(chatRoomId)
-      messages.value.splice(0, messages.value.length, ...latestMessages)
-    } else {
-      console.warn('WebSocket 연결이 아직 안 됐습니다.')
-    }
-  }
+  chatSocketStore.sendMessage({
+    chatRoomId,
+    senderId: userId,
+    receiverId,
+    message: text.value.trim()
+  })
+
+  text.value = ''
 }
 
 function sendTypingSignal() {
-  if (socket.value?.readyState === WebSocket.OPEN) {
-    socket.value.send(JSON.stringify({
-      type: 'typing',
-      chatRoomId,
-      userId
-    }))
+  if (chatSocketStore.socket?.readyState === WebSocket.OPEN) {
+    chatSocketStore.socket.send(
+        JSON.stringify({
+          type: 'typing',
+          chatRoomId,
+          userId
+        })
+    )
   }
 }
 
 async function markMessagesAsRead() {
   try {
-    await chatApi.markAsRead({
-      chatRoomId,
-      userId
-    })
-    messages.value.forEach(msg => {
+    await chatApi.markAsRead({ chatRoomId, userId })
+    messages.value.forEach((msg) => {
       if (msg.senderId !== userId) msg.read = true
     })
   } catch (e) {
@@ -158,17 +156,15 @@ async function markMessagesAsRead() {
 
 function formatTime(isoTime: string) {
   if (!isoTime) return ''
-
   const date = new Date(isoTime)
   if (isNaN(date.getTime())) return ''
-
-  return isToday(date) ? format(date, 'a h:mm') : format(date, 'M\u6708 d\u65e5 a h:mm')
+  return isToday(date) ? format(date, 'a h:mm') : format(date, 'M월 d일 a h:mm')
 }
 </script>
 
-<style scoped>
+<style>
 .chat-window {
-  height: 400px;
+  height: 65vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -183,13 +179,13 @@ function formatTime(isoTime: string) {
 }
 
 .chat-bubble.mine {
-  background-color: #e3f2fd;
+  background-color: #3b3b3b;
   align-self: flex-end;
   text-align: right;
 }
 
 .chat-bubble.theirs {
-  background-color: #eeeeee;
+  background-color: #4d4d4d;
   align-self: flex-start;
   text-align: left;
 }
