@@ -34,10 +34,12 @@ export const trustScoreApi = {
     // 기존 평점 조회도 유지
     async getUserScores(userIds: number[]) {
         const response = await apiClient.get('/api/trust-scores', {
-            params: { userIds },
-            paramsSerializer: params => qs.stringify(params, { indices: false })
+            params: {
+                userIds: userIds.join(',')  // ✅ '1,2,3' 형태로 보냄
+            }
         })
-        return response?.data
+        console.log(response)
+        return response
     },
 }
 

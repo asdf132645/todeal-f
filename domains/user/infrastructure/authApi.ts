@@ -24,7 +24,7 @@ export const authApi = {
     },
 
     // ✅ 카카오 회원가입
-    signupWithKakao: async (form: any, tempToken: string) => {
+    signupWithKakaoApi: async (form: any, tempToken: string) => {
         return await apiClient.post<{ token: string }>('/api/auth/signup', form, {
             headers: { Authorization: `Bearer ${tempToken}` }
         })

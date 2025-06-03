@@ -10,7 +10,7 @@
       {{ _t('board.guideline_warning') }}
     </v-alert>
 
-    <!-- ✅ 카테고리 선택 -->
+    <!--  카테고리 선택 -->
     <v-select
         v-model="category"
         :items="categoryOptions"
@@ -21,7 +21,7 @@
         clearable
         class="mb-4"
     />
-    <!-- ✅ 번역 버튼 안내 -->
+    <!--  번역 버튼 안내 -->
     <div class="mb-1 text-caption text-grey-darken-1">
       {{ _t('board.translate_tip') }}
     </div>
@@ -68,7 +68,7 @@
       </v-card>
     </v-expand-transition>
 
-    <!-- ✅ 이미지 업로더 -->
+    <!--  이미지 업로더 -->
     <div class="image-upload-wrapper mb-5">
       <div class="image-grid">
         <div
@@ -95,13 +95,13 @@
       </div>
       <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
     </div>
-    <!-- ✅ 제목/내용 -->
+    <!--  제목/내용 -->
     <v-text-field v-model="title" :label="`${_t('board.title')}`" outlined clearable class="mb-3" />
     <v-textarea v-model="content" :label="`${_t('board.content')}`" outlined rows="4" auto-grow class="mb-3" />
 
 
 
-    <!-- ✅ 제출 버튼 -->
+    <!--  제출 버튼 -->
     <v-btn block color="primary" :loading="loading" @click="submit">{{ _t("board.complete") }}</v-btn>
   </v-container>
 </template>
@@ -113,7 +113,7 @@ import { boardApi } from '@/domains/board/infrastructure/boardApi'
 import { apiClient } from '@/libs/http/apiClient'
 import { useGeoStore } from '@/stores/geoStore'
 import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
-import {useI18n} from "vue-i18n";
+import { useI18n } from 'vue-i18n'
 
 const title = ref('')
 const content = ref('')
@@ -124,22 +124,19 @@ const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
 const targetLang = ref('')
 const loading = ref(false)
-const { t: _t, locale } = useI18n()
+const originalTitle = ref('')    //  원문 보존용
+const originalContent = ref('')  //  원문 보존용
 
+const { t: _t, locale } = useI18n()
 const geo = useGeoStore()
 const router = useRouter()
+
 const nickname = process.client ? localStorage.getItem('nickname') || '익명' : '익명'
 const region = process.client ? localStorage.getItem('userRegion') ?? undefined : undefined
 
 const langOptions = [
   { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' },
-  { label: '일본어', value: 'ja' },
-  { label: '베트남어', value: 'vi' },
-  { label: '중국어 간체', value: 'zh-CN' },
-  { label: '중국어 번체', value: 'zh-TW' },
-  { label: '태국어', value: 'th' },
-  { label: '인도네시아어', value: 'id' }
+  { label: '영어', value: 'en' }
 ]
 
 const categoryOptions = [
@@ -177,7 +174,9 @@ const handleImageUpload = async (event: Event) => {
   if (fileInput.value) fileInput.value.value = ''
 }
 
-const toggleTranslationPanel = () => showTranslatePanel.value = !showTranslatePanel.value
+const toggleTranslationPanel = () => {
+  showTranslatePanel.value = !showTranslatePanel.value
+}
 
 const runTranslation = async () => {
   if (!title.value || !content.value) {
@@ -185,6 +184,10 @@ const runTranslation = async () => {
     return
   }
   try {
+    //  원문 저장
+    originalTitle.value = title.value
+    originalContent.value = content.value
+
     const [resTitle, resContent] = await Promise.all([
       apiClient.post('/api/translate', {
         source: sourceLang.value,
@@ -197,6 +200,8 @@ const runTranslation = async () => {
         text: content.value
       })
     ])
+
+    // UI는 번역본으로 대체
     title.value = resTitle.translatedText
     content.value = resContent.translatedText
     showTranslatePanel.value = false
@@ -210,17 +215,20 @@ const submit = async () => {
   if (!title.value.trim() || !content.value.trim()) return alert('제목과 내용을 입력해주세요.')
   if (!category.value) return alert('카테고리를 선택해주세요.')
 
+  const lat = Number(localStorage.getItem('userLat'))
+  const lng = Number(localStorage.getItem('userLng'))
+
   loading.value = true
   try {
     await boardApi.createPost({
-      title: title.value,
-      content: content.value,
-      category: category.value,
+      title: originalTitle.value || title.value,        //  원문
+      content: originalContent.value || content.value,  //  원문
+      translatedTitle: title.value,                     //  번역본
+      translatedContent: content.value,                 //  번역본
       language: sourceLang.value,
-      translatedTitle: title.value,
-      translatedContent: content.value,
-      latitude: geo.latitude,
-      longitude: geo.longitude,
+      category: category.value,
+      latitude: lat,
+      longitude: lng,
       nickname,
       region,
       imageUrls: imageUrls.value
@@ -234,6 +242,7 @@ const submit = async () => {
   }
 }
 </script>
+
 
 <style scoped>
 .image-grid {

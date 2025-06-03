@@ -83,13 +83,15 @@ const goDetail = (id: number) => {
 const loadDeals = async () => {
   loading.value = true;
   const userRadius = process.client ? localStorage.getItem('userRadius') : null
+  const lat = Number(localStorage.getItem('userLat'))
+  const lng = Number(localStorage.getItem('userLng'))
   try {
     const res = await dealApi.getList({
       type,
       page: page.value,
       pageSize,
-      lat: geo.latitude,
-      lng: geo.longitude,
+      lat: lat,
+      lng: lng,
       radius : Number(userRadius)
     })
 

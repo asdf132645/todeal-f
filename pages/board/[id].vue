@@ -12,11 +12,11 @@
       </div>
 
       <div class="text-h6 font-weight-bold mb-3 color-black">
-        {{ post.title }}
+        {{ post.translatedTitle }}
       </div>
 
       <div class="text-body-1 color-black" style="white-space: pre-line;">
-        {{ post.content }}
+        {{ post.translatedContent }}
       </div>
 
       <!-- ✅ 이미지 썸네일 출력 -->

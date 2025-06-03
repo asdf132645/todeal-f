@@ -72,39 +72,49 @@ export const useAuthStore = defineStore('auth', () => {
         await registerFcm(res.user.id)
     }
 
-    const loginWithKakao = async () => {
-        if (typeof window === 'undefined' || !window.Kakao?.isInitialized?.()) {
-            throw new Error('Kakao SDK not available')
-        }
+     const loginWithKakao = async () => {
+        const { $kakaoReady } = useNuxtApp()
+        await $kakaoReady
 
-        await window.Kakao.Auth.login()
+        return new Promise(async (resolve, reject) => {
+            try {
+                await new Promise<void>((res, rej) => {
+                    window.Kakao.Auth.login({
+                        success: () => res(),
+                        fail: (err: any) => rej(new Error(`카카오 로그인 실패: ${JSON.stringify(err)}`))
+                    })
+                })
 
-        const kakaoAccessToken = window.Kakao.Auth.getAccessToken()
-        if (!kakaoAccessToken) {
-            // 사용자 취소 또는 인증 실패 등
-            return { isNewUser: true, tempToken: null }
-        }
+                const kakaoAccessToken = window.Kakao.Auth.getAccessToken()
+                if (!kakaoAccessToken) {
+                    throw new Error('카카오 액세스 토큰이 비어 있습니다.')
+                }
 
-        const res = await apiClient.post<{
-            accessToken: string
-            refreshToken: string
-            user: any
-            isNewUser?: boolean
-        }>('/api/auth/kakao-login', {
-            accessToken: kakaoAccessToken
+                const res = await apiClient.post<{
+                    accessToken: string
+                    refreshToken: string
+                    user: any
+                    isNewUser?: boolean
+                }>('/api/auth/kakao-login', {
+                    accessToken: kakaoAccessToken
+                })
+
+                if (res.isNewUser) {
+                    return resolve({ isNewUser: true, tempToken: kakaoAccessToken })
+                }
+
+                accessToken.value = res.accessToken
+                saveAccessToken(res.accessToken)
+                saveRefreshToken(res.refreshToken)
+                setUser(res.user)
+                await registerFcm(res.user.id)
+
+                return resolve({ isNewUser: false })
+            } catch (err) {
+                console.error('[❌] loginWithKakao error:', err)
+                return reject(err)
+            }
         })
-
-        if (res.isNewUser) {
-            // 새 유저인 경우 tempToken으로 accessToken 전달
-            return { isNewUser: true, tempToken: kakaoAccessToken }
-        }
-
-        accessToken.value = res.accessToken
-        saveAccessToken(res.accessToken)
-        saveRefreshToken(res.refreshToken)
-        setUser(res.user)
-        await registerFcm(res.user.id)
-        return { isNewUser: false }
     }
 
     const signupWithKakao = async (form: any, tempToken: string) => {

@@ -152,10 +152,12 @@ const categories = [
 ]
 
 const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'parttime-request') => {
+  const lat = Number(localStorage.getItem('userLat'))
+  const lng = Number(localStorage.getItem('userLng'))
   try {
     const res = await dealApi.fetchNearbyDeals({
-      lat: geo.latitude!,
-      lng: geo.longitude!,
+      lat: lat,
+      lng: lng,
       radius: userRadius.value,
       type
     })

@@ -89,10 +89,10 @@
               class="hoverable px-3 py-3"
           >
             <v-list-item-title class="font-weight-bold">
-              {{ post.title }}
+              {{ post.translatedTitle }}
             </v-list-item-title>
             <v-list-item-subtitle class="text-truncate">
-              {{ post.content }}
+              {{ post.translatedContent }}
             </v-list-item-subtitle>
             <v-list-item-subtitle class="text-caption text-grey">
               💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}

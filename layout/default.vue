@@ -33,8 +33,13 @@
       </v-card>
     </v-dialog>
 
-    <v-snackbar v-model="showLocationError" color="red" timeout="5000">
+    <v-snackbar v-model="showLocationError" color="red" timeout="8000">
       {{ geo.error }}
+      <template #actions>
+        <v-btn color="white" text @click="showConsentDialog = true">
+          다시 허용하기
+        </v-btn>
+      </template>
     </v-snackbar>
   </v-app>
 </template>
@@ -51,7 +56,7 @@ import AppHeader from '~/components/layout/AppHeader.vue'
 import AppBottomNav from '~/components/layout/AppBottomNav.vue'
 import AppBackHeader from '~/components/layout/AppBackHeader.vue'
 
-const { t: _t, locale } = useI18n()
+const { t: _t } = useI18n()
 const route = useRoute()
 
 const isIntroPage = computed(() => route.path === '/intro')
@@ -99,7 +104,6 @@ const pageTitle = computed(() => {
   }
   return map[path] || ''
 })
-
 const resolvedTitle = computed(() => _t(pageTitle.value))
 
 const getUserId = (): number => {
@@ -171,22 +175,44 @@ const connectNotificationSocket = () => {
 }
 
 const handleConsent = async (agree: boolean) => {
-  localStorage.setItem(LOCATION_KEY, String(agree))
+  localStorage.setItem(LOCATION_KEY, agree ? 'granted' : 'denied')
   showConsentDialog.value = false
-  await geo.initLocationWithConsent(agree)
 
-  if (agree) {
-    localStorage.setItem('userLat', String(geo.latitude))
-    localStorage.setItem('userLng', String(geo.longitude))
-    localStorage.setItem('userRegionName', geo.regionName)
+  try {
+    await geo.initLocationWithConsent(agree)
+
+    if (agree && geo.latitude && geo.longitude) {
+      localStorage.setItem('userLat', String(geo.latitude))
+      localStorage.setItem('userLng', String(geo.longitude))
+      localStorage.setItem('userRegionName', geo.regionName)
+
+      // ✅ 리로드 플래그가 없으면 새로고침 (딱 한 번만)
+      if (!localStorage.getItem('locationConsentReloaded')) {
+        localStorage.setItem('locationConsentReloaded', 'true')
+        window.location.reload()
+      }
+    } else if (agree) {
+      throw new Error('위치 정보 없음')
+    }
+  } catch (e) {
+    console.error('위치 권한 허용 중 실패:', e)
+    geo.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
+    showLocationError.value = true
+    localStorage.removeItem(LOCATION_KEY)
+    showConsentDialog.value = true
   }
 }
 
+
 onMounted(async () => {
+  // ✅ 무조건 한 번만 리로드되게 초기화
+  localStorage.removeItem('locationConsentReloaded')
+
   const consent = localStorage.getItem(LOCATION_KEY)
-  if (consent === 'true') {
+
+  if (consent === 'granted') {
     await geo.initLocationWithConsent(true)
-  } else if (consent === 'false') {
+  } else if (consent === 'denied') {
     await geo.initLocationWithConsent(false)
   } else {
     showConsentDialog.value = true
@@ -196,6 +222,14 @@ onMounted(async () => {
 })
 
 watch(() => geo.error, (val) => {
-  if (val) showLocationError.value = true
+  if (val) {
+    showLocationError.value = true
+
+    if (val.includes('denied') || val.includes('허용')) {
+      setTimeout(() => {
+        showConsentDialog.value = true
+      }, 1000)
+    }
+  }
 })
 </script>

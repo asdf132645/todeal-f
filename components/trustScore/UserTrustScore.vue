@@ -31,22 +31,7 @@ const REVIEW_PAGE_SIZE = 100
 onMounted(async () => {
   try {
     const res = await trustScoreApi.getUserScores([user.id])
-    score.value = res[user.id] ?? null
-
-    // ✅ 병렬 처리
-    const types = ['USED', 'PARTTIME', 'PARTTIME_REQUEST', 'BARTER']
-    const promises = types.map(async (t) => {
-      const reviews = await trustScoreApi.getUserReviews(user.id, { type: t, page: 0, size: REVIEW_PAGE_SIZE })
-      const total = reviews.content.length
-      const positive = reviews.content.filter((r: any) => r.isPositive).length
-      const result = total > 0 ? (positive / total) * 100 : null
-      return { type: t, score: result }
-    })
-
-    const results = await Promise.all(promises)
-    for (const r of results) {
-      typeScores.value[r.type] = r.score
-    }
+    score.value = res?.[String(user.id)] ?? null
   } catch (e) {
     console.error('❌ 투딜지수 로딩 실패', e)
     score.value = null

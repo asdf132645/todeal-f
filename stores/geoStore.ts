@@ -93,7 +93,7 @@ export const useGeoStore = defineStore('geo', {
                 } catch {
                     this.regionName = '주소 확인 실패'
                 }
-                this.error = '위치를 허용하지 않아 기본 위치(서울)가 적용됩니다.'
+                this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
                 return
             }
 
@@ -117,7 +117,7 @@ export const useGeoStore = defineStore('geo', {
                     },
                     async (err) => {
                         this.setDefaultLocation()
-                        this.error = '위치 권한을 거부하여 기본 위치(서울)가 적용됩니다.'
+                        this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
                         try {
                             await this.fetchRegionInfo(this.latitude!, this.longitude!)
                         } catch {

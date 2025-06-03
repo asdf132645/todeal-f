@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <!-- ✅ 카테고리 안내 -->
+    <!--  카테고리 안내 -->
     <v-alert
         type="warning"
         dense
@@ -24,7 +24,7 @@
 
 
 
-    <!-- ✅ 이미지 업로더 -->
+    <!--  이미지 업로더 -->
     <div class="image-upload-wrapper mb-5">
       <div class="image-grid">
         <div
@@ -51,12 +51,7 @@
       </div>
       <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
     </div>
-
-    <!-- ✅ 제목/내용 입력 -->
-    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
-    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
-
-    <!-- ✅ 번역 패널 -->
+    <!--  번역 패널 -->
     <v-expand-transition>
       <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
         <div class="mb-1 text-caption text-grey-darken-1">제목과 내용을 선택한 언어로 번역해 드립니다. 정확한 번역을 위해 원문을 먼저 입력해주세요.</div>
@@ -98,8 +93,13 @@
         </v-btn>
       </v-card>
     </v-expand-transition>
+    <!--  제목/내용 입력 -->
+    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
+    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
 
-    <!-- ✅ 수정 완료 -->
+
+
+    <!--  수정 완료 -->
     <v-btn
         block
         color="primary"
@@ -125,6 +125,8 @@ const postId = Number(route.params.id)
 
 const title = ref('')
 const content = ref('')
+const originalTitle = ref('')    //  원문 저장용
+const originalContent = ref('')
 const category = ref('')
 const loading = ref(false)
 const originalPost = ref<any>(null)
@@ -135,16 +137,12 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
 const targetLang = ref('')
+const translatedTitle = ref('')     //  번역본 저장용
+const translatedContent = ref('')
 
 const langOptions = [
   { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' },
-  { label: '일본어', value: 'ja' },
-  { label: '베트남어', value: 'vi' },
-  { label: '중국어 간체', value: 'zh-CN' },
-  { label: '중국어 번체', value: 'zh-TW' },
-  { label: '태국어', value: 'th' },
-  { label: '인도네시아어', value: 'id' }
+  { label: '영어', value: 'en' }
 ]
 
 const categoryOptions = [
@@ -161,8 +159,14 @@ const load = async () => {
   try {
     const res = await boardApi.getPost(postId)
     originalPost.value = res
+
     title.value = res.title
     content.value = res.content
+    originalTitle.value = res.title      //  원문 저장
+    originalContent.value = res.content
+    translatedTitle.value = res.translatedTitle || ''
+    translatedContent.value = res.translatedContent || ''
+
     category.value = res.category
     imageUrls.value = res.imageUrls || []
     sourceLang.value = res.language || 'ko'
@@ -214,8 +218,9 @@ const runTranslation = async () => {
         text: content.value
       })
     ])
-    title.value = resTitle.data.translatedText
-    content.value = resContent.data.translatedText
+
+    translatedTitle.value = resTitle.data.translatedText
+    translatedContent.value = resContent.data.translatedText
     showTranslatePanel.value = false
   } catch (e) {
     console.error(e)
@@ -236,12 +241,12 @@ const submit = async () => {
   loading.value = true
   try {
     await boardApi.updatePost(postId, {
-      title: title.value,
-      content: content.value,
+      title: originalTitle.value || title.value,        //  원문
+      content: originalContent.value || content.value,  //  원문
+      translatedTitle: translatedTitle.value || null,   //  번역본
+      translatedContent: translatedContent.value || null,
       category: category.value,
       language: sourceLang.value,
-      translatedTitle: title.value,
-      translatedContent: content.value,
       latitude: originalPost.value.latitude,
       longitude: originalPost.value.longitude,
       nickname: originalPost.value.nickname,
@@ -259,6 +264,7 @@ const submit = async () => {
 
 onMounted(load)
 </script>
+
 
 <style scoped>
 .image-grid {

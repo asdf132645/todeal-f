@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { useRoute } from 'vue-router'
 import { onMounted, ref, computed } from 'vue'
@@ -17,7 +18,9 @@ const dealId = Number(route.params.dealId)
 const deal = ref<any>(null)
 const bids = ref<any[]>([])
 const userId = ref('')
-const trustScores = ref<Record<number, number>>({})
+
+// ✅ key가 string임을 반영
+const trustScores = ref<Record<string, number>>({})
 
 const type = (route.query.type as string)?.toLowerCase() || ''
 const sectionMap = {
@@ -33,16 +36,11 @@ const isExpired = computed(() => {
 
   const now = new Date()
   const deadline = new Date(deal.value.deadline)
-  console.log('deadline', deadline)
-  console.log('deadline < now', deadline < now)
-  console.log('deal.value.winnerBidId', deal.value.winnerBidId)
   const isTimeOver = deadline < now
   const isWinnerConfirmed = !!deal.value.winnerBidId
 
-  // 정책: 마감 시간이 지났거나 낙찰자가 확정됐으면 만료 처리
   return isTimeOver || isWinnerConfirmed
 })
-
 
 const fetchDeal = async () => {
   deal.value = await dealApi.getDealById(dealId)
@@ -79,29 +77,36 @@ const fetchTrustScores = async () => {
 
   try {
     const result = await trustScoreApi.getUserScores(uniqueUserIds)
-    if (result && typeof result === 'object') {
-      trustScores.value = result
-    } else {
-      console.warn('⚠️ trustScore 응답 형식이 이상함:', result)
-    }
+    console.log('🟢 투딜지수 응답:', result)
+    trustScores.value = result
   } catch (e) {
     console.warn('❌ 투딜지수 불러오기 실패', e)
   }
 }
 
+// ✅ string key 기반 접근으로 수정
 const trustScoreWriter = computed(() => {
-  if (!deal.value || typeof deal.value.userId !== 'number') return '-'
-  const score = trustScores.value?.[deal.value.userId]
-  return typeof score === 'number' ? score.toFixed(1) + '점' : '-'
+  if (
+      !deal.value ||
+      typeof deal.value.userId !== 'number' ||
+      !trustScores.value ||
+      typeof trustScores.value[String(deal.value.userId)] !== 'number'
+  ) return '-'
+
+  return trustScores.value[String(deal.value.userId)].toFixed(1) + '점'
 })
 
 
 const getBidderScore = (userId: number) => {
-  if (!userId || typeof userId !== 'number') return '-'
-  const score = trustScores.value?.[userId]
-  return typeof score === 'number' ? score.toFixed(1) + '점' : '-'
-}
+  if (
+      !userId ||
+      typeof userId !== 'number' ||
+      !trustScores.value ||
+      typeof trustScores.value[String(userId)] !== 'number'
+  ) return '-'
 
+  return trustScores.value[String(userId)].toFixed(1) + '점'
+}
 
 
 const handleBidComplete = async () => {
@@ -109,54 +114,15 @@ const handleBidComplete = async () => {
   await fetchBids()
 }
 
-// onMounted(async () => {
-//   userId.value = localStorage.getItem('userId') || ''
-//   await fetchDeal()
-//   await fetchBids()
-// })
-
 onMounted(() => {
   initPage()
 })
 
 const initPage = async () => {
   userId.value = localStorage.getItem('userId') || ''
-
-  const fetchedDeal = await dealApi.getDealById(dealId)
-  deal.value = fetchedDeal
-
-  if (type === 'barter') {
-    bids.value = await barterBidApi.getListByDealId(dealId)
-  } else {
-    bids.value = await bidApi.getBidListByDealId(dealId)
-  }
-
-  const userIds = new Set<number>()
-
-  if (typeof deal.value?.userId === 'number') {
-    userIds.add(deal.value.userId)
-  }
-
-  bids.value.forEach((b: any) => {
-    if (typeof b.userId === 'number') {
-      userIds.add(b.userId)
-    }
-  })
-
-  const winnerBid = bids.value.find(b => b.id === deal.value?.winnerBidId)
-  if (winnerBid?.userId && typeof winnerBid.userId === 'number') {
-    userIds.add(winnerBid.userId)
-  }
-
-  try {
-    const result = await trustScoreApi.getUserScores(Array.from(userIds))
-    console.log(result)
-    trustScores.value = result
-  } catch (e) {
-    console.warn('❌ 투딜지수 불러오기 실패', e)
-  }
+  await fetchDeal()
+  await fetchBids()
 }
-
 </script>
 
 <template>

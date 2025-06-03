@@ -37,30 +37,6 @@
         <v-icon start>mdi-translate</v-icon>
         {{ showTranslatePanel ? '번역 닫기' : '번역 도우미 열기' }}
       </v-btn>
-      <div class="text-caption text-grey-darken-1 mb-1">제목은 최대 40자까지 입력할 수 있어요</div>
-      <v-text-field
-          v-model="form.title"
-          label="제목"
-          :counter="40"
-          :rules="[v => (v?.length <= 40) || '40자 이내로 입력해주세요.']"
-          outlined
-          dense
-          class="mb-1 color-black"
-          ref="titleInput"
-      />
-
-      <div class="text-caption text-grey-darken-1 mb-1 mt-0">설명은 최대 500자까지 입력할 수 있어요</div>
-      <v-textarea
-          v-model="form.description"
-          label="설명"
-          :counter="500"
-          :rules="[v => (v?.length <= 500) || '500자 이내로 입력해주세요.']"
-          outlined
-          rows="4"
-          class="mb-1 color-black"
-          ref="descriptionInput"
-      />
-
       <v-expand-transition>
         <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
           <v-row dense class="mb-3">
@@ -99,6 +75,31 @@
           </v-btn>
         </v-card>
       </v-expand-transition>
+      <div class="text-caption text-grey-darken-1 mb-1">제목은 최대 40자까지 입력할 수 있어요</div>
+      <v-text-field
+          v-model="form.title"
+          label="제목"
+          :counter="40"
+          :rules="[v => (v?.length <= 40) || '40자 이내로 입력해주세요.']"
+          outlined
+          dense
+          class="mb-1 color-black"
+          ref="titleInput"
+      />
+
+      <div class="text-caption text-grey-darken-1 mb-1 mt-0">설명은 최대 500자까지 입력할 수 있어요</div>
+      <v-textarea
+          v-model="form.description"
+          label="설명"
+          :counter="500"
+          :rules="[v => (v?.length <= 500) || '500자 이내로 입력해주세요.']"
+          outlined
+          rows="4"
+          class="mb-1 color-black"
+          ref="descriptionInput"
+      />
+
+
 
       <!-- 거래 방식 안내 및 선택 -->
       <div class="text-subtitle-2 font-weight-bold mt-4 mb-1">
@@ -205,12 +206,6 @@ const targetLang = ref('')
 const langOptions = [
   { label: '한국어', value: 'ko' },
   { label: '영어', value: 'en' },
-  { label: '일본어', value: 'ja' },
-  { label: '베트남어', value: 'vi' },
-  { label: '중국어 간체', value: 'zh-CN' },
-  { label: '중국어 번체', value: 'zh-TW' },
-  { label: '태국어', value: 'th' },
-  { label: '인도네시아어', value: 'id' }
 ]
 
 const minDate = new Date()
