@@ -1,5 +1,5 @@
 <template>
-  <v-card class="rounded-lg" elevation="2" @click="goToDetail">
+  <v-card class="rounded-sm" elevation="2" @click="goToDetail">
     <v-img
         :src="job.images?.[0] || noImage"
         height="120"
@@ -8,27 +8,18 @@
 
     <v-card-text class="pa-2">
       <!-- ✅ 거래 방식 뱃지 -->
-      <v-chip
-          small
-          :color="job.pricingType === 'FIXED' ? 'green' : 'blue'"
-          text-color="white"
-          class="mb-2"
+      <div
+          class="chip-custom mb-2"
       >
         {{ job.pricingType === 'FIXED' ? '정가 방식' : '경매 방식' }}
-      </v-chip>
+      </div>
 
-      <div class="text-body-2 font-weight-bold">{{ job.title }}</div>
+      <div class="text-body-2 font-weight-bold">{{ job.translatedTitle ? job.translatedTitle : job.title }}</div>
       <div class="mt-1 text-caption">
         시급: <strong>{{ job.currentPrice.toLocaleString() }}원</strong><br />
         {{ address || '위치 미지정' }}
       </div>
     </v-card-text>
-
-    <v-card-actions class="px-3 pb-3 main">
-      <v-btn block density="compact">
-        {{ job.pricingType === 'FIXED' ? '바로 지원' : '입찰하기' }}
-      </v-btn>
-    </v-card-actions>
   </v-card>
 </template>
 

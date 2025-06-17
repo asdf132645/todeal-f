@@ -7,8 +7,13 @@
   >
     <v-card>
       <v-card-title class="font-weight-bold text-h6">
-        {{ type === 'terms' ? '이용약관' : '개인정보 수집 및 이용 동의' }}
-      </v-card-title>
+        {{
+          type === 'terms'
+              ? '이용약관'
+              : type === 'privacy'
+                  ? '개인정보 수집 및 이용 동의'
+                  : '위치정보 수집 및 이용 동의'
+        }}      </v-card-title>
       <v-divider />
       <v-card-text style="max-height: 500px; overflow-y: auto;">
         <template v-if="type === 'terms'">
@@ -89,7 +94,7 @@
           </p>
         </template>
 
-        <template v-else>
+        <template v-else-if="type === 'privacy'">
           <p class="mb-2">1. 수집 항목</p>
           <p class="text-body-2 mb-2">
             이메일, 비밀번호, 닉네임, 전화번호, GPS 위치정보
@@ -123,6 +128,30 @@
             필수 항목 동의 거부 시 서비스 이용이 제한될 수 있습니다.
           </p>
         </template>
+        <template v-else>
+          <!-- 위치정보 수집 및 이용 동의 전문 -->
+          <p class="mb-2">1. 수집 항목</p>
+          <p class="text-body-2 mb-2">
+            GPS를 기반으로 한 사용자의 위치 좌표(위도, 경도)
+          </p>
+
+          <p class="mb-2">2. 수집 목적</p>
+          <p class="text-body-2 mb-2">
+            - 사용자의 위치 기반 게시글(중고, 알바 등) 추천 및 정렬<br />
+            - 반경 내 거래 및 알바 매칭 기능 제공<br />
+            - 사용자 간 거리 기반 검색 기능 제공
+          </p>
+
+          <p class="mb-2">3. 보유 및 이용 기간</p>
+          <p class="text-body-2 mb-2">
+            수집된 위치정보는 실시간 매칭 서비스에만 일시적으로 사용되며, 저장되지 않음. 단, GPS 허용 시 사용자 위치는 캐시로 일시 보관될 수 있음.
+          </p>
+
+          <p class="mb-2">4. 동의 거부 시 불이익</p>
+          <p class="text-body-2">
+            위치정보 수집에 동의하지 않으면 위치 기반 맞춤 서비스(반경 내 딜 노출 등) 이용이 제한될 수 있습니다.
+          </p>
+        </template>
       </v-card-text>
       <v-divider />
       <v-card-actions class="justify-end">
@@ -135,7 +164,7 @@
 <script setup lang="ts">
 defineProps<{
   modelValue: boolean
-  type: 'terms' | 'privacy'
+  type: 'terms' | 'privacy' | 'location'
 }>()
 const emit = defineEmits(['update:modelValue'])
 </script>

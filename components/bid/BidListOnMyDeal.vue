@@ -17,7 +17,7 @@
     <v-row dense v-if="groupedBids.length > 0">
       <v-col cols="12" v-for="group in groupedBids" :key="group.deal.id">
         <template v-if="group.deal.pricingType === 'BIDDING'">
-          <v-card class="pa-4 mb-4 rounded-xl elevation-2">
+          <v-card class="pa-4 mb-4 rounded-sm elevation-2">
             <!-- 상단 헤더 -->
             <div class="d-flex justify-space-between align-center mb-3">
               <div class="text-subtitle-1 font-weight-bold color-black">
@@ -140,37 +140,82 @@
               <v-list-item
                   v-for="bid in group.bids"
                   :key="bid.id"
-                  class="mb-3 pa-3 rounded-lg bg-bid-default"
+                  class="mb-3 pa-3 rounded-lg"
+                  :class="group.deal.winnerBidId === bid.id ? 'bg-bid-winner' : 'bg-bid-default'"
               >
                 <div class="d-flex justify-space-between align-start flex-wrap" style="gap: 0.75rem">
                   <div>
                     <div class="font-weight-bold text-body-1">
                       {{ bid.nickname }} 님이 정가로 지원하였습니다.
                     </div>
+                    <div
+                        v-if="group.deal.winnerBidId === bid.id"
+                        class="mt-1 text-caption font-weight-medium"
+                        style="color: #B6FFC7"
+                    >
+                      ✅ 낙찰자
+                    </div>
                   </div>
 
-                  <v-btn
-                      v-if="!group.deal.winnerBidId"
-                      size="small"
-                      class="rounded-pill"
-                      color="primary"
-                      @click="selectWinner(bid, group.deal.id)"
-                  >
-                    낙찰 확정
-                  </v-btn>
+                  <div class="d-flex flex-wrap align-center" style="gap: 0.5rem">
+                    <v-btn
+                        v-if="!group.deal.winnerBidId"
+                        size="small"
+                        class="rounded-pill"
+                        color="primary"
+                        @click="selectWinner(bid, group.deal.id)"
+                    >
+                      낙찰 확정
+                    </v-btn>
 
-                  <v-btn
-                      v-else-if="group.deal.winnerBidId === bid.id"
-                      size="small"
-                      class="rounded-pill"
-                      color="error"
-                      @click="cancelWinner(group.deal.id)"
-                  >
-                    확정 취소
-                  </v-btn>
+                    <v-btn
+                        v-else-if="group.deal.winnerBidId === bid.id"
+                        size="small"
+                        class="rounded-pill"
+                        color="error"
+                        @click="cancelWinner(group.deal.id)"
+                    >
+                      확정 취소
+                    </v-btn>
+
+                    <!-- ✅ 추가된 낙찰자용 버튼들 -->
+                    <v-btn
+                        v-if="group.deal.winnerBidId === bid.id"
+                        variant="tonal"
+                        :style="{ backgroundColor: '#2B2E34', color: '#F2F3F4' }"
+                        size="small"
+                        class="rounded-pill"
+                        @click="goToChat(group.deal.id, bid.userId)"
+                    >
+                      💬 채팅
+                    </v-btn>
+
+                    <v-btn
+                        v-if="group.deal.winnerBidId === bid.id"
+                        variant="tonal"
+                        :style="{ backgroundColor: '#393C47', color: '#FFE082' }"
+                        size="small"
+                        class="rounded-pill"
+                        @click="openEvaluation(bid.userId, group.deal.id)"
+                    >
+                      ⭐ 평가하기
+                    </v-btn>
+
+                    <v-btn
+                        size="x-small"
+                        variant="text"
+                        class="d-flex align-center text-caption px-1"
+                        style="color: #FF6B6B"
+                        @click="openReport(bid.userId, group.deal.id)"
+                    >
+                      <v-icon size="16" class="mr-1">mdi-alert-circle-outline</v-icon>
+                      <span class="d-none d-sm-inline">신고</span>
+                    </v-btn>
+                  </div>
                 </div>
               </v-list-item>
             </v-list>
+
 
             <div v-else class="text-caption text-grey mt-3">아직 지원한 사용자가 없습니다.</div>
           </v-card>

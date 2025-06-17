@@ -303,3 +303,24 @@ body.light-mode .section-empty {
 .light-mode .color-white {
     color: #FFFFFF !important;
 }
+
+.light-mode .text-custom-small {
+    background: none;
+    color: #0E0F10;
+    border-radius: 4px;
+    border: 1px solid;
+    font-size: 0.7rem;
+    padding: 5px 11px;
+}
+
+
+.light-mode .btn-custom {
+    color: #002bab;
+    border-radius: 5px;
+    padding: 6px 20px;
+    font-size: 0.7rem;
+    border: 1px solid;
+}
+.light-mode .sticky-filters {
+    background: #ffffff !important;
+}

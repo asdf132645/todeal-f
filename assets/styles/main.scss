@@ -140,7 +140,6 @@ html, body {
 .v-sheet.v-theme--dark.location-banner {
   background-color: #1A1B1D;
   border: 1px solid  #F2F3F4;
-  margin: 1rem;
   padding: 1rem;
   border-radius: 1rem;
 }
@@ -255,7 +254,7 @@ body:not(.light-mode) .bg-app {
 
 /* 헤더 */
 body:not(.light-mode) .header-sheet {
-  background-color: #1A1B1D !important;
+  //background-color: #1A1B1D !important;
   color: #F2F3F4 !important;
 }
 body:not(.light-mode) .highlight-text {
@@ -300,4 +299,42 @@ body:not(.light-mode) .section-title {
 body:not(.light-mode) .section-empty {
   color: #999 !important;
   background-color: transparent !important;
+}
+.chip-custom {
+  background: #dbeafe;
+  color: #002bab;
+  border-radius: 5px;
+  padding: 3px;
+  font-size: 0.7rem;
+  width: 31%;
+  text-align: center;
+}
+
+.text-custom-small {
+  background: none;
+  color: #ffd54f;
+  border-radius: 4px;
+  border: 1px solid;
+  font-size: 0.7rem;
+  padding: 5px 11px;
+}
+
+
+.btn-custom {
+  color: #FFD54F;
+  border-radius: 5px;
+  padding: 6px 20px;
+  font-size: 0.7rem;
+  border: 1px solid;
+}
+
+.gray-text {
+  color: #999999;
+  font-size: 0.7rem;
+}
+
+a.text-link.text-sm-body-1 {
+  font-size: 0.8rem!important;
+  color: #717171;
+  margin-left: 9px;
 }

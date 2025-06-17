@@ -52,6 +52,6 @@ const handleClick = (msg: any) => {
   } else {
     router.push(`/deals/detail/${msg.dealId}`)
   }
-  notification.clear(msg)
+  // notification.clear(msg)
 }
 </script>

@@ -32,7 +32,7 @@
         <div class="text-caption text-grey-darken-1 mt-1">{{ images.length }} / 5</div>
       </div>
       <!-- 번역 도우미 -->
-      <div class="mb-1 text-caption text-grey-darken-1">다른 언어 사용자도 볼 수 있도록 번역 기능을 활용해보세요</div>
+      <div class="mb-1 text-caption text-grey-darken-1">다른 언어 사용자도 볼 수 있도록 번역 기능을 활용해보세요. 투딜에서 제공하는 번역은 완벽하지 않습니다.</div>
       <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
         <v-icon start>mdi-translate</v-icon>
         {{ showTranslatePanel ? '번역 닫기' : '번역 도우미 열기' }}
@@ -68,16 +68,16 @@
               :disabled="!sourceLang || !targetLang"
               color="secondary"
               block
-              :loading="loading"
+              :loadingTranslation="loadingTranslation"
               @click="runTranslation"
           >
-            번역 시작
+            {{ loadingTranslation ? '번역 중입니다...' : '번역 시작' }}
           </v-btn>
         </v-card>
       </v-expand-transition>
       <div class="text-caption text-grey-darken-1 mb-1">제목은 최대 40자까지 입력할 수 있어요</div>
       <v-text-field
-          v-model="form.title"
+          v-model="display.title"
           label="제목"
           :counter="40"
           :rules="[v => (v?.length <= 40) || '40자 이내로 입력해주세요.']"
@@ -89,7 +89,7 @@
 
       <div class="text-caption text-grey-darken-1 mb-1 mt-0">설명은 최대 500자까지 입력할 수 있어요</div>
       <v-textarea
-          v-model="form.description"
+          v-model="display.description"
           label="설명"
           :counter="500"
           :rules="[v => (v?.length <= 500) || '500자 이내로 입력해주세요.']"
@@ -119,7 +119,16 @@
           dense
           class="mb-4"
       />
-
+      <v-text-field
+          v-if="form.pricingType === 'FIXED'"
+          v-model="form.startPrice"
+          label="정가 가격 (원)"
+          type="number"
+          outlined
+          dense
+          class="mb-3 color-black"
+          :rules="[v => v > 0 || '1원 이상 입력해주세요.']"
+      />
       <KakaoLocationPicker v-model:region="region" />
 
       <div class="text-caption text-grey-darken-1 mb-1 mt-4">마감일은 최대 30일까지 선택 가능합니다</div>
@@ -167,7 +176,7 @@ import { useSnackbarStore } from '@/stores/snackbarStore'
 import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
 import AdRewardButton from '@/components/common/AdRewardButton.vue'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
-import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
+import {deleteImage, uploadImage} from '~/domains/upload/infrastructure/uploadApi'
 import { apiClient } from '@/libs/http/apiClient'
 
 const { type } = defineProps<{ type: string }>()
@@ -176,10 +185,22 @@ const snackbar = useSnackbarStore()
 const auth = useAuthStore()
 const user = computed(() => auth.user)
 
+const display = ref({
+  title: '',
+  description: ''
+})
+
+
 const form = ref({
   title: '',
   description: '',
-  pricingType: 'BIDDING'
+  pricingType: 'BIDDING',
+  startPrice: null as number | null
+})
+
+const translated = ref({
+  title: '',
+  description: ''
 })
 
 const pricingTypeOptions = [
@@ -197,7 +218,8 @@ const deadlineDate = ref<Date | null>(null)
 const formattedDeadline = ref('')
 const tempDate = ref<Date | null>(null)
 const ticket = ref<any>(null)
-const loading = ref(false)
+const loading = ref(false);
+const loadingTranslation = ref(false);
 
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
@@ -205,7 +227,7 @@ const targetLang = ref('')
 
 const langOptions = [
   { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' },
+  { label: '영어', value: 'en' }
 ]
 
 const minDate = new Date()
@@ -256,9 +278,18 @@ const onFileChange = async (e: Event) => {
   if (fileInput.value) fileInput.value.value = ''
 }
 
-const removeImage = (index: number) => {
-  images.value.splice(index, 1)
-  uploadedImageUrls.value.splice(index, 1)
+const removeImage = async (index: number) => {
+  const url = uploadedImageUrls.value[index]
+  try {
+    await deleteImage(url)
+    images.value.splice(index, 1)
+    uploadedImageUrls.value.splice(index, 1)
+    snackbar.show('이미지가 삭제되었습니다.', 'success')
+  } catch (e) {
+    snackbar.show('이미지 삭제 실패', 'error')
+    console.error('이미지 삭제 에러:', e)
+  }
+
 }
 
 const getImageUrl = (file: File) => URL.createObjectURL(file)
@@ -279,31 +310,50 @@ const toggleTranslationPanel = () => {
 }
 
 const runTranslation = async () => {
-  if (!form.value.title || !form.value.description) {
+  if (!display.value.title || !display.value.description) {
     snackbar.show('제목과 설명을 먼저 입력해주세요.', 'error')
     return
   }
+  loadingTranslation.value = true;
   try {
     const [resTitle, resDesc] = await Promise.all([
-      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: form.value.title }),
-      apiClient.post('/api/translate', { source: sourceLang.value, target: targetLang.value, text: form.value.description })
+      apiClient.post('/api/translate', {
+        source: sourceLang.value,
+        target: targetLang.value,
+        text: display.value.title
+      }),
+      apiClient.post('/api/translate', {
+        source: sourceLang.value,
+        target: targetLang.value,
+        text: display.value.description
+      })
     ])
-    form.value.title = resTitle.translatedText
-    form.value.description = resDesc.translatedText
+    translated.value.title = resTitle.translatedText
+    translated.value.description = resDesc.translatedText
+
+    form.value.title = display.value.title
+    form.value.description = display.value.description
+
+    display.value.title = resTitle.translatedText
+    display.value.description = resDesc.translatedText
+    loadingTranslation.value = false;
+
     snackbar.show('번역이 적용되었습니다.', 'success')
   } catch (e) {
+    loadingTranslation.value = false;
+
     snackbar.show('번역에 실패했습니다.', 'error')
   }
 }
 
 const submit = async () => {
-  if (!form.value.title || form.value.title.length > 40) {
+  if (!display.value.title || display.value.title.length > 40) {
     snackbar.show('제목을 올바르게 입력해주세요.', 'error')
     titleInput.value?.focus()
     return
   }
 
-  if (!form.value.description || form.value.description.length > 500) {
+  if (!display.value.description || display.value.description.length > 500) {
     snackbar.show('설명을 올바르게 입력해주세요.', 'error')
     descriptionInput.value?.focus()
     return
@@ -311,6 +361,11 @@ const submit = async () => {
 
   if (!form.value.pricingType) {
     snackbar.show('가격 설정 방식을 선택해주세요.', 'error')
+    return
+  }
+
+  if (form.value.pricingType === 'FIXED' && (!form.value.startPrice || form.value.startPrice <= 0)) {
+    snackbar.show('정가 가격을 올바르게 입력해주세요.', 'error')
     return
   }
 
@@ -328,17 +383,21 @@ const submit = async () => {
   try {
     const payload = {
       type,
-      title: form.value.title,
-      description: form.value.description,
+      title: form.value.title ? form.value.title : display.value.title,
+      description: form.value.description ? form.value.description : display.value.description,
       pricingType: form.value.pricingType,
       deadline: deadlineDate.value.toISOString(),
+      startPrice: form.value.pricingType === 'FIXED' ? form.value.startPrice : null,
       region: region.value.full,
       regionDepth1: region.value.depth1,
       regionDepth2: region.value.depth2,
       regionDepth3: region.value.depth3,
       longitude: region.value.longitude,
       latitude: region.value.latitude,
-      images: uploadedImageUrls.value
+      images: uploadedImageUrls.value,
+      translatedTitle: translated.value.title || null,
+      translatedContent: translated.value.description || null,
+      language: targetLang.value || null
     }
 
     await dealApi.createDeal(payload)

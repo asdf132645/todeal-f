@@ -1,84 +1,71 @@
 <template>
   <v-container>
-    <!-- ✅ 헤더: 커뮤니티 + 글쓰기 버튼 -->
-    <div class="d-flex justify-space-between align-center mb-4">
-      <div class="d-flex gap-2">
-        <v-btn color="secondary" density="comfortable" class="mr-2" @click="goToMine">
-          내 글 보기
-        </v-btn>
-        <v-btn color="primary" density="comfortable" @click="goToWrite">
-          글쓰기
-        </v-btn>
+    <!-- ✅ 고정 필터 영역 -->
+    <div class="sticky-filters">
+      <!-- 🧭 토글 버튼 -->
+      <div class="d-flex justify-center align-center mb-2">
+        <div class="custom-toggle">
+          <button
+              :class="['toggle-btn', tab === 'local' ? 'active' : '']"
+              @click="tab = 'local'"
+          >
+            내 동네
+          </button>
+          <button
+              :class="['toggle-btn', tab === 'all' ? 'active' : '']"
+              @click="tab = 'all'"
+          >
+            전체
+          </button>
+        </div>
       </div>
-    </div>
-    <!-- ✅ 탭 (내 동네 / 전체) -->
-    <div flat class="mb-4 d-flex justify-center">
-      <div class="custom-toggle">
-        <button
-            :class="['toggle-btn', tab === 'local' ? 'active' : '']"
-            @click="tab = 'local'"
-        >
-          내 동네
-        </button>
-        <button
-            :class="['toggle-btn', tab === 'all' ? 'active' : '']"
-            @click="tab = 'all'"
-        >
-          전체
-        </button>
-      </div>
-    </div>
 
-
-    <div class="d-flex gap-2 mb-4">
-      <!-- 검색 대상 선택 -->
-      <v-select
-          v-model="searchField"
-          :items="searchFieldOptions"
-          dense
-          variant="outlined"
-          hide-details
-          style="max-width: 120px"
-          class="mr-3"
-      />
-
-      <!-- 검색어 입력 -->
-      <v-text-field
-          v-model="keyword"
-          label="검색어"
-          variant="outlined"
-          dense
-          clearable
-          hide-details
-          prepend-inner-icon="mdi-magnify"
-          @keyup.enter="fetchPosts"
-          class="flex-grow-1"
-      />
-    </div>
-
-
-    <!-- ✅ 카테고리 필터 (태그형 칩 + 가로 스크롤) -->
-    <v-slide-group
-        v-model="category"
-        class="mb-4"
-        show-arrows
-    >
-      <v-slide-group-item
-          v-for="option in categoryOptions"
-          :key="option.value"
-          :value="option.value"
+      <!-- 🏷 카테고리 칩 -->
+      <v-slide-group
+          v-model="category"
+          class="mb-2"
+          show-arrows
       >
-        <v-chip
-            :color="category === option.value ? 'primary' : 'grey-lighten-3'"
-            class="ma-1"
-            variant="flat"
-            @click="category = option.value"
+        <v-slide-group-item
+            v-for="option in categoryOptions"
+            :key="option.value"
+            :value="option.value"
         >
-          {{ option.label }}
-        </v-chip>
-      </v-slide-group-item>
-    </v-slide-group>
+          <v-chip
+              :color="category === option.value ? 'primary' : 'grey-lighten-3'"
+              class="ma-1"
+              variant="flat"
+              @click="category = option.value"
+          >
+            {{ option.label }}
+          </v-chip>
+        </v-slide-group-item>
+      </v-slide-group>
 
+      <!-- 🔍 검색 영역 -->
+      <div class="d-flex align-center gap-2 mb-2 search-bar-wrap">
+        <v-select
+            v-model="searchField"
+            :items="searchFieldOptions"
+            density="compact"
+            variant="outlined"
+            hide-details
+            class="search-select mr-2"
+            style="max-width: 120px"
+        />
+        <v-text-field
+            v-model="keyword"
+            label="검색어"
+            density="compact"
+            variant="outlined"
+            clearable
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+            @keyup.enter="fetchPosts"
+            class="search-input"
+        />
+      </div>
+    </div>
 
     <!-- ✅ 게시글 리스트 -->
     <template v-if="posts.length">
@@ -98,13 +85,12 @@
               💬 {{ post.commentCount }} ・ {{ formatDate(post.createdAt) }}
             </v-list-item-subtitle>
           </v-list-item>
-
           <v-divider v-if="idx !== posts.length - 1" class="my-1" />
         </template>
       </v-list>
     </template>
 
-    <!-- ❌ 글이 없을 경우 -->
+    <!-- ❌ 글 없음 -->
     <v-container class="text-center py-16" v-else>
       <v-icon size="56" color="grey">mdi-chat-remove</v-icon>
       <div class="text-subtitle-1 font-weight-bold mt-4">아직 글이 없어요</div>
@@ -113,6 +99,7 @@
     </v-container>
   </v-container>
 </template>
+
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
@@ -204,6 +191,18 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
 
 </script>
 <style>
+
+.sticky-filters {
+  position: sticky;
+  top: 0;
+  background: #0E0F10;
+  z-index: 100;
+  padding-top: 12px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+}
+
+
 .custom-toggle {
   display: flex;
   gap: 4px;
@@ -220,10 +219,11 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
   background: transparent;
   color: #ccc;
   font-weight: 500;
-  padding: 8px 12px;
+  padding: 5px 12px;
   border-radius: 999px;
   transition: all 0.2s ease;
   cursor: pointer;
+  font-size: 0.8rem;
 }
 
 .toggle-btn:hover {

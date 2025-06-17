@@ -2,6 +2,12 @@
   <v-container>
     <!-- 📌 게시글 카드 -->
     <v-card class="mb-4 pa-4">
+      <!-- ✅ 언어 토글 버튼 -->
+      <div class="d-flex justify-end mb-2">
+        <button type="button" class="btn-custom" @click="toggleLang">
+          {{ langToggleText }}
+        </button>
+      </div>
       <div class="d-flex align-center mb-3">
         <div>
           <div class="font-weight-medium color-black">{{ post.nickname || '익명' }}</div>
@@ -9,14 +15,18 @@
             {{ post.region || '지역정보 없음' }} ・ {{ formatDate(post.createdAt) }}
           </div>
         </div>
+
       </div>
 
+
+
+      <!-- ✅ 제목/내용 -->
       <div class="text-h6 font-weight-bold mb-3 color-black">
-        {{ post.translatedTitle }}
+        {{ displayedTitle }}
       </div>
 
       <div class="text-body-1 color-black" style="white-space: pre-line;">
-        {{ post.translatedContent }}
+        {{ displayedContent }}
       </div>
 
       <!-- ✅ 이미지 썸네일 출력 -->
@@ -85,6 +95,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -94,7 +105,9 @@ const postId = Number(route.params.id)
 const post = ref<any>({})
 const comments = ref<any[]>([])
 const newComment = ref('')
+const showOriginal = ref(false) // ✅ 원문 보기 상태
 
+const { locale } = useI18n()
 const authStore = useAuthStore()
 
 const userId = process.client
@@ -112,6 +125,27 @@ const load = async () => {
     router.push('/board')
   }
 }
+
+const displayedTitle = computed(() =>
+    showOriginal.value ? post.value.title : post.value.translatedTitle || post.value.title
+)
+const displayedContent = computed(() =>
+    showOriginal.value ? post.value.content : post.value.translatedContent || post.value.content
+)
+
+const toggleLang = () => {
+  showOriginal.value = !showOriginal.value
+}
+
+const langToggleText = computed(() => {
+  const currentLang = locale.value
+  const originalLang = post.value.language || 'ko'
+  const isSame = currentLang === originalLang
+
+  return showOriginal.value
+      ? (isSame ? '영어 보기' : '한국어 보기')
+      : (isSame ? '한국어 보기' : '영어 보기')
+})
 
 const submitComment = async () => {
   if (!newComment.value.trim()) return

@@ -24,7 +24,7 @@
         </template>
 
         <v-list-item-title class="font-weight-bold text-body-1 color-black" style="color: #F2F3F4">
-          {{ deal.title }}
+          {{ deal.translatedTitle ? deal.translatedTitle : deal.title  }}
         </v-list-item-title>
 
         <v-list-item-subtitle class="text-caption mt-1" style="color: #A6A9AD">

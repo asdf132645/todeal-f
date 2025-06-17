@@ -62,7 +62,7 @@ const selectedType = ref<TrustScoreType | null>(null)
 const page = ref(1)
 const size = 5
 const totalPages = ref(1)
-
+const userId = ref('');
 const typeOptions = [
   { title: '중고', value: 'USED' },
   { title: '알바', value: 'PARTTIME' },
@@ -77,17 +77,27 @@ const typeMap: Record<string, string> = {
   BARTER: '빌려드려요'
 }
 
-function fetchReviews() {
-  if (!user.value?.id) return
-  trustScoreApi.getUserReviews(user.value.id, {
-    page: page.value - 1,
-    size,
-    type: selectedType.value || undefined,
-  }).then(res => {
+async function fetchReviews() {
+  if (!userId.value) {
+    console.warn('user.id 없음 → fetchReviews 스킵')
+    return
+  }
+
+  try {
+    const res = await trustScoreApi.getUserReviews(userId.value, {
+      page: page.value - 1,
+      size,
+      type: selectedType.value || undefined,
+    })
+
+    console.log('✅ 후기 응답:', res)
     reviews.value = res.content
     totalPages.value = res.totalPages
-  })
+  } catch (err) {
+    console.error('❌ 후기 조회 실패:', err)
+  }
 }
+
 
 function refreshReviews() {
   page.value = 1
@@ -99,7 +109,11 @@ watch(selectedType, () => {
   fetchReviews()
 })
 
-onMounted(fetchReviews)
+
+onMounted(() => {
+  userId.value = localStorage.getItem('userId') || ''
+  fetchReviews()
+})
 
 const formatDate = (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm')
 </script>

@@ -53,23 +53,23 @@ export const dealApi = {
     // ✅ 무한스크롤용 리스트 조회
     getList({
                 type,
-                page,
-                pageSize,
+                size,
+                cursor,
                 lat,
                 lng,
-                radius, // ✅ 추가
+                radius,
             }: {
         type: 'used' | 'parttime' | 'barter'
-        page: number
-        pageSize: number
+        size: number
+        cursor?: number
         lat?: number
         lng?: number
-        radius?: number   // ✅ 선택값 또는 필수값으로 설정
-    }): Promise<DealResponse[]> {
-        console.log('🚀 getList 호출됨:', { type, page, pageSize, lat, lng, radius })
+        radius?: number
+    }): Promise<{ items: DealResponse[]; nextCursor: number | null }> {
+        console.log(' getList 호출됨:', { type, size, cursor, lat, lng, radius })
 
-        return apiClient.get<DealResponse[]>('/api/deals', {
-            params: { type, page, pageSize, lat, lng, radius } // ✅ 포함
+        return apiClient.get('/api/deals', {
+            params: { type, size, cursor, lat, lng, radius, useLocation: true }
         })
     },
 

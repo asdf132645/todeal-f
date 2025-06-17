@@ -1,5 +1,16 @@
 <template>
   <v-container class="py-2 px-2">
+    <!-- 🔘 지역/전체 전환 버튼 -->
+    <div class="d-flex justify-end mb-3">
+      <button
+          class="btn-custom"
+          @click="toggleUseLocation"
+      >
+        {{ useLocation ? '전체 보기' : '내 지역만 보기' }}
+      </button>
+    </div>
+
+    <!-- 🗂 리스트 -->
     <v-row v-if="items.length > 0" dense>
       <v-col cols="12" v-for="item in items" :key="item.id" class="pb-1">
         <v-sheet
@@ -16,7 +27,7 @@
           />
           <div class="ml-3 flex-grow-1">
             <div class="text-body-2 font-weight-bold mb-1">
-              {{ item.title }}
+              {{ item.translatedTitle ? item.translatedTitle : item.title }}
             </div>
             <div class="text-caption text-grey-darken-1 mb-1">
               {{ item.region }} · {{ formatTimeAgo(item.createdAt) }}
@@ -28,9 +39,13 @@
         </v-sheet>
       </v-col>
     </v-row>
+
+    <!-- ❌ 항목 없음 -->
     <div v-else class="text-caption text-grey text-center py-10">
       등록된 항목이 없습니다.
     </div>
+
+    <!-- 🔁 무한스크롤 감지용 타겟 -->
     <div ref="infiniteScrollTarget" class="text-center py-2">
       <v-progress-circular indeterminate v-if="loading" />
     </div>
@@ -38,21 +53,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick  } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
-import { useGeoStore } from '@/stores/geoStore'
 
 const route = useRoute()
 const router = useRouter()
-const geo = useGeoStore()
 
 const type = (route.params.type as string) || 'used'
 const items = ref<any[]>([])
-const page = ref(0)
-const pageSize = 10
-const hasMore = ref(true)
+const cursor = ref<number | null>(null)
 const loading = ref(false)
+const hasMore = ref(true)
+const useLocation = ref(true)
 const infiniteScrollTarget = ref<HTMLElement | null>(null)
 
 const formatTimeAgo = (iso: string) => {
@@ -66,50 +79,54 @@ const formatTimeAgo = (iso: string) => {
   const days = Math.floor(hours / 24)
   return `${days}일 전`
 }
+
+const goDetail = (id: number) => {
+  router.push({ path: `/deals/detail/${id}`, query: { type } })
+}
+
+const toggleUseLocation = () => {
+  useLocation.value = !useLocation.value
+  refreshDeals()
+}
+
 const refreshDeals = async () => {
-  page.value = 0
-  hasMore.value = true
   items.value = []
+  cursor.value = null
+  hasMore.value = true
   await loadDeals()
 }
 
-const goDetail = (id: number) => {
-  router.push({
-    path: `/deals/detail/${id}`,
-    query: { type }
-  })
-}
-
 const loadDeals = async () => {
-  loading.value = true;
+  if (loading.value || !hasMore.value) return
+  loading.value = true
+
   const userRadius = process.client ? localStorage.getItem('userRadius') : null
   const lat = Number(localStorage.getItem('userLat'))
   const lng = Number(localStorage.getItem('userLng'))
+
   try {
     const res = await dealApi.getList({
       type,
-      page: page.value,
-      pageSize,
-      lat: lat,
-      lng: lng,
-      radius : Number(userRadius)
+      size: 10,
+      cursor: cursor.value ?? undefined,
+      lat: useLocation.value ? lat : undefined,
+      lng: useLocation.value ? lng : undefined,
+      radius: useLocation.value ? Number(userRadius) : undefined,
     })
 
-    if (res.length < pageSize) hasMore.value = false
-    items.value.push(...res)
-    page.value++
+    items.value.push(...res.items)
+    cursor.value = res.nextCursor
+    if (!res.nextCursor) hasMore.value = false
   } catch (e) {
-    console.error('딜 불러오기 실패:', e)
+    console.error('❌ 딜 불러오기 실패:', e)
   } finally {
     loading.value = false
   }
 }
 
-
-
 onMounted(async () => {
-  await nextTick() // DOM 렌더링 이후 보장
-  await refreshDeals() // ✅ 초기 로딩
+  await nextTick()
+  await refreshDeals()
 
   const observer = new IntersectionObserver((entries) => {
     if (entries[0].isIntersecting && hasMore.value) {
@@ -124,9 +141,5 @@ onMounted(async () => {
   } else {
     console.log('❌ infiniteScrollTarget 렌더 안 됨')
   }
-
 })
-
-
-
 </script>

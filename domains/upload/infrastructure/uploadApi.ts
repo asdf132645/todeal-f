@@ -12,3 +12,9 @@ export const uploadImage = async (file: File): Promise<string> => {
     console.log('response',response);
     return response // <- 백엔드에서 반환한 image URL
 }
+
+export const deleteImage = async (imageUrl: string): Promise<void> => {
+    await apiClient.delete('/api/upload/image', {
+        params: { imageUrl },
+    })
+}

@@ -13,7 +13,7 @@
   "common": {
     "deny": "거부",
     "allow": "허용",
-    "more": "+ 더보기"
+    "more": "더보기"
   },
   "page": {
     "search_result": "검색 결과",
@@ -52,7 +52,7 @@
   "home": {
     "header_title": "요즘 뜨는 동네 경매는",
     "toDeal": "투딜에서 ✨",
-    "header_subtitle": "어려웠던 단기알바 구하기.. 이제 투딜로 쉽게 구하자!"
+    "header_subtitle": "중고거래 단기알바! 외국인 한국인을 위한 투딜!"
   },
   "section": {
     "urgent_parttime_title": "오늘 급구 알바",

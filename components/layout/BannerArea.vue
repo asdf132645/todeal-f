@@ -1,7 +1,7 @@
 <template>
   <v-sheet
       color="blue-grey-lighten-5"
-      class="mx-4 mt-0 mb-4 px-4 py-3 rounded-xl d-flex align-center"
+      class="mt-0 mb-4 px-4 py-3 rounded-xl d-flex align-center"
       height="80"
   >
     <v-icon color="indigo-darken-2" size="28" class="mr-3">mdi-bullhorn</v-icon>

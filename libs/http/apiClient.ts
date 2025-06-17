@@ -18,11 +18,17 @@ export function initApiClient() {
 
 function handleResponse<T>(res: ApiResponse<T>): T {
     if (!res.success) {
-        const msg = typeof res.message === 'string' ? res.message : JSON.stringify(res.message)
-        throw new Error(msg || '요청 실패')
+        if (typeof res.message === 'string') {
+            throw new Error(res.message)
+        } else if (typeof res.message === 'object') {
+            const firstError = Object.values(res.message)[0]
+            throw new Error(typeof firstError === 'string' ? firstError : '요청 실패')
+        }
+        throw new Error('요청 실패')
     }
     return res.data as T
 }
+
 
 function isTokenExpired(token: string): boolean {
     try {

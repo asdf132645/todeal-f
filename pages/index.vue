@@ -1,7 +1,7 @@
 <template>
   <v-container fluid class="pa-0 bg-app">
     <!-- 1. 헤더 -->
-    <v-sheet class="header-sheet px-4 py-6 main">
+    <v-sheet class="header-sheet py-4 main">
       <div class="header-title"  >
         {{ _t('home.header_title') }} <span class="highlight-text">{{ _t('home.toDeal') }}</span>
       </div>
@@ -10,18 +10,41 @@
 
     <BannerArea />
 
+    <!-- 카테고리 -->
+    <v-row class=" pt-0" dense>
+      <v-col cols="6" sm="4" md="3" v-for="(item, i) in categories" :key="i">
+        <v-card class="category-card d-flex flex-column align-center justify-center pa-4" @click="goToCategory(item.route)">
+          <v-icon size="32" class="mb-2" color="#FFD54F">{{ item.icon }}</v-icon>
+          <div class="text-subtitle-2 font-weight-bold">{{ _t(item.title) }}</div>
+          <div class="text-caption mt-1 subtitle-text">{{ _t(item.subtitle) }}</div>
+        </v-card>
+      </v-col>
+    </v-row>
 
+    <!-- 위치 안내 -->
+    <v-sheet class="location-banner px-4 py-3 mt-4">
+      <div class="d-flex justify-space-between align-center">
+        <div>
+          <div class="location-title">{{ _t('location.title') }}</div>
+          <div class="location-subtitle">
+            {{ _t('location.subtitle_prefix') }} <strong>{{ userRadius }}km</strong> {{ _t('location.subtitle_suffix') }}
+          </div>        </div>
+        <v-btn icon variant="plain" class="location-icon-btn" @click="refreshLocationData">
+          <v-icon>mdi-crosshairs-gps</v-icon>
+        </v-btn>
+      </div>
+    </v-sheet>
 
 
     <!-- 오늘 급구 알바 + 구직 경매 -->
-    <v-sheet class="highlight-jobs px-4 py-6 my-4">
+    <v-sheet class="highlight-jobs px-4 py-4 my-4">
       <!-- 급구 알바 -->
       <div class="d-flex justify-space-between align-center mb-3">
         <div>
-          <div class="text-h6 font-weight-bold mb-1">{{ _t('section.urgent_parttime_title') }}</div>
-          <div class="text-body-2">{{ _t('section.urgent_parttime_sub') }}</div>
+          <div class="text-h7 font-weight-bold mb-1">{{ _t('section.urgent_parttime_title') }}</div>
+          <div class=" gray-text">{{ _t('section.urgent_parttime_sub') }}</div>
         </div>
-        <v-btn text size="small" @click="router.push('/deals/parttime-request')">{{ _t('common.more') }}</v-btn>
+        <button type="button" class="text-custom-small" @click="router.push('/deals/parttime-request')">{{ _t('common.more') }}</button>
       </div>
       <v-slide-group show-arrows v-if="parttimeRequest.length > 0">
         <v-slide-group-item v-for="job in parttimeRequest" :key="job.id">
@@ -35,14 +58,14 @@
       <!-- 구직 경매 -->
       <div class="d-flex justify-space-between align-center my-5">
         <div>
-          <div class="text-h6 font-weight-bold mb-1">{{ _t('section.recruit_title') }}</div>
-          <div class="text-body-2">{{ _t('section.recruit_sub') }}</div>
+          <div class="text-h7 font-weight-bold mb-1">{{ _t('section.recruit_title') }}</div>
+          <div class=" gray-text">{{ _t('section.recruit_sub') }}</div>
         </div>
-        <v-btn text size="small" @click="router.push('/deals/parttime')">{{ _t('common.more') }}</v-btn>
+        <button type="button" class="text-custom-small" @click="router.push('/deals/parttime')">{{ _t('common.more') }}</button>
       </div>
       <v-slide-group show-arrows v-if="jobs.length > 0">
         <v-slide-group-item v-for="job in jobs" :key="job.id">
-          <v-card class="job-card mx-2" width="220" flat>
+          <v-card class="job-card mx-2" width="200" flat>
             <JobCard :job="job" />
           </v-card>
         </v-slide-group-item>
@@ -50,71 +73,36 @@
       <div v-else class="section-empty mt-3">{{ _t('section.recruit_empty') }}</div>
     </v-sheet>
 
-    <!-- 카테고리 -->
-    <v-row class="px-3 pt-3 pb-2" dense>
-      <v-col cols="6" sm="4" md="3" v-for="(item, i) in categories" :key="i">
-        <v-card class="category-card d-flex flex-column align-center justify-center pa-4" @click="goToCategory(item.route)">
-          <v-icon size="32" class="mb-2" color="#FFD54F">{{ item.icon }}</v-icon>
-          <div class="text-subtitle-2 font-weight-bold">{{ _t(item.title) }}</div>
-          <div class="text-caption mt-1 subtitle-text">{{ _t(item.subtitle) }}</div>
-        </v-card>
-      </v-col>
-    </v-row>
-    <!-- 실시간 입찰 마감 임박 강조 -->
-    <v-sheet class="highlight-jobs urgent-highlight px-4 py-6 my-4">
-      <div class="d-flex justify-space-between align-center mb-3">
-        <div>
-          <div class="text-h6 font-weight-bold mb-1 blink-text text-red-accent-2">
-            {{ _t('main.liveAuction') }}
-          </div>
-          <div class="text-body-2">
-            {{ _t('main.liveAuction_subtitle') }}
-          </div>
-        </div>
-        <v-btn text size="small" color="red-accent-2" @click="router.push('/deals')">
-          {{ _t('common.more') }}
-        </v-btn>
-      </div>
-      <v-slide-group show-arrows v-if="deals.length > 0">
-        <v-slide-group-item v-for="deal in deals.slice(0, 8)" :key="deal.id">
-          <v-card class="job-card urgent-card mx-2" width="220" flat>
-            <DealCard :deal="deal" />
-          </v-card>
-        </v-slide-group-item>
-      </v-slide-group>
-      <div v-else class="section-empty mt-3">실시간 입찰 가능한 경매가 없습니다.</div>
-    </v-sheet>
-    <!-- 위치 안내 -->
-    <v-sheet class="location-banner px-4 py-3">
-      <div class="d-flex justify-space-between align-center">
-        <div>
-          <div class="location-title">{{ _t('location.title') }}</div>
-          <div class="location-subtitle">
-            {{ _t('location.subtitle_prefix') }} <strong>{{ userRadius }}km</strong> {{ _t('location.subtitle_suffix') }}
-          </div>        </div>
-        <v-btn icon variant="plain" class="location-icon-btn" @click="refreshLocationData">
-          <v-icon>mdi-crosshairs-gps</v-icon>
-        </v-btn>
-      </div>
-    </v-sheet>
+
 
     <!-- 빌려드려요 -->
     <div class="section-title px-4 mt-6 mb-2">{{ _t('section.barter_title') }}</div>
-    <v-row class="section-row px-3" dense v-if="barters.length > 0">
-      <v-col cols="12" sm="6" md="3" v-for="barter in barters" :key="barter.id">
+
+    <v-slide-group show-arrows v-if="barters.length > 0" class="px-3">
+      <v-slide-group-item
+          v-for="barter in barters.slice(0, 12)"
+          :key="barter.id"
+          class="slide-item"
+      >
         <DealCard :deal="barter" />
-      </v-col>
-    </v-row>
+      </v-slide-group-item>
+    </v-slide-group>
+
     <div v-else class="section-empty">{{ _t('section.barter_empty') }}</div>
 
-    <!-- 희귀템 -->
+    <!-- 희귀템 섹션 -->
     <div class="section-title px-4 mt-6 mb-2">{{ _t('section.rare_item_title') }}</div>
-    <v-row class="section-row px-3" dense v-if="deals.length > 0">
-      <v-col cols="12" sm="6" md="3" v-for="deal in deals" :key="deal.id">
+    <v-slide-group show-arrows v-if="deals.length > 0" class="px-3">
+      <v-slide-group-item
+          v-for="deal in deals.slice(0, 12)"
+          :key="deal.id"
+          class="slide-item"
+      >
         <DealCard :deal="deal" />
-      </v-col>
-    </v-row>
+      </v-slide-group-item>
+    </v-slide-group>
     <div v-else class="section-empty">{{ _t('section.rare_item_empty') }}</div>
+
   </v-container>
 </template>
 

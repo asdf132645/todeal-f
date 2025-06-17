@@ -1,13 +1,13 @@
 <template>
   <div>
-    <!-- 등록 메뉴 팝업 -->
+    <!-- 📌 등록 메뉴 팝업 -->
     <transition name="fade">
       <div v-if="showMenu" class="floating-menu">
         <div
-            v-for="item in postOptions"
+            v-for="item in currentPostOptions"
             :key="item.title"
             class="menu-option"
-            @click="handleSelect(item.to)"
+            @click="item.action ? item.action() : handleSelect(item.to)"
         >
           <v-icon class="icon">{{ item.icon }}</v-icon>
           <span class="label">{{ item.title }}</span>
@@ -15,15 +15,20 @@
       </div>
     </transition>
 
-    <!-- 플로팅 버튼 -->
-    <v-btn icon class="fab-post-btn"     v-if="!isChatPage"
-           elevation="12" @click="toggleMenu">
+    <!-- 📌 플로팅 버튼 (채팅 페이지 제외 모든 페이지에서 뜸) -->
+    <v-btn
+        icon
+        class="fab-post-btn"
+        v-if="!isChatPage"
+        elevation="12"
+        @click="toggleMenu"
+    >
       <div class="fab-circle">
         <v-icon size="28">mdi-plus</v-icon>
       </div>
     </v-btn>
 
-    <!-- 하단 네비게이션 -->
+    <!-- 📌 하단 네비게이션 -->
     <v-bottom-navigation height="70" grow app class="bottom-nav-dark">
       <v-btn to="/" value="home" :class="{ active: isActive('/') }">
         <v-icon>mdi-home</v-icon>
@@ -49,11 +54,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-const router = useRouter()
 const route = useRoute()
+const router = useRouter()
 const showMenu = ref(false)
 
 const toggleMenu = () => {
@@ -71,27 +76,57 @@ const handleProtectedRoute = (path: string) => {
     router.push(path)
   }
 }
+
+// ✅ 현재 채팅 페이지 여부
 const isChatPage = computed(() => {
   return route.path.startsWith('/chats/') && route.query.receiverId
 })
+
+// ✅ 현재 커뮤니티(/board) 여부
+const isBoardPage = computed(() => route.path === '/board')
+
+// ✅ 커뮤니티 전용 메뉴
+const goToWrite = () => {
+  showMenu.value = false
+  handleProtectedRoute('/board/write')
+}
+
+const goToMine = () => {
+  showMenu.value = false
+  handleProtectedRoute('/board/mine')
+}
+
+const boardPostOptions = [
+  { title: '글쓰기', icon: 'mdi-pencil', action: goToWrite },
+  { title: '내 글 보기', icon: 'mdi-account', action: goToMine }
+]
+
+// ✅ 기본 플로팅 메뉴
+const postOptions = [
+  { title: '중고거래 등록', icon: 'mdi-tag-outline', to: '/post/used' },
+  { title: '알바 등록', icon: 'mdi-account-hard-hat-outline', to: '/post/parttime' },
+  { title: '빌려드려요 등록', icon: 'mdi-swap-horizontal', to: '/post/barter' },
+  { title: '알바 구해요', icon: 'mdi-account-search', to: '/post/parttime-request' }
+]
+
+// ✅ 공통 핸들러
 const handleSelect = (path: string) => {
   showMenu.value = false
   handleProtectedRoute(path)
 }
 
+// ✅ 현재 페이지에 맞는 메뉴 반환
+const currentPostOptions = computed(() => {
+  return isBoardPage.value ? boardPostOptions : postOptions
+})
+
+// ✅ 네비 하단 버튼 active 스타일
 const isActive = (path: string) => {
   return route.path === path
 }
-
-const postOptions = [
-  { title: '중고거래 등록', icon: 'mdi-tag-outline', to: '/post/used' },
-  { title: '알바 등록', icon: 'mdi-account-hard-hat-outline', to: '/post/parttime' },
-  { title: '빌려드려요 등록', icon: 'mdi-swap-horizontal', to: '/post/barter' },
-  { title: '알바 구해요', icon: 'mdi-account-search', to: '/post/parttime-request' },
-]
 </script>
 
-<style>
+<style scoped>
 .fab-post-btn {
   position: fixed;
   bottom: 90px;
@@ -157,7 +192,6 @@ const postOptions = [
 .v-btn.active span {
   color: #FFD54F !important;
 }
-
 
 .fade-enter-active,
 .fade-leave-active {

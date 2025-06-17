@@ -1,6 +1,5 @@
 <template>
   <v-container>
-    <!--  카테고리 안내 -->
     <v-alert
         type="warning"
         dense
@@ -10,6 +9,7 @@
     >
       커뮤니티 가이드라인에 어긋나는 내용은 사전 통보 없이 삭제될 수 있습니다.
     </v-alert>
+
     <div class="mb-1 text-caption text-grey-darken-1">글의 성격에 맞는 카테고리를 선택해주세요.</div>
     <v-select
         v-model="category"
@@ -22,9 +22,7 @@
         class="mb-4"
     />
 
-
-
-    <!--  이미지 업로더 -->
+    <!-- 이미지 업로더 -->
     <div class="image-upload-wrapper mb-5">
       <div class="image-grid">
         <div
@@ -35,11 +33,9 @@
         >
           <v-img :src="img" cover max-width="100" max-height="100" class="rounded" />
         </div>
-
         <div v-if="imageUrls.length < 5" class="upload-image-slot add" @click="triggerFileInput">
           <v-icon size="50">mdi-plus</v-icon>
         </div>
-
         <input
             type="file"
             ref="fileInput"
@@ -51,10 +47,21 @@
       </div>
       <div class="text-caption text-grey-darken-1 mt-1">{{ imageUrls.length }} / 5</div>
     </div>
-    <!--  번역 패널 -->
+
+    <!-- 번역 안내 및 버튼 -->
+    <div class="mb-1 text-caption text-grey-darken-1">
+      {{ _t('board.translate_tip') }}
+    </div>
+    <v-btn block color="primary" class="mb-4" @click="toggleTranslationPanel">
+      <v-icon start>mdi-translate</v-icon>
+      {{ showTranslatePanel ? _t('board.closeTranslation') : _t('board.openTranslationHelper') }}
+    </v-btn>
+
     <v-expand-transition>
       <v-card v-show="showTranslatePanel" class="pa-4 mb-4">
-        <div class="mb-1 text-caption text-grey-darken-1">제목과 내용을 선택한 언어로 번역해 드립니다. 정확한 번역을 위해 원문을 먼저 입력해주세요.</div>
+        <div class="mb-1 text-caption text-grey-darken-1">
+          제목과 내용을 선택한 언어로 번역해 드립니다. 정확한 번역을 위해 원문을 먼저 입력해주세요. 투딜에서 제공하는 번역은 완벽하지 않습니다.
+        </div>
 
         <v-row dense class="mb-3">
           <v-col cols="6">
@@ -82,24 +89,23 @@
         </v-row>
 
         <v-btn
-            :disabled="!sourceLang || !targetLang"
+            :disabled="!sourceLang || !targetLang || loadingTranslation"
             color="secondary"
             block
             class="mb-3"
-            :loading="loading"
+            :loading="loadingTranslation"
             @click="runTranslation"
         >
-          번역 시작
+          {{ loadingTranslation ? '번역 중입니다...' : '번역 시작' }}
         </v-btn>
       </v-card>
     </v-expand-transition>
-    <!--  제목/내용 입력 -->
-    <v-text-field v-model="title" label="제목" outlined clearable class="mb-3" />
-    <v-textarea v-model="content" label="내용" outlined rows="4" auto-grow class="mb-3" />
 
+    <!-- 제목 / 내용 -->
+    <v-text-field v-model="display.title" label="제목" outlined clearable class="mb-3" />
+    <v-textarea v-model="display.content" label="내용" outlined rows="4" auto-grow class="mb-3" />
 
-
-    <!--  수정 완료 -->
+    <!-- 수정 완료 버튼 -->
     <v-btn
         block
         color="primary"
@@ -115,30 +121,41 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 import { apiClient } from '@/libs/http/apiClient'
 import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
 
+const { t: _t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const postId = Number(route.params.id)
+const loading = ref(false)
+const loadingTranslation = ref(false)
 
+const postId = Number(route.params.id)
+if (isNaN(postId)) {
+  alert('잘못된 게시글 ID입니다.')
+  router.replace('/board')
+}
+
+// ✅ 실제 저장되는 값
 const title = ref('')
 const content = ref('')
-const originalTitle = ref('')    //  원문 저장용
-const originalContent = ref('')
-const category = ref('')
-const loading = ref(false)
-const originalPost = ref<any>(null)
 
+// ✅ 화면에 표시/편집용
+const display = ref({
+  title: '',
+  content: ''
+})
+
+const category = ref('')
 const imageUrls = ref<string[]>([])
-const fileInput = ref<HTMLInputElement | null>(null)
+const originalPost = ref<any>(null)
 
 const showTranslatePanel = ref(false)
 const sourceLang = ref('ko')
 const targetLang = ref('')
-const translatedTitle = ref('')     //  번역본 저장용
-const translatedContent = ref('')
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const langOptions = [
   { label: '한국어', value: 'ko' },
@@ -158,20 +175,19 @@ const categoryOptions = [
 const load = async () => {
   try {
     const res = await boardApi.getPost(postId)
-    originalPost.value = res
+    const post = res?.data || res
 
-    title.value = res.title
-    content.value = res.content
-    originalTitle.value = res.title      //  원문 저장
-    originalContent.value = res.content
-    translatedTitle.value = res.translatedTitle || ''
-    translatedContent.value = res.translatedContent || ''
-
-    category.value = res.category
-    imageUrls.value = res.imageUrls || []
-    sourceLang.value = res.language || 'ko'
+    originalPost.value = post
+    title.value = post.title
+    content.value = post.content
+    display.value.title = post.translatedTitle ? post.translatedTitle : post.title;
+    display.value.content = post.translatedContent ? post.translatedContent : post.content;
+    category.value = post.category;
+    imageUrls.value = post.imageUrls || []
+    sourceLang.value = post.language || 'ko'
   } catch (e) {
     alert('게시글을 불러올 수 없습니다.')
+    router.replace('/board')
   }
 }
 
@@ -194,57 +210,65 @@ const handleImageUpload = async (e: Event) => {
       console.error(e)
     }
   }
+
   imageUrls.value.push(...uploaded)
   if (fileInput.value) fileInput.value.value = ''
 }
 
-const toggleTranslationPanel = () => showTranslatePanel.value = !showTranslatePanel.value
+const toggleTranslationPanel = () => {
+  showTranslatePanel.value = !showTranslatePanel.value
+}
 
 const runTranslation = async () => {
-  if (!title.value || !content.value) {
+  if (!display.value.title || !display.value.content) {
     alert('제목과 내용을 먼저 입력해주세요.')
     return
   }
+  loadingTranslation.value = true
+
   try {
     const [resTitle, resContent] = await Promise.all([
       apiClient.post('/api/translate', {
         source: sourceLang.value,
         target: targetLang.value,
-        text: title.value
+        text: display.value.title
       }),
       apiClient.post('/api/translate', {
         source: sourceLang.value,
         target: targetLang.value,
-        text: content.value
+        text: display.value.content
       })
     ])
-
-    translatedTitle.value = resTitle.data.translatedText
-    translatedContent.value = resContent.data.translatedText
-    showTranslatePanel.value = false
+    display.value.title = resTitle?.translatedText || display.value.title
+    display.value.content = resContent?.translatedText || display.value.content
   } catch (e) {
     console.error(e)
     alert('번역 중 오류가 발생했습니다.')
+  } finally {
+    loadingTranslation.value = false
   }
 }
 
 const submit = async () => {
-  if (!title.value.trim() || !content.value.trim()) {
+  if (!display.value.title.trim() || !display.value.content.trim()) {
     alert('제목과 내용을 입력해주세요.')
     return
   }
+
   if (!category.value) {
     alert('카테고리를 선택해주세요.')
     return
   }
 
-  loading.value = true
+  // ✅ 화면에서 입력한 걸 저장용 변수에 반영
+  title.value = display.value.title
+  content.value = display.value.content
+
   try {
+    loading.value = true
     await boardApi.updatePost(postId, {
-      title: originalTitle.value || title.value,        //  원문
-      content: originalContent.value || content.value,  //  원문
-      translatedTitle: translatedTitle.value || null,   //  번역본
-      translatedContent: translatedContent.value || null,
+      title: title.value,
+      content: content.value,
       category: category.value,
       language: sourceLang.value,
       latitude: originalPost.value.latitude,
@@ -253,7 +277,7 @@ const submit = async () => {
       region: originalPost.value.region,
       imageUrls: imageUrls.value
     })
-    router.push(`/board/view/${postId}`)
+    router.push(`/board/${postId}`)
   } catch (e) {
     console.error(e)
     alert('게시글 수정 중 오류가 발생했습니다.')
@@ -264,7 +288,6 @@ const submit = async () => {
 
 onMounted(load)
 </script>
-
 
 <style scoped>
 .image-grid {

@@ -13,7 +13,6 @@ export const useAuthStore = defineStore('auth', () => {
     const user = ref<any>(null)
     const accessToken = ref<string | null>(getStoredAccessToken())
 
-    // 🔁 새로고침 시 로컬스토리지에 저장된 유저 정보 복원
     if (typeof window !== 'undefined') {
         const savedUser = localStorage.getItem('user')
         if (savedUser) {
@@ -72,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
         await registerFcm(res.user.id)
     }
 
-     const loginWithKakao = async () => {
+    const loginWithKakao = async () => {
         const { $kakaoReady } = useNuxtApp()
         await $kakaoReady
 
@@ -80,15 +79,23 @@ export const useAuthStore = defineStore('auth', () => {
             try {
                 await new Promise<void>((res, rej) => {
                     window.Kakao.Auth.login({
+                        scope: 'profile_nickname,account_email',
                         success: () => res(),
                         fail: (err: any) => rej(new Error(`카카오 로그인 실패: ${JSON.stringify(err)}`))
                     })
                 })
 
                 const kakaoAccessToken = window.Kakao.Auth.getAccessToken()
-                if (!kakaoAccessToken) {
-                    throw new Error('카카오 액세스 토큰이 비어 있습니다.')
-                }
+                if (!kakaoAccessToken) throw new Error('카카오 액세스 토큰이 비어 있습니다.')
+
+                // 사용자 정보 받아오기
+                const userRes = await fetch('https://kapi.kakao.com/v2/user/me', {
+                    headers: { Authorization: `Bearer ${kakaoAccessToken}` }
+                })
+                const kakaoUser = await userRes.json()
+
+                const kakaoEmail = kakaoUser.kakao_account?.email || ''
+                const kakaoNickname = kakaoUser.properties?.nickname || ''
 
                 const res = await apiClient.post<{
                     accessToken: string
@@ -100,7 +107,12 @@ export const useAuthStore = defineStore('auth', () => {
                 })
 
                 if (res.isNewUser) {
-                    return resolve({ isNewUser: true, tempToken: kakaoAccessToken })
+                    return resolve({
+                        isNewUser: true,
+                        tempToken: kakaoAccessToken,
+                        kakaoEmail,
+                        kakaoNickname
+                    })
                 }
 
                 accessToken.value = res.accessToken

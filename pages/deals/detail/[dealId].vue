@@ -126,19 +126,19 @@ const initPage = async () => {
 </script>
 
 <template>
-  <v-container v-if="deal" class="py-4">
+  <v-container v-if="deal" class="py-2">
     <v-alert
         v-if="isExpired"
         type="warning"
         color="grey-lighten-3"
         text
         prominent
-        class="mb-4"
+        class="mb-2"
     >
       이 경매는 마감되었습니다.
     </v-alert>
 
-    <v-card class="mb-4 pa-3" elevation="1">
+    <v-card class="mb-2 pa-3" elevation="1">
       <div class="text-subtitle-2 font-weight-medium mb-1 color-black">📍 거래 지역</div>
       <div class="text-body-2 mb-1 color-black">
         {{ deal.regionDepth1 }} {{ deal.regionDepth2 }} {{ deal.regionDepth3 }}
@@ -149,6 +149,7 @@ const initPage = async () => {
     </v-card>
 
     <DealDetailBase :deal="deal" />
+
     <component
         :is="currentSection"
         :deal="deal"

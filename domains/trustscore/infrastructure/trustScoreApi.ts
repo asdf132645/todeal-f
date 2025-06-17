@@ -28,7 +28,7 @@ export const trustScoreApi = {
         type?: TrustScoreType
     }) {
         const response = await apiClient.get(`/api/trust-scores/user/${userId}/reviews`, { params })
-        return response?.data
+        return response
     },
 
     // 기존 평점 조회도 유지
