@@ -77,17 +77,17 @@ export const dealApi = {
 
     searchDeals(params: {
         type: string
-        tags?: string[]
-        minPrice?: number
-        maxPrice?: number
-        sort?: string
+        keyword?: string
+        exclude?: string
         page?: number
-        radius?: number
         lat?: number
         lng?: number
-    }) {
+        radius?: number
+        useLocation?: boolean
+    }): Promise<DealResponse[]> {
         return apiClient.get('/api/deals/search', { params })
     },
+
 
     // ✅ 거래종료 (딜 삭제) 메서드 추가
     deleteDeal(dealId: number): Promise<void> {

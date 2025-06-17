@@ -40,7 +40,11 @@ const loadingMore = ref(false)
 const latestFilters = ref<Record<string, any>>({})
 
 const resetAndSearch = async (filters: Record<string, any>) => {
-  latestFilters.value = filters
+  latestFilters.value = {
+    ...filters,
+    useLocation: filters.useLocation ?? false,
+    radius: filters.radius ?? 5
+  }
   page.value = 1
   results.value = []
   hasNext.value = true

@@ -1,7 +1,7 @@
 <!-- ✅ components/search/RecentSearch.vue -->
 <template>
   <v-sheet class="pa-3 mb-3" rounded>
-    <div class="text-caption font-weight-bold mb-2">🕓 최근 검색</div>
+    <div class="text-caption font-weight-bold mb-2">최근 검색</div>
     <v-chip
         v-for="(item, index) in store.recentSearches"
         :key="index"

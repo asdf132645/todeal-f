@@ -31,18 +31,49 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useSearchStore } from '@/stores/searchStore'
-import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router';
 
-const emit = defineEmits(['search'])
+onMounted(() => {
+  const storedLat = parseFloat(localStorage.getItem('userLat') || '')
+  const storedLng = parseFloat(localStorage.getItem('userLng') || '')
+  const storedRadius = parseFloat(localStorage.getItem('userRadius') || '')
+
+  if (!isNaN(storedLat) && !isNaN(storedLng)) {
+    form.value.lat = storedLat
+    form.value.lng = storedLng
+    form.value.useLocation = true
+  }
+  console.log(storedLat, storedLng)
+  if (!isNaN(storedRadius)) {
+    form.value.radius = storedRadius
+  }
+})
+
+const emit = defineEmits<{
+  (e: 'search', filters: {
+    type: string
+    keyword?: string
+    exclude?: string
+    lat?: number
+    lng?: number
+    radius?: number
+    useLocation?: boolean
+  }): void
+}>()
 const store = useSearchStore()
 
 const form = ref({
   keyword: '',
-  exclude: '',     // ✅ 추가됨
-  type: 'used'
+  exclude: '',
+  type: 'used',
+  useLocation: false,
+  radius: 5,
+  lat: undefined as number | undefined,
+  lng: undefined as number | undefined
 })
+
 
 const typeOptions = [
   { label: '중고거래', value: 'used' },
@@ -55,12 +86,19 @@ const router = useRouter()
 
 const submit = () => {
   store.addRecentSearch(form.value)
+
+  const filteredQuery = Object.fromEntries(
+      Object.entries({
+        ...form.value,
+        page: 1
+      }).filter(([_, v]) => v !== undefined && v !== '')
+  )
+  console.log(filteredQuery)
   router.push({
     path: '/deals/search-result',
-    query: {
-      ...form.value,
-      page: 1
-    }
+    query: filteredQuery
   })
 }
+
+
 </script>
