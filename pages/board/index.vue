@@ -10,7 +10,7 @@
             :class="{ active: tab === 'local' }"
             @click="tab = 'local'"
         >
-          <v-icon class="mb-1" size="15">mdi-map-marker</v-icon>
+          <v-icon class="mb-1" size="18">mdi-map-marker</v-icon>
           <div>내 동네</div>
         </div>
 
