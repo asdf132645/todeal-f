@@ -1,5 +1,5 @@
 <template>
-  <v-card flat class="mt-4 pa-4" v-if="user">
+  <v-card flat class="pa-4" v-if="user">
 
     <!-- ✅ 후기 필터 -->
     <div class="mb-3 d-flex align-center justify-space-between">

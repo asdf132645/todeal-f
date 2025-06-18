@@ -1,7 +1,5 @@
 <template>
-  <v-container
-      fluid
-      class="pa-4 pt-6"
+  <div
       style="min-height: 100vh; background-color: #0E0F10; color: #F2F3F4"
   >
     <!-- 헤더에서 자연스럽게 이어지는 부분 -->
@@ -28,7 +26,7 @@
         color="#9EBEFF"
         class="d-block mx-auto my-4"
     />
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

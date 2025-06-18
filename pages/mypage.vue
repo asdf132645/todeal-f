@@ -1,5 +1,5 @@
 <template>
-  <div class="pa-0">
+  <div class="pa-0 px-2 mt-2">
     <MyProfileSection />
     <v-list nav class="py-0  mt-2">
       <div class="customText1 mb-2 mt-4">서비스</div>

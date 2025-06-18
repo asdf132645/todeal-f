@@ -1,16 +1,18 @@
 <template>
   <v-card
-      class=" d-flex"
+      class=" d-flex rounded-lg-custom"
       elevation="2"
       @click="goToDetail"
       height="160"
       style="border-bottom: 1px solid #373333; border-radius: 0;"
   >
     <!-- 좌측 이미지 -->
-    <v-img
-        :src="deal.images?.[0] || noImage"
-        height="160"
-    />
+   <div class="d-flex flex-column customImg">
+     <v-img
+         :src="deal.images?.[0] || noImage"
+         height="160"
+     />
+   </div>
 
     <!-- 우측 텍스트 -->
     <v-card-text class=" d-flex flex-column " style="flex: 1">

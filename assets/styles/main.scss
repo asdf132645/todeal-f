@@ -295,7 +295,11 @@ body:not(.light-mode) .location-banner {
   background: #2c2c2e!important;
   color: #fff!important;
 }
-
+.d-flex.flex-column.customImg {
+  min-width: 162px;
+  overflow: hidden;
+  border-radius: 8px;
+}
 /* 공통 텍스트 */
 body:not(.light-mode) .section-title {
   color: #F2F3F4 !important;

@@ -1,5 +1,5 @@
 <template>
-  <v-list flat class="mt-2" v-if="user">
+  <v-list flat v-if="user">
     <div class="px-2 text-h6 font-weight-bold color-black mt-2">{{ user.nickname }}</div>
     <div class="px-2 text-body-2 color-black">{{ user.email }}</div>
 

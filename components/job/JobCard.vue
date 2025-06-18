@@ -10,6 +10,8 @@
     <v-img
         :src="job.images?.[0] || noImage"
         height="160"
+        class="rounded-lg"
+
     />
 
     <!-- 우측 텍스트 -->

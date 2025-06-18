@@ -7,7 +7,7 @@
       <AppBackHeader :title="resolvedTitle" />
     </template>
 
-    <v-main class="pb-16 px-4">
+    <v-main class="pb-16">
       <NuxtPage />
     </v-main>
 

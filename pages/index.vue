@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="pa-0 bg-app">
+  <v-container fluid class="pa-1 bg-app">
     <BannerArea />
 
     <!-- 태그 필터 그룹 + ⋯ 메뉴 -->
@@ -118,9 +118,9 @@ const hasNext = ref(true)
 
 const tagFilters = [
   { label: '빌려드려요', value: 'barter' },
-  { label: '희귀템 경매', value: 'used' },
-  { label: '오늘 알바 구함', value: 'parttime-request' },
-  { label: '오늘 알바 한다', value: 'parttime' }
+  { label: '중고거래', value: 'used' },
+  { label: '알바 구인', value: 'parttime-request' },
+  { label: '알바 구직', value: 'parttime' }
 ]
 
 const categories = {

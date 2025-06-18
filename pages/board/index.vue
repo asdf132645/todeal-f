@@ -1,34 +1,34 @@
 <template>
-  <v-container>
+  <div>
     <!-- ✅ 고정 필터 영역 -->
     <div class="sticky-filters">
       <!-- 🧭 토글 버튼 -->
-      <div class="d-flex justify-start align-center mb-2 gap-2">
-        <!-- 내 동네 -->
-        <div
-            class="toggle-card mr-2"
-            :class="{ active: tab === 'local' }"
-            @click="tab = 'local'"
-        >
-          <v-icon class="mb-1" size="18">mdi-map-marker</v-icon>
-          <div>내 동네</div>
-        </div>
+<!--      <div class="d-flex justify-start align-center mb-2 gap-2">-->
+<!--        &lt;!&ndash; 내 동네 &ndash;&gt;-->
+<!--        <div-->
+<!--            class="toggle-card mr-2"-->
+<!--            :class="{ active: tab === 'local' }"-->
+<!--            @click="tab = 'local'"-->
+<!--        >-->
+<!--          <v-icon class="mb-1" size="18">mdi-map-marker</v-icon>-->
+<!--          <div class="customText1">내 동네</div>-->
+<!--        </div>-->
 
-        <!-- 전체 -->
-        <div
-            class="toggle-card"
-            :class="{ active: tab === 'all' }"
-            @click="tab = 'all'"
-        >
-          <v-icon class="mb-1" size="28">mdi-map-search	</v-icon>
-          <div class="text-no-icon">전체</div>
-        </div>
-      </div>
+<!--        &lt;!&ndash; 전체 &ndash;&gt;-->
+<!--        <div-->
+<!--            class="toggle-card"-->
+<!--            :class="{ active: tab === 'all' }"-->
+<!--            @click="tab = 'all'"-->
+<!--        >-->
+<!--          <v-icon class="mb-1" size="18">mdi-map-search	</v-icon>-->
+<!--          <div class="customText1">전체</div>-->
+<!--        </div>-->
+<!--      </div>-->
 
       <!-- 🏷 카테고리 칩 -->
       <v-slide-group
           v-model="category"
-          class="mb-2"
+          class="mb-2 px-2"
       >
         <v-slide-group-item
             v-for="option in categoryOptions"
@@ -47,7 +47,7 @@
       </v-slide-group>
 
       <!-- 🔍 검색 영역 -->
-      <div class="d-flex align-center gap-2 mb-2 search-bar-wrap">
+      <div class="d-flex align-center gap-2 mb-2 px-2 search-bar-wrap">
         <v-select
             v-model="searchField"
             :items="searchFieldOptions"
@@ -104,7 +104,7 @@
       <div class="text-body-2 text-grey mt-1">첫 번째 글을 남겨보세요!</div>
       <v-btn color="primary" class="mt-6" @click="goToWrite">글쓰기</v-btn>
     </v-container>
-  </v-container>
+  </div>
 </template>
 
 
