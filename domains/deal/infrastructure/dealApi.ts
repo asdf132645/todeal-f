@@ -4,6 +4,7 @@ import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import type { DealRequest } from '@/domains/deal/domain/deal/dto/DealRequest'
 import type { DealResponse } from '@/domains/deal/domain/deal/dto/DealResponse'
 import { useAuthStore } from '@/stores/authStore'
+import type {CursorDealResponse} from "~/types/deal";
 
 export const dealApi = {
     fetchDeals(
@@ -50,28 +51,21 @@ export const dealApi = {
         })
     },
 
-    // ✅ 무한스크롤용 리스트 조회
-    getList({
-                type,
-                size,
-                cursor,
-                lat,
-                lng,
-                radius,
-            }: {
-        type: 'used' | 'parttime' | 'barter'
-        size: number
-        cursor?: number
+    async searchDealsByCursor(params: {
+        type: string
+        keyword?: string
+        exclude?: string
+        cursorId?: number
+        pageSize: number
         lat?: number
         lng?: number
         radius?: number
-    }): Promise<{ items: DealResponse[]; nextCursor: number | null }> {
-        console.log(' getList 호출됨:', { type, size, cursor, lat, lng, radius })
-
-        return apiClient.get('/api/deals', {
-            params: { type, size, cursor, lat, lng, radius, useLocation: true }
-        })
+        useLocation: boolean
+    }): Promise<CursorDealResponse> {
+        const data = await apiClient.get('/api/deals/search', { params })
+        return data
     },
+
 
 
 
@@ -79,7 +73,8 @@ export const dealApi = {
         type: string
         keyword?: string
         exclude?: string
-        page?: number
+        page?: number,
+        pageSize?: number,
         lat?: number
         lng?: number
         radius?: number

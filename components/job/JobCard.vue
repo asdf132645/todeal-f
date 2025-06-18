@@ -1,22 +1,32 @@
 <template>
-  <v-card class="rounded-sm" elevation="2" @click="goToDetail">
+  <v-card
+      class=" d-flex"
+      elevation="2"
+      @click="goToDetail"
+      height="160"
+      style="border-bottom: 1px solid #373333; border-radius: 0;"
+  >
+    <!-- 좌측 이미지 -->
     <v-img
         :src="job.images?.[0] || noImage"
-        height="120"
-        cover
+        height="160"
     />
 
-    <v-card-text class="pa-2">
-      <!-- ✅ 거래 방식 뱃지 -->
-      <div
-          class="chip-custom mb-2"
-      >
+    <!-- 우측 텍스트 -->
+    <v-card-text class=" d-flex flex-column " style="flex: 1">
+      <!-- 거래방식 -->
+      <div class="chip-custom wid100 mb-1">
         {{ job.pricingType === 'FIXED' ? '정가 방식' : '경매 방식' }}
       </div>
 
-      <div class="text-body-2 font-weight-bold">{{ job.translatedTitle ? job.translatedTitle : job.title }}</div>
-      <div class="mt-1 text-caption">
-        시급: <strong>{{ job.currentPrice.toLocaleString() }}원</strong><br />
+      <div class="text-subtitle-2 font-weight-bold mb-1">
+        {{ job.translatedTitle || job.title }}
+      </div>
+      <div class="text-subtitle-2 font-weight-bold mb-1">
+       시급: <strong>{{ job.currentPrice.toLocaleString() }}원</strong>
+      </div>
+
+      <div class="grey--text custom-text-sm mb-1">
         {{ address || '위치 미지정' }}
       </div>
     </v-card-text>
@@ -31,12 +41,13 @@ import noImage from '@/assets/img/noimg.jpg'
 interface Job {
   id: number
   title: string
+  translatedTitle?: string
   description: string
   currentPrice: number
   latitude: number
   longitude: number
   type?: string
-  pricingType?: string // ✅ 추가
+  pricingType?: string
   images?: string[]
 }
 
@@ -45,7 +56,13 @@ const address = ref('')
 const router = useRouter()
 
 onMounted(async () => {
-  address.value = await getAddressFromCoords(props.job.latitude, props.job.longitude)
+  address.value = await getAddressFromCoords(props.job.latitude, props.job.longitude);
+  const savedY = sessionStorage.getItem('scrollY')
+  if (savedY) {
+    window.scrollTo({ top: parseInt(savedY), behavior: 'auto' })
+    sessionStorage.removeItem('scrollY')
+  }
+
 })
 
 async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
@@ -56,7 +73,7 @@ async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
       }
     })
     const data = await response.json()
-    return data.documents?.[0]?.address_name || '위치 미지정'
+    return data.documents?.[0]?.region_3depth_name || '위치 미지정'
   } catch (error) {
     console.error('위치 변환 실패:', error)
     return '위치 미지정'
@@ -64,6 +81,7 @@ async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
 }
 
 const goToDetail = () => {
+  sessionStorage.setItem('scrollY', String(window.scrollY))
   router.push({
     path: `/deals/detail/${props.job.id}`,
     query: { type: props.job.type || 'parttime' }

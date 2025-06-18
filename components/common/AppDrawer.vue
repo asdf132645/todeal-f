@@ -6,7 +6,7 @@
       temporary
       location="right"
   >
-    <v-list nav dense>
+    <v-list nav dense class="no-bottom-line">
       <template v-if="auth.user">
         <v-list-item to="/mypage" title="마이페이지" prepend-icon="mdi-account" />
         <v-list-item to="/bids/history" title="입찰내역" prepend-icon="mdi-gavel" />

@@ -3,20 +3,25 @@
     <!-- ✅ 고정 필터 영역 -->
     <div class="sticky-filters">
       <!-- 🧭 토글 버튼 -->
-      <div class="d-flex justify-center align-center mb-2">
-        <div class="custom-toggle">
-          <button
-              :class="['toggle-btn', tab === 'local' ? 'active' : '']"
-              @click="tab = 'local'"
-          >
-            내 동네
-          </button>
-          <button
-              :class="['toggle-btn', tab === 'all' ? 'active' : '']"
-              @click="tab = 'all'"
-          >
-            전체
-          </button>
+      <div class="d-flex justify-start align-center mb-2 gap-2">
+        <!-- 내 동네 -->
+        <div
+            class="toggle-card mr-2"
+            :class="{ active: tab === 'local' }"
+            @click="tab = 'local'"
+        >
+          <v-icon class="mb-1" size="28">mdi-map-marker</v-icon>
+          <div>내 동네</div>
+        </div>
+
+        <!-- 전체 -->
+        <div
+            class="toggle-card"
+            :class="{ active: tab === 'all' }"
+            @click="tab = 'all'"
+        >
+          <v-icon class="mb-1" size="28">mdi-map-search	</v-icon>
+          <div class="text-no-icon">전체</div>
         </div>
       </div>
 
@@ -24,7 +29,6 @@
       <v-slide-group
           v-model="category"
           class="mb-2"
-          show-arrows
       >
         <v-slide-group-item
             v-for="option in categoryOptions"
@@ -32,7 +36,7 @@
             :value="option.value"
         >
           <v-chip
-              :color="category === option.value ? 'primary' : 'grey-lighten-3'"
+              :color="category === option.value ? 'primary' : 'grey-lighten-3-custom'"
               class="ma-1"
               variant="flat"
               @click="category = option.value"
@@ -201,39 +205,29 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
   padding-bottom: 4px;
   border-bottom: 1px solid #eee;
 }
-
-
-.custom-toggle {
+.toggle-card {
+  width: 80px;
+  height: 72px;
+  border-radius: 16px;
+  background-color: #2c2c2e;
+  text-align: center;
+  padding: 12px 4px;
+  color: #aaa;
+  font-size: 15px;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: 1px solid transparent;
   display: flex;
-  gap: 4px;
-  background: #2a2a2a;
-  padding: 4px;
-  border-radius: 999px;
-  max-width: 240px;
-  width: 100%;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
-
-.toggle-btn {
-  flex: 1;
-  border: none;
-  background: transparent;
-  color: #ccc;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: 999px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.toggle-btn:hover {
-  background-color: #3a3a3a;
+.toggle-card.active {
+  background-color: #ffffff10;
+  border-color: #2a2e9d;
   color: #fff;
 }
-
-.toggle-btn.active {
-  background-color: #f1c40f; /* primary 색상 */
-  color: #000;
-  font-weight: 600;
+.text-no-icon {
+  margin-top: 6px;
 }
 </style>

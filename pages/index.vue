@@ -1,206 +1,263 @@
 <template>
   <v-container fluid class="pa-0 bg-app">
-    <!-- 1. 헤더 -->
-    <v-sheet class="header-sheet py-4 main">
-      <div class="header-title"  >
-        {{ _t('home.header_title') }} <span class="highlight-text">{{ _t('home.toDeal') }}</span>
-      </div>
-      <div class="header-subtitle">{{ _t('home.header_subtitle') }}</div>
-    </v-sheet>
-
     <BannerArea />
 
-    <!-- 카테고리 -->
-    <v-row class=" pt-0" dense>
-      <v-col cols="6" sm="4" md="3" v-for="(item, i) in categories" :key="i">
-        <v-card class="category-card d-flex flex-column align-center justify-center pa-4" @click="goToCategory(item.route)">
-          <v-icon size="32" class="mb-2" color="#FFD54F">{{ item.icon }}</v-icon>
-          <div class="text-subtitle-2 font-weight-bold">{{ _t(item.title) }}</div>
-          <div class="text-caption mt-1 subtitle-text">{{ _t(item.subtitle) }}</div>
-        </v-card>
-      </v-col>
-    </v-row>
+    <!-- 태그 필터 그룹 + ⋯ 메뉴 -->
+    <div class="mt-4 mb-4">
+      <v-slide-group v-model="selectedTag">
+        <!-- ⏺ 맨 앞 ⋯ 드롭다운 메뉴 -->
+        <v-slide-group-item>
+          <v-menu transition="fade-transition" offset-y>
+            <template #activator="{ props }">
+              <v-chip
+                  class="ma-1 d-flex align-center"
+                  color="grey-lighten-3"
+                  variant="flat"
+                  v-bind="props"
+              >
+                ⋯
+              </v-chip>
+            </template>
 
-    <!-- 위치 안내 -->
-    <v-sheet class="location-banner px-4 py-3 mt-4">
-      <div class="d-flex justify-space-between align-center">
-        <div>
-          <div class="location-title">{{ _t('location.title') }}</div>
-          <div class="location-subtitle">
-            {{ _t('location.subtitle_prefix') }} <strong>{{ userRadius }}km</strong> {{ _t('location.subtitle_suffix') }}
-          </div>        </div>
-        <v-btn icon variant="plain" class="location-icon-btn" @click="refreshLocationData">
-          <v-icon>mdi-crosshairs-gps</v-icon>
-        </v-btn>
-      </div>
-    </v-sheet>
+            <v-list>
+              <v-list-item
+                  v-for="tag in tagFilters"
+                  :key="'menu-' + tag.value"
+                  @click="goToCategory(categories[tag.value])"
+              >
+                <v-list-item-title>{{ tag.label }}</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
+        </v-slide-group-item>
 
-
-    <!-- 오늘 급구 알바 + 구직 경매 -->
-    <v-sheet class="highlight-jobs px-4 py-4 my-4">
-      <!-- 급구 알바 -->
-      <div class="d-flex justify-space-between align-center mb-3">
-        <div>
-          <div class="text-h7 font-weight-bold mb-1">{{ _t('section.urgent_parttime_title') }}</div>
-          <div class=" gray-text">{{ _t('section.urgent_parttime_sub') }}</div>
-        </div>
-        <button type="button" class="text-custom-small" @click="router.push('/deals/parttime-request')">{{ _t('common.more') }}</button>
-      </div>
-      <v-slide-group show-arrows v-if="parttimeRequest.length > 0">
-        <v-slide-group-item v-for="job in parttimeRequest" :key="job.id">
-          <v-card class="job-card mx-2" width="220" flat>
-            <JobCard :job="job" />
-          </v-card>
+        <!-- 나머지 태그 필터 버튼들 -->
+        <v-slide-group-item
+            v-for="tag in tagFilters"
+            :key="tag.value"
+            :value="tag.value"
+        >
+          <v-chip
+              :color="selectedTag === tag.value ? 'primary' : 'grey-lighten-3-custom'"
+              class="ma-1 d-flex align-center"
+              variant="flat"
+              @click="onTagChange(tag.value)"
+          >
+            {{ tag.label }}
+          </v-chip>
         </v-slide-group-item>
       </v-slide-group>
-      <div v-else class="section-empty mt-3">{{ _t('section.urgent_parttime_empty') }}</div>
+    </div>
 
-      <!-- 구직 경매 -->
-      <div class="d-flex justify-space-between align-center my-5">
-        <div>
-          <div class="text-h7 font-weight-bold mb-1">{{ _t('section.recruit_title') }}</div>
-          <div class=" gray-text">{{ _t('section.recruit_sub') }}</div>
-        </div>
-        <button type="button" class="text-custom-small" @click="router.push('/deals/parttime')">{{ _t('common.more') }}</button>
-      </div>
-      <v-slide-group show-arrows v-if="jobs.length > 0">
-        <v-slide-group-item v-for="job in jobs" :key="job.id">
-          <v-card class="job-card mx-2" width="200" flat>
-            <JobCard :job="job" />
-          </v-card>
-        </v-slide-group-item>
-      </v-slide-group>
-      <div v-else class="section-empty mt-3">{{ _t('section.recruit_empty') }}</div>
-    </v-sheet>
+    <!-- 오늘 올라온 게시글 -->
+    <CommunityFlashBoard />
 
+    <!-- 게시글 리스트 -->
+    <v-container class="mt-4 px-0">
+      <v-row dense>
+        <v-col
+            cols="12"
+            v-for="deal in pagedDeals"
+            :key="deal.id"
+            class="pt-0 pb-0"
+        >
+          <JobCard
+              v-if="selectedTag === 'parttime' || selectedTag === 'parttime-request'"
+              :job="deal"
+              class="card-item"
+          />
+          <DealCard
+              v-else
+              :deal="deal"
+              class="card-item"
+          />
+        </v-col>
+      </v-row>
 
+      <!-- 무한스크롤 트리거 -->
+      <div ref="scrollTrigger" style="height: 1px; margin-top: 80px;" />
+      <v-progress-circular
+          v-if="loadingMore"
+          indeterminate
+          color="primary"
+          class="d-block mx-auto my-4"
+      />
+    </v-container>
 
-    <!-- 빌려드려요 -->
-    <div class="section-title px-4 mt-6 mb-2">{{ _t('section.barter_title') }}</div>
-
-    <v-slide-group show-arrows v-if="barters.length > 0" class="px-3">
-      <v-slide-group-item
-          v-for="barter in barters.slice(0, 12)"
-          :key="barter.id"
-          class="slide-item"
-      >
-        <DealCard :deal="barter" />
-      </v-slide-group-item>
-    </v-slide-group>
-
-    <div v-else class="section-empty">{{ _t('section.barter_empty') }}</div>
-
-    <!-- 희귀템 섹션 -->
-    <div class="section-title px-4 mt-6 mb-2">{{ _t('section.rare_item_title') }}</div>
-    <v-slide-group show-arrows v-if="deals.length > 0" class="px-3">
-      <v-slide-group-item
-          v-for="deal in deals.slice(0, 12)"
-          :key="deal.id"
-          class="slide-item"
-      >
-        <DealCard :deal="deal" />
-      </v-slide-group-item>
-    </v-slide-group>
-    <div v-else class="section-empty">{{ _t('section.rare_item_empty') }}</div>
-
+    <!-- 빈 상태 -->
+    <div v-if="pagedDeals.length === 0" class="section-empty">
+      관련 게시글이 없습니다 😢
+    </div>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import JobCard from '@/components/job/JobCard.vue'
-import DealCard from '@/components/deal/DealCard.vue'
-import BannerArea from '~/components/layout/BannerArea.vue'
-import { dealApi } from '@/domains/deal/infrastructure/dealApi'
-import { hashtagApi } from '@/domains/hashtag/infrastructure/hashtagApi'
-import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
-import { useGeoStore } from '@/stores/geoStore'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from '#vue-router'
-import {useI18n} from "vue-i18n";
-const { t: _t, locale } = useI18n()
+import { useI18n } from 'vue-i18n'
+import { dealApi } from '@/domains/deal/infrastructure/dealApi'
+import { useGeoStore } from '@/stores/geoStore'
+import DealCard from '@/components/deal/DealCard.vue'
+import JobCard from '@/components/job/JobCard.vue'
+import CommunityFlashBoard from '@/components/community/CommunityFlashBoard.vue'
+import BannerArea from '~/components/layout/BannerArea.vue'
+import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 
-const jobs = ref<Deal[]>([])
-const deals = ref<Deal[]>([])
-const barters = ref<Deal[]>([])
-const parttimeRequest = ref<Deal[]>([])
-const hashtags = ref<string[]>([])
-const geo = useGeoStore()
+const { t: _t } = useI18n()
 const router = useRouter()
-const userRadius = ref('')
+const geo = useGeoStore()
+const cursorId = ref<number | null>(null)
 
-const defaultHashtags = [
-  '#알바구함', '#중고거래', '#희귀템', '#오늘출근', '#빌려드려요', '#유물', '#서울', '#신림동'
+const selectedTag = ref('barter')
+const allDeals = ref<Deal[]>([])
+const loadedCount = ref(8)
+const loadingMore = ref(false)
+const scrollTrigger = ref<HTMLElement | null>(null)
+const page = ref(1)
+const hasNext = ref(true)
+
+const tagFilters = [
+  { label: '빌려드려요', value: 'barter' },
+  { label: '희귀템 경매', value: 'used' },
+  { label: '오늘 알바 구함', value: 'parttime-request' },
+  { label: '오늘 알바 한다', value: 'parttime' }
 ]
 
-const categories = [
-  { title: 'category.barter_title', subtitle: 'category.barter_subtitle', icon: 'mdi-arrow-left-right', route: '/deals/barter' },
-  { title: 'category.used_title', subtitle: 'category.used_subtitle', icon: 'mdi-bag-personal-outline', route: '/deals/used' },
-  { title: 'category.parttime_title', subtitle: 'category.parttime_subtitle', icon: 'mdi-storefront-outline', route: '/deals/parttime' },
-  { title: 'category.parttime_request_title', subtitle: 'category.parttime_request_subtitle', icon: 'mdi-account-tie-outline', route: '/deals/parttime-request' }
-]
+const categories = {
+  barter: '/deals/barter',
+  used: '/deals/used',
+  'parttime-request': '/deals/parttime-request',
+  parttime: '/deals/parttime'
+}
 
-const fetchNearbyDealsByType = async (type: 'used' | 'parttime' | 'barter' | 'parttime-request') => {
-  const lat = Number(localStorage.getItem('userLat'))
-  const lng = Number(localStorage.getItem('userLng'))
+const currentCategoryRoute = computed(() => categories[selectedTag.value])
+
+const pagedDeals = computed(() =>
+    allDeals.value.slice(0, loadedCount.value)
+)
+
+const onTagChange = async (tag: string) => {
+  selectedTag.value = tag
+  sessionStorage.setItem('selectedTag', tag)
+
+  // 🔥 기존 캐시 제거
+  sessionStorage.removeItem('dealsCache')
+  sessionStorage.removeItem('cursorIdCache')
+
+  loadedCount.value = 8
+  page.value = 1
+  hasNext.value = true
+  allDeals.value = []
+  cursorId.value = null
+
+  await fetchDeals()
+}
+
+
+const goToCategory = (path: string) => router.push(path)
+
+const fetchDeals = async () => {
+  if (!hasNext.value || loadingMore.value) return
+  loadingMore.value = true
+
   try {
-    const res = await dealApi.fetchNearbyDeals({
-      lat: lat,
-      lng: lng,
-      radius: userRadius.value,
-      type
+    const lat = Number(localStorage.getItem('userLat'))
+    const lng = Number(localStorage.getItem('userLng'))
+
+    const res = await dealApi.searchDeals({
+      type: selectedTag.value,
+      cursorId: cursorId.value,
+      pageSize: 10,
+      useLocation: true,
+      radius: Number(localStorage.getItem('userRadius') || '5'),
+      lat, lng
     })
-    if (type === 'parttime') jobs.value = res
-    else if (type === 'used') deals.value = res
-    else if (type === 'barter') barters.value = res
-    else if (type === 'parttime-request') parttimeRequest.value = res
+    if (res.items.length === 0) {
+      hasNext.value = false
+    } else {
+      const ids = new Set(allDeals.value.map(d => String(d.id)))
+      const newDeals = res.items.filter(d => !ids.has(String(d.id)))
+
+      allDeals.value.push(...newDeals)
+      cursorId.value = res.nextCursorId
+
+      // ✅ 조건부 캐시 저장
+      const prevCache = sessionStorage.getItem('dealsCache')
+      const prevCursor = sessionStorage.getItem('cursorIdCache')
+      const currentItems = JSON.stringify(allDeals.value)
+      const currentCursor = String(cursorId.value)
+
+      if (prevCache !== currentItems || prevCursor !== currentCursor) {
+        sessionStorage.setItem('dealsCache', currentItems)
+        sessionStorage.setItem('cursorIdCache', currentCursor)
+      }
+    }
   } catch (e) {
-    console.error(`위치 기반 ${type} 조회 실패:`, e)
+    console.error('searchDeals 실패:', e)
+  } finally {
+    loadingMore.value = false
   }
 }
 
-const fetchPopularHashtags = async () => {
-  try {
-    const res = await hashtagApi.fetchAllHashtags()
-    hashtags.value = res.length > 0 ? res : defaultHashtags
-  } catch (e) {
-    console.error('인기 해시태그 조회 실패:', e)
-    hashtags.value = defaultHashtags
+
+const loadMore = () => {
+  if (!loadingMore.value && hasNext.value) {
+    loadedCount.value += 10  // ✅ 이거 필수
+    fetchDeals()
   }
 }
 
-const refreshLocationData = async () => {
-  await geo.initLocationOnce()
-  if (geo.latitude && geo.longitude) {
-    await fetchNearbyDealsByType('parttime')
-    await fetchNearbyDealsByType('used')
-    await fetchNearbyDealsByType('barter')
-    await fetchNearbyDealsByType('parttime-request')
+
+let observer: IntersectionObserver | null = null
+const observeScroll = () => {
+  if (observer) observer.disconnect()
+  observer = new IntersectionObserver(([entry]) => {
+    if (entry.isIntersecting) loadMore()
+  }, { threshold: 0.5 })
+
+  if (scrollTrigger.value) observer.observe(scrollTrigger.value)
+}
+
+onMounted(async () => {
+  const savedTag = sessionStorage.getItem('selectedTag')
+  if (savedTag && categories[savedTag]) selectedTag.value = savedTag
+
+  const cachedDeals = sessionStorage.getItem('dealsCache')
+  const cachedCursor = sessionStorage.getItem('cursorIdCache')
+  const savedScroll = sessionStorage.getItem('scrollY')
+
+  if (cachedDeals && cachedCursor) {
+    const deals = JSON.parse(cachedDeals)
+    allDeals.value = deals
+    cursorId.value = Number(cachedCursor)
+    loadedCount.value = deals.length
+
+    if (savedScroll) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: parseInt(savedScroll), behavior: 'auto' })
+        sessionStorage.removeItem('scrollY')
+      })
+    }
+  } else {
+    await geo.initLocationOnce()
+    await fetchDeals()
   }
-}
 
-const goToCategory = (path: string) => {
-  router.push(path)
-}
+  observeScroll()
+})
 
-onMounted(() => {
-  userRadius.value = localStorage.getItem('userRadius') || '5'
-  refreshLocationData()
+onBeforeUnmount(() => {
+  if (observer) observer.disconnect()
 })
 </script>
 
 <style scoped>
-.highlight-jobs {
-  background-color: #2C2D30;
-  border-radius: 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-.job-card {
-  background-color: #1A1B1D;
-  border-radius: 12px;
-}
 .section-empty {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+.card-item {
+  width: 100%;
 }
 </style>

@@ -1,6 +1,5 @@
 <template>
   <v-sheet class="pa-4 mb-4" rounded>
-    <div class="text-subtitle-2 font-weight-bold mb-2">키워드 검색</div>
     <v-row dense>
       <v-col cols="12">
         <v-text-field

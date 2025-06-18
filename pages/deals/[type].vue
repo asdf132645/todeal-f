@@ -2,20 +2,17 @@
   <v-container class="py-2 px-2">
     <!-- 🔘 지역/전체 전환 버튼 -->
     <div class="d-flex justify-end mb-3">
-      <button
-          class="btn-custom"
-          @click="toggleUseLocation"
-      >
+      <button class="btn-custom" @click="toggleUseLocation">
         {{ useLocation ? '전체 보기' : '내 지역만 보기' }}
       </button>
     </div>
 
     <!-- 🗂 리스트 -->
     <v-row v-if="items.length > 0" dense>
-      <v-col cols="12" v-for="item in items" :key="item.id" class="pb-1">
+      <v-col cols="12" v-for="item in items" :key="item.id" class="pt-0 pb-0">
         <v-sheet
             class="d-flex align-start pa-2"
-            style="border-bottom: 1px solid #eee; cursor: pointer"
+            style="border-bottom: 1px solid #353131; cursor: pointer"
             @click.stop="goDetail(item.id)"
         >
           <v-img
@@ -27,7 +24,7 @@
           />
           <div class="ml-3 flex-grow-1">
             <div class="text-body-2 font-weight-bold mb-1">
-              {{ item.translatedTitle ? item.translatedTitle : item.title }}
+              {{ item.translatedTitle || item.title }}
             </div>
             <div class="text-caption text-grey-darken-1 mb-1">
               {{ item.region }} · {{ formatTimeAgo(item.createdAt) }}
@@ -53,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
 
@@ -62,11 +59,14 @@ const router = useRouter()
 
 const type = (route.params.type as string) || 'used'
 const items = ref<any[]>([])
-const cursor = ref<number | null>(null)
+const cursorId = ref<number | null>(null)
+const pageSize = 10
 const loading = ref(false)
 const hasMore = ref(true)
 const useLocation = ref(true)
 const infiniteScrollTarget = ref<HTMLElement | null>(null)
+
+let observer: IntersectionObserver | null = null
 
 const formatTimeAgo = (iso: string) => {
   const d = new Date(iso)
@@ -81,8 +81,22 @@ const formatTimeAgo = (iso: string) => {
 }
 
 const goDetail = (id: number) => {
+  // 👉 기존에 저장된 값과 비교
+  const prevCache = sessionStorage.getItem('dealItemsCache')
+  const prevCursor = sessionStorage.getItem('dealCursorId')
+
+  const currentItems = JSON.stringify(items.value)
+  const currentCursor = String(cursorId.value || '')
+
+  if (prevCache !== currentItems || prevCursor !== currentCursor) {
+    sessionStorage.setItem('scrollYDealDetail', String(window.scrollY))
+    sessionStorage.setItem('dealItemsCache', currentItems)
+    sessionStorage.setItem('dealCursorId', currentCursor)
+  }
+
   router.push({ path: `/deals/detail/${id}`, query: { type } })
 }
+
 
 const toggleUseLocation = () => {
   useLocation.value = !useLocation.value
@@ -91,7 +105,7 @@ const toggleUseLocation = () => {
 
 const refreshDeals = async () => {
   items.value = []
-  cursor.value = null
+  cursorId.value = null
   hasMore.value = true
   await loadDeals()
 }
@@ -105,18 +119,19 @@ const loadDeals = async () => {
   const lng = Number(localStorage.getItem('userLng'))
 
   try {
-    const res = await dealApi.getList({
+    const res = await dealApi.searchDealsByCursor({
       type,
-      size: 10,
-      cursor: cursor.value ?? undefined,
+      cursorId: cursorId.value,
+      pageSize,
       lat: useLocation.value ? lat : undefined,
       lng: useLocation.value ? lng : undefined,
-      radius: useLocation.value ? Number(userRadius) : undefined,
+      radius: useLocation.value ? Number(userRadius || 5) : undefined,
+      useLocation: useLocation.value
     })
 
     items.value.push(...res.items)
-    cursor.value = res.nextCursor
-    if (!res.nextCursor) hasMore.value = false
+    cursorId.value = res.nextCursorId
+    hasMore.value = res.hasNext
   } catch (e) {
     console.error('❌ 딜 불러오기 실패:', e)
   } finally {
@@ -126,20 +141,39 @@ const loadDeals = async () => {
 
 onMounted(async () => {
   await nextTick()
-  await refreshDeals()
 
-  const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && hasMore.value) {
-      console.log('🔁 스크롤 감지됨 → loadDeals 실행')
-      loadDeals()
+  const cachedItems = sessionStorage.getItem('dealItemsCache')
+  const cachedCursor = sessionStorage.getItem('dealCursorId')
+  let restored = false
+
+  if (cachedItems) {
+    items.value = JSON.parse(cachedItems)
+    cursorId.value = cachedCursor ? Number(cachedCursor) : null
+    sessionStorage.removeItem('dealItemsCache')
+    sessionStorage.removeItem('dealCursorId')
+    restored = true
+  }
+
+  const savedY = sessionStorage.getItem('scrollYDealDetail')
+  if (savedY) {
+    window.scrollTo({ top: parseInt(savedY), behavior: 'auto' })
+    sessionStorage.removeItem('scrollYDealDetail')
+  }
+
+  if (!restored) {
+    await refreshDeals()
+
+    // ✅ observer는 딱 한 번만 등록
+    if (observer) observer.disconnect()
+    observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && hasMore.value) {
+        loadDeals()
+      }
+    }, { threshold: 1 })
+
+    if (infiniteScrollTarget.value) {
+      observer.observe(infiniteScrollTarget.value)
     }
-  }, { threshold: 1 })
-
-  if (infiniteScrollTarget.value) {
-    observer.observe(infiniteScrollTarget.value)
-    console.log('✅ observer 연결됨')
-  } else {
-    console.log('❌ infiniteScrollTarget 렌더 안 됨')
   }
 })
 </script>

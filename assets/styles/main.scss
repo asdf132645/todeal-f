@@ -291,7 +291,10 @@ body:not(.light-mode) .location-banner {
   color: #F2F3F4 !important;
   border: 1px solid #444 !important;
 }
-
+.bg-grey-lighten-3-custom {
+  background: #2c2c2e!important;
+  color: #fff!important;
+}
 /* 공통 텍스트 */
 body:not(.light-mode) .section-title {
   color: #F2F3F4 !important;
@@ -301,8 +304,8 @@ body:not(.light-mode) .section-empty {
   background-color: transparent !important;
 }
 .chip-custom {
-  background: #dbeafe;
-  color: #002bab;
+  background: #000000;
+  color: #ffd54f;
   border-radius: 5px;
   padding: 3px;
   font-size: 0.7rem;
@@ -327,10 +330,24 @@ body:not(.light-mode) .section-empty {
   font-size: 0.7rem;
   border: 1px solid;
 }
-
+.customText1 {
+  color: #dedede;
+  font-size: 0.8rem;
+}
+.custom-text-sm {
+  font-size: 0.7rem;
+  color: #bbbbbb;
+}
 .gray-text {
   color: #999999;
   font-size: 0.7rem;
+}
+.wid100{
+  width: 100% !important;
+  max-width: 63px;
+}
+.v-card--variant-elevated, .v-card--variant-flat{
+  background: #1a1b1d!important;
 }
 
 a.text-link.text-sm-body-1 {

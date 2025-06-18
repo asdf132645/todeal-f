@@ -1,9 +1,9 @@
 <template>
   <v-container fluid class="pa-4 pt-6" style="min-height: 100vh;">
-    <div class="text-h6 font-weight-bold mb-3">검색 결과</div>
+<!--    <div class="text-h6 font-weight-bold mb-3">검색 결과</div>-->
 
     <v-row v-if="results.length > 0" dense>
-      <v-col cols="6" v-for="deal in results" :key="deal.id">
+      <v-col cols="12" v-for="deal in results" :key="deal.id">
         <DealCard :deal="deal" />
       </v-col>
     </v-row>
@@ -23,19 +23,18 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 import DealCard from '@/components/deal/DealCard.vue'
 import { dealApi } from '@/domains/deal/infrastructure/dealApi'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 
 const route = useRoute()
-
 const results = ref<Deal[]>([])
-const page = ref(1)
-const hasNext = ref(true)
 const loadingMore = ref(false)
+const hasNext = ref(true)
 const infiniteScrollTrigger = ref<HTMLElement | null>(null)
+const cursorId = ref<number | null>(null)
 let observer: IntersectionObserver | null = null
 
 const fetchPage = async () => {
@@ -46,18 +45,25 @@ const fetchPage = async () => {
       type: route.query.type as string,
       keyword: route.query.keyword as string,
       exclude: route.query.exclude as string,
-      page: page.value,
+      cursorId: cursorId.value,
+      pageSize: 10,
       lat: route.query.lat ? parseFloat(route.query.lat as string) : undefined,
       lng: route.query.lng ? parseFloat(route.query.lng as string) : undefined,
       radius: route.query.radius ? parseFloat(route.query.radius as string) : 5,
       useLocation: route.query.useLocation === 'true'
     })
 
-    if (res.length === 0) {
+    if (res.items.length === 0) {
       hasNext.value = false
     } else {
-      results.value.push(...res)
-      page.value += 1
+      const ids = new Set(results.value.map((d) => d.id))
+      const newItems = res.items.filter((item) => !ids.has(item.id))
+      results.value.push(...newItems)
+      cursorId.value = res.nextCursorId ?? null
+
+      // ✅ 세션 캐시 저장
+      sessionStorage.setItem('searchResults', JSON.stringify(results.value))
+      sessionStorage.setItem('searchCursor', cursorId.value ? String(cursorId.value) : '')
     }
   } catch (e) {
     console.error('검색 결과 불러오기 실패:', e)
@@ -68,31 +74,53 @@ const fetchPage = async () => {
 
 const observeScroll = () => {
   if (observer) observer.disconnect()
-
   observer = new IntersectionObserver(([entry]) => {
     if (entry.isIntersecting && !loadingMore.value) {
       fetchPage()
     }
   }, {
-    rootMargin: '0px',
-    threshold: 1.0
+    threshold: 0.5
   })
-
-  if (infiniteScrollTrigger.value) {
-    observer.observe(infiniteScrollTrigger.value)
-  }
+  if (infiniteScrollTrigger.value) observer.observe(infiniteScrollTrigger.value)
 }
 
-onMounted(() => {
+// ✅ route.query 변경 감지 (초기화 + fetch)
+watch(() => route.query, async () => {
+  results.value = []
+  cursorId.value = null
+  hasNext.value = true
+
+  sessionStorage.removeItem('searchResults')
+  sessionStorage.removeItem('searchCursor')
+  sessionStorage.removeItem('scrollY')
+
+  await fetchPage()
+}, { immediate: true })
+
+onMounted(async () => {
   observeScroll()
 
-  watch(() => route.query, () => {
-    results.value = []
-    page.value = 1
-    hasNext.value = true
-    fetchPage()
-  }, { immediate: true })
+  const cached = sessionStorage.getItem('searchResults')
+  const cachedCursor = sessionStorage.getItem('searchCursor')
+  const cachedScroll = sessionStorage.getItem('scrollY')
+
+  if (cached && cachedCursor) {
+    results.value = JSON.parse(cached)
+    cursorId.value = cachedCursor ? parseInt(cachedCursor) : null
+
+    // ✅ 렌더링 완료될 때까지 대기
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 100)) // ← 이게 핵심
+
+    if (cachedScroll) {
+      window.scrollTo({ top: parseInt(cachedScroll), behavior: 'auto' })
+      sessionStorage.removeItem('scrollY')
+    }
+  } else {
+    await fetchPage()
+  }
 })
+
 
 onUnmounted(() => {
   if (observer) observer.disconnect()
