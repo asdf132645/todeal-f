@@ -10,7 +10,7 @@
             :class="{ active: tab === 'local' }"
             @click="tab = 'local'"
         >
-          <v-icon class="mb-1" size="28">mdi-map-marker</v-icon>
+          <v-icon class="mb-1" size="15">mdi-map-marker</v-icon>
           <div>내 동네</div>
         </div>
 
@@ -90,8 +90,11 @@
             </v-list-item-subtitle>
           </v-list-item>
           <v-divider v-if="idx !== posts.length - 1" class="my-1" />
+
         </template>
       </v-list>
+      <div ref="observerTarget" class="py-8 text-center text-caption text-grey" v-show="posts.length > 0">
+      </div>
     </template>
 
     <!-- ❌ 글 없음 -->
@@ -106,7 +109,7 @@
 
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted, nextTick, onUnmounted    } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 
@@ -119,6 +122,11 @@ const tab = ref(route.query.tab?.toString() || 'local')
 const category = ref(route.query.category?.toString() || 'all')
 const keyword = ref('')
 const searchField = ref('title') // 기본값: 제목
+const observerTarget = ref<HTMLElement | null>(null)
+const loading = ref(false)           // 로딩 중 여부
+const hasNext = ref(true)            // 다음 페이지 존재 여부
+const cursorId = ref<number | null>(null) // 커서 기반 페이징용 ID
+const cursorCreatedAt = ref<string | null>(null)
 
 const searchFieldOptions = [
   { title: '제목', value: 'title' },
@@ -135,9 +143,64 @@ const categoryOptions = [
   { label: 'Q&A', value: 'qna' },
   { label: '자유', value: 'free' }
 ]
+let observer: IntersectionObserver | null = null
+const initObserver = async () => {
+  await nextTick()
+  if (!observerTarget.value || !hasNext.value) return
 
-// ✅ 상태 변경 시 쿼리 반영 (기존 위치 쿼리 포함)
-watch([tab, category], ([newTab, newCategory]) => {
+  if (observer) observer.disconnect()
+
+  observer = new IntersectionObserver(async ([entry]) => {
+    if (entry.isIntersecting && hasNext.value && !loading.value) {
+      await fetchPosts()
+    }
+  }, {
+    threshold: 0.1
+  })
+
+  observer.observe(observerTarget.value)
+}
+
+
+// ✅ 게시글 불러오기
+const fetchPosts = async () => {
+  if (!hasNext.value || loading.value) return
+  loading.value = true
+  try {
+    const lat = Number(localStorage.getItem('userLat'))
+    const lng = Number(localStorage.getItem('userLng'))
+    const userRadius  = localStorage.getItem('userRadius')
+    const res = await boardApi.getPosts({
+      cursorId: cursorId.value,
+      size: 10,
+      cursorCreatedAt: cursorCreatedAt.value,
+      tab: tab.value,
+      latitude: lat,
+      longitude: lng,
+      distance: userRadius,
+      category: category.value,
+      keyword: keyword.value,
+      searchField: searchField.value,
+    })
+
+    posts.value.push(...res.items)
+    cursorId.value = res.nextCursorId;
+    cursorCreatedAt.value = res.nextCursorCreatedAt;
+    hasNext.value = res.hasNext
+
+    if (!res.hasNext && observer) observer.disconnect()
+
+  } catch (e) {
+    console.error('게시글 로딩 실패', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+
+
+
+watch([tab, category], async ([newTab, newCategory]) => {
   router.replace({
     query: {
       ...route.query,
@@ -145,34 +208,16 @@ watch([tab, category], ([newTab, newCategory]) => {
       category: newCategory
     }
   })
-})
 
-// ✅ 게시글 불러오기
-const fetchPosts = async () => {
-  const lat = Number(localStorage.getItem('userLat'))
-  const lng = Number(localStorage.getItem('userLng'))
-  const radius = Number(localStorage.getItem('userRadius') || 5)
+  posts.value = []
+  cursorId.value = null
+  hasNext.value = true
 
-  const params: any =
-      tab.value === 'local' && !isNaN(lat) && !isNaN(lng)
-          ? { latitude: lat, longitude: lng, distance: radius }
-          : {}
+  if (observer) observer.disconnect()
 
-  if (category.value !== 'all') {
-    params.category = category.value
-  }
-
-  if (keyword.value.trim()) {
-    params.keyword = keyword.value.trim()
-    params.field = searchField.value // ✅ 검색 대상 전달
-  }
-
-  const res = await boardApi.getPosts(params)
-  posts.value = res
-}
-
-
-watch([tab, category], fetchPosts, { immediate: true })
+  await fetchPosts()
+  await initObserver() // ✅ 꼭 여기서 다시 등록
+}, { immediate: true })
 
 const goToPost = (id: number) => router.push(`/board/${id}`)
 
@@ -190,6 +235,23 @@ const goToMine = () => {
     router.push('/board/mine')
   }
 }
+onMounted(async () => {
+  // 스크롤 복원은 OK
+  const saved = sessionStorage.getItem('boardScrollY')
+  if (saved) window.scrollTo({ top: Number(saved) })
+
+  window.addEventListener('scroll', () => {
+    sessionStorage.setItem('boardScrollY', String(window.scrollY))
+  })
+
+  // ✅ 옵저버 초기화
+  await initObserver()
+})
+
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+})
+
 
 const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
 

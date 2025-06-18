@@ -9,9 +9,13 @@ export const boardApi = {
         category?: string
         keyword?: string
         field?: 'title' | 'content' | 'nickname'
+        cursorCreatedAt?: string | null
+        cursorId?: number | null
+        size?: number
     }) {
         return apiClient.get('/api/board', { params })
     },
+
 
     /** 게시글 단건 조회 */
     getPost(postId: number) {
