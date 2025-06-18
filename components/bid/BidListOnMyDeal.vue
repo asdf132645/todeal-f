@@ -1,5 +1,5 @@
 <template>
-  <v-sheet rounded class="pa-2">
+  <v-sheet rounded class="pa-2 mt-4">
     <!-- 검색 필터 -->
     <div class="d-flex align-center mb-4" style="gap: 12px">
       <v-text-field

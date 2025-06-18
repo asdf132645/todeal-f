@@ -1,20 +1,16 @@
 <template>
-  <v-card flat class="pa-4" v-if="user">
+  <v-list flat class="mt-2" v-if="user">
+    <div class="px-2 text-h6 font-weight-bold color-black mt-2">{{ user.nickname }}</div>
+    <div class="px-2 text-body-2 color-black">{{ user.email }}</div>
+
     <!-- ✅ 유저 정보 -->
     <UserTrustScore class="mt-4" />
-    <v-avatar size="80" class="mb-3">
-      <v-img :src="user.profileImageUrl || 'https://via.placeholder.com/80'" />
-    </v-avatar>
-    <div class="text-h6 font-weight-bold color-black">{{ user.nickname }}</div>
-    <div class="text-body-2 color-black">{{ user.email }}</div>
+
+
     <v-divider class="my-4" />
-    <div>
-      <p class="color-black">등록권: {{ user.ticketCount ?? 0 }}개</p>
-      <p class="color-black">초대 보상: 등록권 {{ user.inviteRewardCount ?? 0 }}개</p>
-    </div>
 
 
-  </v-card>
+  </v-list>
 </template>
 
 <script setup lang="ts">

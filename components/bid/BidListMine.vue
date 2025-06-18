@@ -1,9 +1,5 @@
 <template>
   <v-container fluid class="pa-4 bg-app">
-<!--    <v-alert type="warning" color="#FFE9C4" text-color="#8A6D1A" dense border="start" class="mb-4  text-body-2 text-sm-caption">-->
-<!--      마감된 지 7일 지난 경매글은 자동으로 삭제돼요.-->
-<!--    </v-alert>-->
-
     <!-- 낙찰 필터 토글 -->
     <v-btn
         small
@@ -15,6 +11,7 @@
       {{ showOnlyWon ? '전체 보기' : '낙찰 성공만 보기' }}
     </v-btn>
 
+    <!-- 필터 영역 -->
     <v-row class="mb-4" align="center" dense>
       <v-col cols="12" sm="4">
         <v-select
@@ -43,13 +40,13 @@
       </v-col>
     </v-row>
 
+    <!-- 입찰 카드 리스트 -->
     <v-row dense v-if="filteredBids.length > 0">
       <v-col
           cols="12"
           v-for="bid in filteredBids"
           :key="bid.id"
           @click="goToDeal(bid.deal.id)"
-          v-intersect.once="onScrollTrigger"
       >
         <v-card
             class="px-4 py-3 rounded-lg"
@@ -61,7 +58,7 @@
           }"
         >
           <div class="d-flex justify-space-between align-center mb-2">
-            <div class="font-weight-bold cursor-pointer text-body-1 text-sm-subtitle-2 color-black" style="color: #F2F3F4">
+            <div class="font-weight-bold text-body-1 color-white">
               {{ bid.deal.title }}
               <span
                   class="ml-2 text-caption"
@@ -76,7 +73,7 @@
                 :style="{ backgroundColor: '#2B2E34', color: '#9EBEFF', fontWeight: 500 }"
                 label
                 outlined
-                class="text-caption color-white"
+                class="text-caption"
             >거래 진행중</v-chip>
 
             <v-chip
@@ -84,7 +81,7 @@
                 size="small"
                 :style="{ backgroundColor: '#2E7D32', color: '#C8FACC', fontWeight: 500 }"
                 label
-                class="text-caption color-white"
+                class="text-caption"
             >🎉 낙찰 성공</v-chip>
 
             <v-chip
@@ -96,17 +93,16 @@
             >낙찰 실패</v-chip>
           </div>
 
-          <div class="text-body-2 text-sm-caption mb-1 color-black" style="color: #CCCCCC">
-            내 입찰가: <span class="color-black" style="font-weight: bold; color: #F2F3F4">{{ (bid.amount || 0).toLocaleString() }}원</span>
+          <div class="text-body-2 mb-1 color-white">
+            내 입찰가: <strong>{{ (bid.amount || 0).toLocaleString() }}원</strong>
           </div>
-
-          <div class="text-body-2 text-sm-caption color-black" style="color: #999">
+          <div class="text-caption" style="color: #999">
             마감일: {{ formatDate(bid.deal.deadline) }}
           </div>
 
           <v-btn
               v-if="bid.deal.winnerBidId === null"
-              class="mt-3 text-caption color-white"
+              class="mt-3"
               style="background-color: #FF6B6B; color: white"
               size="small"
               @click.stop="cancelBid(bid.id)"
@@ -116,7 +112,7 @@
 
           <v-btn
               v-if="bid.deal.winnerBidId === bid.id"
-              class="mt-3 text-caption"
+              class="mt-3"
               style="background-color: #2A2E9D; color: white"
               size="small"
               @click.stop="goToChat(bid.deal.id, bid.deal.ownerId)"
@@ -126,6 +122,15 @@
         </v-card>
       </v-col>
     </v-row>
+
+    <v-pagination
+        v-if="totalPages > 1"
+        v-model="page"
+        :length="totalPages"
+        class="mt-6"
+        color="primary"
+        @update:model-value="fetchBids"
+    />
 
     <div v-else class="text-caption text-grey text-center py-6">
       입찰한 물건이 없습니다
@@ -160,20 +165,20 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch  } from 'vue'
 import { useRouter } from 'vue-router'
 import { bidApi } from '@/domains/bid/infrastructure/bidApi'
 import { apiClient } from '@/libs/http/apiClient'
 import { useDebounceFn } from '@vueuse/core'
 import { useSnackbarStore } from '@/stores/snackbarStore'
-import {useAuthStore} from "~/stores/authStore";
-import {chatApi} from "~/domains/chat/infrastructure/chatApi";
+import { useAuthStore } from '~/stores/authStore'
+import { chatApi } from '~/domains/chat/infrastructure/chatApi'
 
 const router = useRouter()
 const snackbar = useSnackbarStore()
 
 const bids = ref<any[]>([])
-const page = ref(0)
+const page = ref(1)
 const size = 10
 const totalPages = ref(1)
 const isLoading = ref(false)
@@ -188,7 +193,10 @@ const reportTarget = ref<{ toUserId: number; dealId: number } | null>(null)
 const reportReason = ref('')
 const reportDetail = ref('')
 const reportReasons = ['욕설/비방', '사기 의심', '허위 정보', '기타']
-
+watch(showOnlyWon, () => {
+  page.value = 1;
+  fetchBids()
+})
 const openReport = (toUserId: number, dealId: number) => {
   reportTarget.value = { toUserId, dealId }
   reportReason.value = ''
@@ -200,42 +208,22 @@ const goToChat = async (dealId: number, ownerId: number) => {
   const userId = useAuthStore().user.id
 
   try {
-    // 1. 기존 채팅방 있는지 조회
-    const existingRoom = await chatApi.checkChatRoomExist({
-      dealId,
-      userId1: userId,
-      userId2: ownerId
-    })
-
+    const existingRoom = await chatApi.checkChatRoomExist({ dealId, userId1: userId, userId2: ownerId })
     let chatRoomId: number
 
     if (existingRoom) {
-      // 이미 존재하는 채팅방
       chatRoomId = existingRoom.id
     } else {
-      // 없으면 생성
-      const created = await chatApi.createChatRoom({
-        dealId,
-        sellerId: ownerId,
-        buyerId: userId
-      })
-      console.log('created', created)
+      const created = await chatApi.createChatRoom({ dealId, sellerId: ownerId, buyerId: userId })
       chatRoomId = created.id
     }
 
-    // ✅ 채팅방으로 이동
-    router.push({
-      path: `/chats/${chatRoomId}`,
-      query: {
-        receiverId: ownerId
-      }
-    })
+    router.push({ path: `/chats/${chatRoomId}`, query: { receiverId: ownerId } })
   } catch (e) {
     console.error('💥 채팅방 이동 실패', e)
     snackbar.show('채팅방 연결에 실패했습니다.', 'error')
   }
 }
-
 
 const submitReport = async () => {
   if (!reportTarget.value || !reportReason.value) {
@@ -265,12 +253,6 @@ const typeOptions = [
   { title: '알바구해요', value: 'parttime-request' }
 ]
 
-const onScrollTrigger = () => {
-  if (!isLoading.value && page.value < totalPages.value) {
-    fetchBids()
-  }
-}
-
 const filteredBids = computed(() => {
   let filtered = [...bids.value]
   if (showOnlyWon.value) {
@@ -290,7 +272,7 @@ const formatDate = (iso: string) => {
 
 const cancelBid = async (bidId: number) => {
   try {
-    const isConfirmed = confirm("정말 이 입찰을 취소하시겠습니까?")
+    const isConfirmed = confirm('정말 이 입찰을 취소하시겠습니까?')
     if (!isConfirmed) return
     await bidApi.cancelBid(bidId)
     snackbar.show('입찰이 취소되었습니다.')
@@ -301,19 +283,17 @@ const cancelBid = async (bidId: number) => {
 }
 
 const fetchBids = async () => {
-  if (isLoading.value || page.value >= totalPages.value) return
   isLoading.value = true
 
   try {
     const res = await bidApi.getMyBids({
-      page: page.value,
+      page: page.value - 1,
       size,
       keyword: keyword.value,
       type: selectedType.value
     })
-    bids.value.push(...res.content)
+    bids.value = res.content
     totalPages.value = res.totalPages
-    page.value++
   } catch (e) {
     snackbar.show('입찰 목록 불러오기 실패', 'error')
   } finally {
@@ -322,9 +302,6 @@ const fetchBids = async () => {
 }
 
 const refreshBids = () => {
-  page.value = 0
-  totalPages.value = 1
-  bids.value = []
   fetchBids()
 }
 
@@ -334,8 +311,11 @@ const goToDeal = (dealId: number) => {
 
 const handleSearchDebounced = useDebounceFn(() => {
   keyword.value = keywordInput.value.trim() || null
-  refreshBids()
+  page.value = 1
+  fetchBids()
 }, 500)
 
-fetchBids()
+onMounted(() => {
+  fetchBids()
+})
 </script>
