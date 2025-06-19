@@ -126,7 +126,7 @@ const initPage = async () => {
 </script>
 
 <template>
-  <v-container v-if="deal" class="py-2">
+  <div v-if="deal" class="py-2">
     <v-alert
         v-if="isExpired"
         type="warning"
@@ -183,5 +183,5 @@ const initPage = async () => {
         </v-list-item>
       </v-list>
     </v-card>
-  </v-container>
+  </div>
 </template>

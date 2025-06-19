@@ -1,5 +1,5 @@
 <template>
-  <v-container class="py-6">
+  <div class="py-6">
     <div class="text-h6 font-weight-bold mb-4">등록할 수 있는 항목</div>
 
     <v-row dense>
@@ -12,13 +12,13 @@
             style="text-decoration: none;"
         >
           <div>
-            <div class="text-body-1 font-weight-medium">{{ item.title }}</div>
+            <div class="customText1 font-weight-medium">{{ item.title }}</div>
             <div class="text-caption text-grey-darken-1 mt-1">{{ item.subtitle }}</div>
           </div>
         </v-card>
       </v-col>
     </v-row>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

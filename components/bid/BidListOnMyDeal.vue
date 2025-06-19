@@ -17,7 +17,7 @@
     <v-row dense v-if="groupedBids.length > 0">
       <v-col cols="12" v-for="group in groupedBids" :key="group.deal.id">
         <template v-if="group.deal.pricingType === 'BIDDING'">
-          <v-card class="pa-4 mb-4 rounded-sm elevation-2">
+          <v-card class="pa-4 mb-2 rounded-lg elevation-2">
             <!-- 상단 헤더 -->
             <div class="d-flex justify-space-between align-center mb-3">
               <div class="text-subtitle-1 font-weight-bold color-black">
@@ -47,10 +47,11 @@
                   :key="bid.id"
                   class="mb-3 pa-3 rounded-lg"
                   :class="group.deal.winnerBidId === bid.id ? 'bg-bid-winner' : 'bg-bid-default'"
+                  :style="bid.evaluated ? 'opacity: 0.4;' : ''"
               >
                 <div class="d-flex justify-space-between align-start flex-wrap" style="gap: 0.75rem">
                   <div style="min-width: 200px">
-                    <div class="font-weight-bold text-body-1">
+                    <div class="font-weight-bold customText1">
                       입찰가: {{ bid.amount.toLocaleString() }}원 / 입찰자 ID: {{ bid.nickname }}
                     </div>
                     <div
@@ -73,7 +74,7 @@
                       낙찰 확정
                     </v-btn>
                     <v-btn
-                        v-if="group.deal.winnerBidId === bid.id"
+                        v-if="group.deal.winnerBidId === bid.id && !bid.evaluated"
                         :style="{ backgroundColor: '#D9534F', color: '#fff' }"
                         size="small"
                         class="rounded-pill"
@@ -92,7 +93,7 @@
                       💬 채팅
                     </v-btn>
                     <v-btn
-                        v-if="group.deal.winnerBidId === bid.id"
+                        v-if="group.deal.winnerBidId === bid.id && !bid.evaluated"
                         variant="tonal"
                         :style="{ backgroundColor: '#393C47', color: '#FFE082' }"
                         size="small"
@@ -127,12 +128,12 @@
         </template>
 
         <template v-else-if="group.deal.pricingType === 'FIXED'">
-          <v-card class="pa-4 mb-4 rounded-xl elevation-2">
+          <v-card class="pa-4 mb-2 rounded-xl elevation-2">
             <div class="text-subtitle-1 font-weight-bold color-black mb-2">
               {{ group.deal.title }}
             </div>
             <v-chip color="green" text-color="white">정가 판매</v-chip>
-            <div class="mt-3 text-body-2 font-weight-medium">
+            <div class="mt-3 mb-2 custom-text-sm font-weight-medium">
               정가 {{ group.deal.currentPrice.toLocaleString() }}원에 지원한 사용자 목록
             </div>
 
@@ -142,10 +143,11 @@
                   :key="bid.id"
                   class="mb-3 pa-3 rounded-lg"
                   :class="group.deal.winnerBidId === bid.id ? 'bg-bid-winner' : 'bg-bid-default'"
+                  :style="bid.evaluated ? 'opacity: 0.4;' : ''"
               >
                 <div class="d-flex justify-space-between align-start flex-wrap" style="gap: 0.75rem">
                   <div>
-                    <div class="font-weight-bold text-body-1">
+                    <div class="font-weight-bold customText1">
                       {{ bid.nickname }} 님이 정가로 지원하였습니다.
                     </div>
                     <div
@@ -169,7 +171,7 @@
                     </v-btn>
 
                     <v-btn
-                        v-else-if="group.deal.winnerBidId === bid.id"
+                        v-else-if="group.deal.winnerBidId === bid.id && !bid.evaluated"
                         size="small"
                         class="rounded-pill"
                         color="error"
@@ -191,7 +193,7 @@
                     </v-btn>
 
                     <v-btn
-                        v-if="group.deal.winnerBidId === bid.id"
+                        v-if="group.deal.winnerBidId === bid.id && !bid.evaluated"
                         variant="tonal"
                         :style="{ backgroundColor: '#393C47', color: '#FFE082' }"
                         size="small"

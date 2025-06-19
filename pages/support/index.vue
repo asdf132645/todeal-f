@@ -1,5 +1,5 @@
 <template>
-  <v-container class="pa-4">
+  <div class="">
     <v-card flat class="pa-4 mt-4" style="background-color: #1A1B1D; color: #F2F3F4">
       <div class="text-h6 font-weight-bold mb-4">고객센터 문의</div>
 
@@ -51,7 +51,7 @@
         문의 보내기
       </v-btn>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

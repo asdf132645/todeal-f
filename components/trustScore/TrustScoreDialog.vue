@@ -16,8 +16,8 @@
         />
 
         <div class="d-flex justify-space-around">
-          <v-btn color="green" @click="submit(true)">👍 신뢰할 수 있어요</v-btn>
-          <v-btn color="red" class="ml-2" @click="submit(false)">👎 별로였어요</v-btn>
+          <v-btn color="green" @click="submit(true)">👍</v-btn>
+          <v-btn color="red" class="ml-2" @click="submit(false)">👎</v-btn>
         </div>
       </v-card-text>
     </v-card>
