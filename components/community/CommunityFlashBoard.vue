@@ -1,7 +1,7 @@
 <template>
   <v-sheet class="bg-app ">
     <!--  타이틀 -->
-    <div class="customText1 mb-4 px-1">오늘 올라온 게시글 💬</div>
+    <div class="customText1 mb-4 px-1"> 우리동네 게시글 💬</div>
 
     <!--  슬라이드 카드 리스트 -->
     <v-slide-group v-if="posts.length > 0" show-arrows="false" class="px-0">
