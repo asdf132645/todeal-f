@@ -14,13 +14,13 @@
         <v-list-item to="/support" title="고객센터" prepend-icon="mdi-headset" />
         <v-list-item to="/support/help/my-inquiries" title="내 문의글" prepend-icon="mdi-help-circle-outline" />
         <v-list-item @click="auth.logout" title="로그아웃" prepend-icon="mdi-logout" />
-        <v-list-item @click="themeStore.toggleTheme()" title="테마변경" prepend-icon="mdi-palette" />
+<!--        <v-list-item @click="themeStore.toggleTheme()" title="테마변경" prepend-icon="mdi-palette" />-->
       </template>
       <template v-else>
         <v-list-item to="/auth/login" title="로그인" prepend-icon="mdi-login" />
       </template>
 
-      <!-- ✅ 언어변경 메뉴 -->
+      <!--  언어변경 메뉴 -->
       <v-list-group v-model="languageGroupOpen" prepend-icon="mdi-translate" value="language">
         <template #activator="{ props }">
           <v-list-item v-bind="props" title="언어변경" />
@@ -50,7 +50,7 @@ const themeStore = useThemeStore()
 const auth = useAuthStore()
 const { locale } = useI18n()
 
-const languageGroupOpen = ref(false) // ✅ 드롭다운 열림 상태 관리
+const languageGroupOpen = ref(false) //  드롭다운 열림 상태 관리
 
 const props = defineProps<{
   modelValue: boolean

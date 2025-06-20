@@ -3,7 +3,7 @@
     <div class="px-2 text-h6 font-weight-bold color-black mt-2">{{ user.nickname }}</div>
     <div class="px-2 text-body-2 color-black">{{ user.email }}</div>
 
-    <!-- ✅ 유저 정보 -->
+    <!--  유저 정보 -->
     <UserTrustScore class="mt-4" />
 
 

@@ -1,4 +1,4 @@
-// ✅ src/domains/deal/infrastructure/dealApi.ts
+//  src/domains/deal/infrastructure/dealApi.ts
 import { apiClient } from '@/libs/http/apiClient'
 import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
 import type { DealRequest } from '@/domains/deal/domain/deal/dto/DealRequest'
@@ -15,7 +15,7 @@ export const dealApi = {
     },
 
     async createDeal(payload: DealRequest): Promise<DealResponse> {
-        const auth = useAuthStore() // ✅ 핀아에서 유저 정보 가져오기
+        const auth = useAuthStore() //  핀아에서 유저 정보 가져오기
         // console.log(auth.user)
         return apiClient.post('/api/deals', payload, {
             headers: {
@@ -84,18 +84,18 @@ export const dealApi = {
     },
 
 
-    // ✅ 거래종료 (딜 삭제) 메서드 추가
+    //  거래종료 (딜 삭제) 메서드 추가
     deleteDeal(dealId: number): Promise<void> {
         return apiClient.delete(`/api/deals/${dealId}`)
     },
 
-    // ✅ 내가 등록한 딜 목록 조회
+    //  내가 등록한 딜 목록 조회
     getMyDeals(params: { page: number; size: number }) {
         return apiClient.get('/api/deals/mine', { params })
     },
 
 
-    // ✅ 딜 수정 요청
+    //  딜 수정 요청
     updateDeal(dealId: number, payload: DealRequest): Promise<DealResponse> {
         return apiClient.put(`/api/deals/${dealId}`, payload)
     },

@@ -1,4 +1,4 @@
-// ✅ pages/bids/history.vue
+//  pages/bids/history.vue
 <template>
   <v-container fluid class="pa-4 pt-6" style="min-height: 100vh;">
 

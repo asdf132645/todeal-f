@@ -1,4 +1,4 @@
-export type PricingType = 'BIDDING' | 'FIXED' // ✅ 거래 방식 enum 정의
+export type PricingType = 'BIDDING' | 'FIXED' //  거래 방식 enum 정의
 
 export interface Deal {
     id: number
@@ -11,5 +11,5 @@ export interface Deal {
     images: string[]
     latitude: number
     longitude: number
-    pricingType: PricingType // ✅ 거래 방식 추가
+    pricingType: PricingType //  거래 방식 추가
 }

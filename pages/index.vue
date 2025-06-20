@@ -181,7 +181,7 @@ const fetchDeals = async () => {
       allDeals.value.push(...newDeals)
       cursorId.value = res.nextCursorId
 
-      // ✅ 조건부 캐시 저장
+      //  조건부 캐시 저장
       const prevCache = sessionStorage.getItem('dealsCache')
       const prevCursor = sessionStorage.getItem('cursorIdCache')
       const currentItems = JSON.stringify(allDeals.value)
@@ -202,7 +202,7 @@ const fetchDeals = async () => {
 
 const loadMore = () => {
   if (!loadingMore.value && hasNext.value) {
-    loadedCount.value += 10  // ✅ 이거 필수
+    loadedCount.value += 10  //  이거 필수
     fetchDeals()
   }
 }

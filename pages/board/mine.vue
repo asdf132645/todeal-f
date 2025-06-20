@@ -1,11 +1,7 @@
 <template>
   <div class="mt-2">
     <v-list lines="three" density="comfortable">
-      <v-list-item
-          v-for="(post, idx) in posts"
-          :key="post.id"
-          class="hoverable"
-      >
+      <v-list-item v-for="(post, idx) in posts" :key="post.id" class="hoverable">
         <v-list-item-content @click="goToPost(post.id)">
           <v-list-item-title class="font-weight-bold">{{ post.title }}</v-list-item-title>
           <v-list-item-subtitle class="text-truncate">{{ post.content }}</v-list-item-subtitle>
@@ -14,20 +10,31 @@
           </v-list-item-subtitle>
         </v-list-item-content>
 
+        <!--  점 세 개 메뉴로 수정/삭제 -->
         <template #append>
-          <v-btn icon size="small" @click.stop="editPost(post.id)" class="mr-2">
-            <v-icon>mdi-pencil-outline</v-icon>
-          </v-btn>
-          <v-btn icon size="small" color="error" @click.stop="deletePost(post.id)">
-            <v-icon>mdi-delete-outline</v-icon>
-          </v-btn>
+          <v-menu offset-y>
+            <template #activator="{ props }">
+              <v-btn icon v-bind="props">
+                <v-icon>mdi-dots-vertical</v-icon>
+              </v-btn>
+            </template>
+
+            <v-list>
+              <v-list-item @click="editPost(post.id)">
+                <v-list-item-title>수정</v-list-item-title>
+              </v-list-item>
+              <v-list-item @click="deletePost(post.id)">
+                <v-list-item-title>삭제</v-list-item-title>
+              </v-list-item>
+            </v-list>
+          </v-menu>
         </template>
 
         <v-divider v-if="idx !== posts.length - 1" class="my-2" />
       </v-list-item>
     </v-list>
 
-    <!-- ✅ 페이지네이션 -->
+    <!--  페이지네이션 -->
     <v-pagination
         v-if="totalPages > 1"
         v-model="page"

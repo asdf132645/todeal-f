@@ -1,8 +1,8 @@
 <template>
-  <v-container>
+  <div>
     <!-- 📌 게시글 카드 -->
     <v-card class="mb-4 pa-4">
-      <!-- ✅ 언어 토글 버튼 -->
+      <!--  언어 토글 버튼 -->
       <div class="d-flex justify-end mb-2">
         <button type="button" class="btn-custom" @click="toggleLang">
           {{ langToggleText }}
@@ -20,7 +20,7 @@
 
 
 
-      <!-- ✅ 제목/내용 -->
+      <!--  제목/내용 -->
       <div class="text-h6 font-weight-bold mb-3 color-black">
         {{ displayedTitle }}
       </div>
@@ -29,7 +29,7 @@
         {{ displayedContent }}
       </div>
 
-      <!-- ✅ 이미지 썸네일 출력 -->
+      <!--  이미지 썸네일 출력 -->
       <v-row v-if="post.imageUrls?.length" class="mt-3" dense>
         <v-col cols="4" v-for="(url, idx) in post.imageUrls" :key="idx">
           <v-img :src="url" aspect-ratio="1" class="rounded"></v-img>
@@ -47,7 +47,7 @@
         댓글 {{ comments.length }}
       </div>
 
-      <!-- ✅ 댓글 목록 -->
+      <!--  댓글 목록 -->
       <template v-if="comments.length">
         <v-list class="comment-list">
           <v-list-item
@@ -89,7 +89,7 @@
       />
       <v-btn color="primary" class="mt-2" @click="submitComment">댓글 작성</v-btn>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -105,7 +105,7 @@ const postId = Number(route.params.id)
 const post = ref<any>({})
 const comments = ref<any[]>([])
 const newComment = ref('')
-const showOriginal = ref(false) // ✅ 원문 보기 상태
+const showOriginal = ref(false) //  원문 보기 상태
 
 const { locale } = useI18n()
 const authStore = useAuthStore()

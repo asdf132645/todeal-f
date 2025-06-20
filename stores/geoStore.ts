@@ -1,4 +1,4 @@
-// ✅ geoStore.ts - 기존 코드 보존 + regionDepth1~3 추가
+//  geoStore.ts - 기존 코드 보존 + regionDepth1~3 추가
 import { defineStore } from 'pinia'
 
 export const useGeoStore = defineStore('geo', {

@@ -3,7 +3,7 @@
     <Default />
     <AppSnackbar />
 
-    <!-- ✅ 카카오 인앱 브라우저 경고 다이얼로그 -->
+    <!--  카카오 인앱 브라우저 경고 다이얼로그 -->
     <v-dialog v-model="showKakaoWarning" persistent max-width="400">
       <v-card>
         <v-card-title class="headline">안내</v-card-title>
@@ -40,7 +40,7 @@ const openInBrowser = () => {
 }
 
 onMounted(async () => {
-  // ✅ 카카오 인앱 브라우저 감지
+  //  카카오 인앱 브라우저 감지
   if (isKakaoInAppBrowser()) {
     showKakaoWarning.value = true
     return

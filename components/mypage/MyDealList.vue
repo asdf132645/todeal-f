@@ -60,7 +60,7 @@
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { dealApi } from '~/domains/deal/infrastructure/dealApi'
-import noImage from '@/assets/img/noimg.jpg'  // ✅ 노이미지 경로 import
+import noImage from '@/assets/img/noimg.jpg'  //  노이미지 경로 import
 
 const myDeals = ref([])
 const router = useRouter()

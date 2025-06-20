@@ -23,7 +23,7 @@ export function useChatSocket(
         socket.value = new WebSocket(url)
 
         socket.value.onopen = () => {
-            // console.log('✅ WebSocket 연결됨')
+            // console.log(' WebSocket 연결됨')
 
             const payload = {
                 type: 'read',

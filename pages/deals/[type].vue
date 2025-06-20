@@ -163,7 +163,7 @@ onMounted(async () => {
   if (!restored) {
     await refreshDeals()
 
-    // ✅ observer는 딱 한 번만 등록
+    //  observer는 딱 한 번만 등록
     if (observer) observer.disconnect()
     observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && hasMore.value) {

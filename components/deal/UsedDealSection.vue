@@ -1,6 +1,6 @@
 <template>
   <v-card class="pa-4 rounded-lg elevation-1 mt-6">
-    <!-- ✅ 거래 방식에 따라 분기 -->
+    <!--  거래 방식에 따라 분기 -->
     <template v-if="deal.pricingType === 'BIDDING'">
       <div class="text-subtitle-1 font-weight-medium mb-2 color-black">입찰가 입력</div>
 
@@ -63,7 +63,7 @@ const props = defineProps<{
 const bidAmount = ref(0)
 const bidding = ref(false)
 
-// ✅ 입찰 방식 처리
+//  입찰 방식 처리
 const submitBid = async () => {
   if (!auth.user) {
     router.push('/auth/login')
@@ -86,7 +86,7 @@ const submitBid = async () => {
       nickname: auth.user.nickname || '알 수 없음'
     })
 
-    snackbar.show(`✅ 입찰이 완료되었습니다!`, 'success')
+    snackbar.show(` 입찰이 완료되었습니다!`, 'success')
     emit('bid-complete')
     props.onBidSuccess?.()
     bidAmount.value = 0
@@ -97,7 +97,7 @@ const submitBid = async () => {
   }
 }
 
-// ✅ 정찰제 방식 처리
+//  정찰제 방식 처리
 const submitDirect = async () => {
   if (!auth.user) {
     router.push('/auth/login')
@@ -117,7 +117,7 @@ const submitDirect = async () => {
       nickname: auth.user.nickname || '알 수 없음'
     })
 
-    snackbar.show(`✅ 바로 지원이 완료되었습니다!`, 'success')
+    snackbar.show(` 바로 지원이 완료되었습니다!`, 'success')
     emit('bid-complete')
     props.onBidSuccess?.()
   } catch {

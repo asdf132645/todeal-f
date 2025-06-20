@@ -16,7 +16,7 @@ export interface DealRequest {
     images: string[] // S3 업로드 완료된 URL
     hashtags: string[]
 
-    translatedTitle: string | null     // ✅ 번역된 제목
-    translatedContent: string | null   // ✅ 번역된 설명
-    language: string | null            // ✅ 번역된 언어 (예: 'en')
+    translatedTitle: string | null     //  번역된 제목
+    translatedContent: string | null   //  번역된 설명
+    language: string | null            //  번역된 언어 (예: 'en')
 }

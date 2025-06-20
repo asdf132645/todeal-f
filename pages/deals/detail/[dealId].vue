@@ -19,7 +19,7 @@ const deal = ref<any>(null)
 const bids = ref<any[]>([])
 const userId = ref('')
 
-// ✅ key가 string임을 반영
+//  key가 string임을 반영
 const trustScores = ref<Record<string, number>>({})
 
 const type = (route.query.type as string)?.toLowerCase() || ''
@@ -84,7 +84,7 @@ const fetchTrustScores = async () => {
   }
 }
 
-// ✅ string key 기반 접근으로 수정
+//  string key 기반 접근으로 수정
 const trustScoreWriter = computed(() => {
   if (
       !deal.value ||

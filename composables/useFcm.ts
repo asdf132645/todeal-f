@@ -2,7 +2,7 @@ import { PushNotifications } from '@capacitor/push-notifications'
 import { Capacitor } from '@capacitor/core'
 import axios from 'axios'
 
-let isRegistered = false // ✅ 리스너 중복 방지용
+let isRegistered = false //  리스너 중복 방지용
 
 export const useFcm = () => {
     const registerFcm = async (userId: number) => {
@@ -18,7 +18,7 @@ export const useFcm = () => {
         isRegistered = true
 
         PushNotifications.addListener('registration', async (token) => {
-            console.log('✅ FCM 등록 토큰:', token.value)
+            console.log(' FCM 등록 토큰:', token.value)
 
             try {
                 await axios.patch(
@@ -51,7 +51,7 @@ export const useFcm = () => {
 
         try {
             await PushNotifications.removeAllListeners()
-            await PushNotifications.unregister() // ✅ 명확히 unregister 호출
+            await PushNotifications.unregister() //  명확히 unregister 호출
             isRegistered = false
             console.log('🔕 FCM 리스너 제거 완료')
         } catch (err) {

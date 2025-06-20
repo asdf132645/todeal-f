@@ -31,7 +31,7 @@ const handleWatchAd = async () => {
     }
 
     await dealApi.notifyAdComplete()
-    snackbar.show('✅ 등록권 10회 지급 완료!', 'success')
+    snackbar.show(' 등록권 10회 지급 완료!', 'success')
   } catch (e) {
     console.error('광고 시청 실패:', e)
     snackbar.show('오류가 발생했어요. 잠시 후 다시 시도해주세요.', 'error')

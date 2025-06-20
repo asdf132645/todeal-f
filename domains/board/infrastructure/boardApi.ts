@@ -34,7 +34,7 @@ export const boardApi = {
         longitude: number
         nickname: string
         region?: string
-        imageUrls: string[]  // ✅ 추가됨
+        imageUrls: string[]  //  추가됨
     }) {
         return apiClient.post('/api/board', payload)
     },

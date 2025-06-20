@@ -59,7 +59,7 @@
                         class="mt-1 text-caption font-weight-medium"
                         style="color: #B6FFC7"
                     >
-                      ✅ 낙찰자
+                       낙찰자
                     </div>
                   </div>
 
@@ -155,7 +155,7 @@
                         class="mt-1 text-caption font-weight-medium"
                         style="color: #B6FFC7"
                     >
-                      ✅ 낙찰자
+                       낙찰자
                     </div>
                   </div>
 
@@ -180,7 +180,7 @@
                       확정 취소
                     </v-btn>
 
-                    <!-- ✅ 추가된 낙찰자용 버튼들 -->
+                    <!--  추가된 낙찰자용 버튼들 -->
                     <v-btn
                         v-if="group.deal.winnerBidId === bid.id"
                         variant="tonal"

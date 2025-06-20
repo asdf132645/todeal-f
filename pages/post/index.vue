@@ -1,9 +1,8 @@
 <template>
   <div class="py-6">
-    <div class="text-h6 font-weight-bold mb-4">등록할 수 있는 항목</div>
 
     <v-row dense>
-      <v-col cols="12" v-for="item in postOptions" :key="item.title">
+      <v-col cols="12" class="px-2" v-for="item in postOptions" :key="item.title">
         <v-card
             tag="router-link"
             :to="item.to"

@@ -26,7 +26,7 @@ export const chatApi = {
         return apiClient.post('/api/chats/room', payload)
     },
 
-    /** ✅ 채팅방 존재 여부 확인 (추가됨) */
+    /**  채팅방 존재 여부 확인 (추가됨) */
     checkChatRoomExist(payload: {
         dealId: number
         userId1: number

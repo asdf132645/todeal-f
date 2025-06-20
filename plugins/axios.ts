@@ -23,9 +23,9 @@ export default defineNuxtPlugin((nuxtApp) => {
         return req
     })
 
-    // ✅ $axios 인스턴스를 Nuxt에 등록
+    //  $axios 인스턴스를 Nuxt에 등록
     nuxtApp.provide('axios', axiosInstance)
 
-    // ✅ apiClient 내부에서도 이 인스턴스 쓸 수 있도록 초기화
+    //  apiClient 내부에서도 이 인스턴스 쓸 수 있도록 초기화
     initApiClient(axiosInstance)
 })

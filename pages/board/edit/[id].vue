@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <div>
     <v-alert
         type="warning"
         dense
@@ -115,7 +115,7 @@
     >
       수정 완료
     </v-btn>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -138,11 +138,11 @@ if (isNaN(postId)) {
   router.replace('/board')
 }
 
-// ✅ 실제 저장되는 값
+//  실제 저장되는 값
 const title = ref('')
 const content = ref('')
 
-// ✅ 화면에 표시/편집용
+//  화면에 표시/편집용
 const display = ref({
   title: '',
   content: ''
@@ -260,7 +260,7 @@ const submit = async () => {
     return
   }
 
-  // ✅ 화면에서 입력한 걸 저장용 변수에 반영
+  //  화면에서 입력한 걸 저장용 변수에 반영
   title.value = display.value.title
   content.value = display.value.content
 

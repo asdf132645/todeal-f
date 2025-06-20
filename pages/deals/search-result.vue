@@ -9,10 +9,10 @@
     </v-row>
     <div v-else class="text-caption text-grey text-center py-6">검색 결과가 없습니다.</div>
 
-    <!-- ✅ 감지용 요소 -->
+    <!--  감지용 요소 -->
     <div ref="infiniteScrollTrigger" style="height: 1px;" />
 
-    <!-- ✅ 로딩 표시 -->
+    <!--  로딩 표시 -->
     <v-progress-circular
         v-if="loadingMore"
         indeterminate
@@ -61,7 +61,7 @@ const fetchPage = async () => {
       results.value.push(...newItems)
       cursorId.value = res.nextCursorId ?? null
 
-      // ✅ 세션 캐시 저장
+      //  세션 캐시 저장
       sessionStorage.setItem('searchResults', JSON.stringify(results.value))
       sessionStorage.setItem('searchCursor', cursorId.value ? String(cursorId.value) : '')
     }
@@ -84,7 +84,7 @@ const observeScroll = () => {
   if (infiniteScrollTrigger.value) observer.observe(infiniteScrollTrigger.value)
 }
 
-// ✅ route.query 변경 감지 (초기화 + fetch)
+//  route.query 변경 감지 (초기화 + fetch)
 watch(() => route.query, async () => {
   results.value = []
   cursorId.value = null
@@ -108,7 +108,7 @@ onMounted(async () => {
     results.value = JSON.parse(cached)
     cursorId.value = cachedCursor ? parseInt(cachedCursor) : null
 
-    // ✅ 렌더링 완료될 때까지 대기
+    //  렌더링 완료될 때까지 대기
     await nextTick()
     await new Promise(resolve => setTimeout(resolve, 100)) // ← 이게 핵심
 

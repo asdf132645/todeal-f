@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- ✅ 고정 필터 영역 -->
+    <!--  고정 필터 영역 -->
     <div class="sticky-filters">
       <!-- 🧭 토글 버튼 -->
 <!--      <div class="d-flex justify-start align-center mb-2 gap-2">-->
@@ -71,7 +71,7 @@
       </div>
     </div>
 
-    <!-- ✅ 게시글 리스트 -->
+    <!--  게시글 리스트 -->
     <template v-if="posts.length">
       <v-list lines="three" density="comfortable">
         <template v-for="(post, idx) in posts" :key="post.id">
@@ -117,7 +117,7 @@ const posts = ref([])
 const router = useRouter()
 const route = useRoute()
 
-// ✅ 쿼리에서 tab/category 복원
+//  쿼리에서 tab/category 복원
 const tab = ref(route.query.tab?.toString() || 'local')
 const category = ref(route.query.category?.toString() || 'all')
 const keyword = ref('')
@@ -162,7 +162,7 @@ const initObserver = async () => {
 }
 
 
-// ✅ 게시글 불러오기
+//  게시글 불러오기
 const fetchPosts = async () => {
   if (!hasNext.value || loading.value) return
   loading.value = true
@@ -216,7 +216,7 @@ watch([tab, category], async ([newTab, newCategory]) => {
   if (observer) observer.disconnect()
 
   await fetchPosts()
-  await initObserver() // ✅ 꼭 여기서 다시 등록
+  await initObserver() //  꼭 여기서 다시 등록
 }, { immediate: true })
 
 const goToPost = (id: number) => router.push(`/board/${id}`)
@@ -244,7 +244,7 @@ onMounted(async () => {
     sessionStorage.setItem('boardScrollY', String(window.scrollY))
   })
 
-  // ✅ 옵저버 초기화
+  //  옵저버 초기화
   await initObserver()
 })
 

@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <div>
     <v-alert
         type="warning"
         dense
@@ -103,7 +103,7 @@
 
     <!--  제출 버튼 -->
     <v-btn block color="primary" :loading="loading" @click="submit">{{ _t("board.complete") }}</v-btn>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

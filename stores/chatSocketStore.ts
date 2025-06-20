@@ -20,7 +20,7 @@ export const useChatSocketStore = defineStore('chatSocket', () => {
      * WebSocket 연결 (userId + chatRoomId 기반 중복 방지)
      */
     function connectOnce(_userId: number, chatRoomId: number) {
-        // ✅ 동일한 userId + chatRoomId 조합이면 연결 생략
+        //  동일한 userId + chatRoomId 조합이면 연결 생략
         if (
             socket.value &&
             socket.value.readyState === WebSocket.OPEN &&
@@ -38,7 +38,7 @@ export const useChatSocketStore = defineStore('chatSocket', () => {
         socket.value = new WebSocket(url)
 
         socket.value.onopen = () => {
-            // console.log('✅ WebSocket 연결됨')
+            // console.log(' WebSocket 연결됨')
         }
 
         socket.value.onmessage = (event) => {
@@ -78,7 +78,7 @@ export const useChatSocketStore = defineStore('chatSocket', () => {
                 })
             )
 
-            // ✅ handler 갱신되었을 수 있으므로 리스너도 덮어씀
+            //  handler 갱신되었을 수 있으므로 리스너도 덮어씀
             socket.value.onmessage = (event) => {
                 try {
                     const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data

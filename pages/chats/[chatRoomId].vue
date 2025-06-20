@@ -97,7 +97,7 @@ onMounted(async () => {
   await loadMessages()
   await markMessagesAsRead()
 
-  // ✅ 이미 연결된 경우 connectOnce는 생략, BUT enterRoom은 꼭 호출해야 함
+  //  이미 연결된 경우 connectOnce는 생략, BUT enterRoom은 꼭 호출해야 함
   const isConnected =
       chatSocketStore.socket?.readyState === WebSocket.OPEN &&
       chatSocketStore.currentRoomId === chatRoomId &&

@@ -1,6 +1,6 @@
 <template>
   <div class="mt-4">
-    <!-- ✅ 거래 방식에 따라 분기 -->
+    <!--  거래 방식에 따라 분기 -->
     <template v-if="deal.pricingType === 'BIDDING'">
       <v-text-field
           v-model.number="hourlyWage"
@@ -72,7 +72,7 @@ const submitBid = async () => {
   }
 }
 
-// ✅ 정찰제 바로 지원
+//  정찰제 바로 지원
 const submitDirect = async () => {
   if (!auth.user) {
     router.push('/auth/login')

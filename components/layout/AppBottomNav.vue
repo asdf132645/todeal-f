@@ -1,6 +1,6 @@
 <template>
   <div>
-    <!-- 📌 등록 메뉴 팝업 -->
+    <!--  등록 메뉴 팝업 -->
     <transition name="fade">
       <div v-if="showMenu" class="floating-menu">
         <div
@@ -15,7 +15,7 @@
       </div>
     </transition>
 
-    <!-- 📌 플로팅 버튼 (채팅 페이지 제외 모든 페이지에서 뜸) -->
+    <!--  플로팅 버튼 (채팅 페이지 제외 모든 페이지에서 뜸) -->
     <v-btn
         icon
         class="fab-post-btn"
@@ -24,11 +24,12 @@
         @click="toggleMenu"
     >
       <div class="fab-circle">
-        <v-icon size="28">mdi-plus</v-icon>
+        <v-icon v-if="!isBoardPage" size="28">mdi-plus</v-icon>
+        <v-icon v-else size="28">mdi-format-list-bulleted</v-icon>
       </div>
     </v-btn>
 
-    <!-- 📌 하단 네비게이션 -->
+    <!--  하단 네비게이션 -->
     <v-bottom-navigation height="70" grow app class="bottom-nav-dark">
       <v-btn to="/" value="home" :class="{ active: isActive('/') }">
         <v-icon>mdi-home</v-icon>
@@ -77,15 +78,15 @@ const handleProtectedRoute = (path: string) => {
   }
 }
 
-// ✅ 현재 채팅 페이지 여부
+//  현재 채팅 페이지 여부
 const isChatPage = computed(() => {
   return route.path.startsWith('/chats/') && route.query.receiverId
 })
 
-// ✅ 현재 커뮤니티(/board) 여부
-const isBoardPage = computed(() => route.path === '/board')
+//  현재 커뮤니티(/board) 여부
+const isBoardPage = computed(() => route.path.includes('/board'))
 
-// ✅ 커뮤니티 전용 메뉴
+//  커뮤니티 전용 메뉴
 const goToWrite = () => {
   showMenu.value = false
   handleProtectedRoute('/board/write')
@@ -101,7 +102,7 @@ const boardPostOptions = [
   { title: '내 글 보기', icon: 'mdi-account', action: goToMine }
 ]
 
-// ✅ 기본 플로팅 메뉴
+//  기본 플로팅 메뉴
 const postOptions = [
   { title: '중고거래 등록', icon: 'mdi-tag-outline', to: '/post/used' },
   { title: '알바 등록', icon: 'mdi-account-hard-hat-outline', to: '/post/parttime' },
@@ -109,18 +110,18 @@ const postOptions = [
   { title: '알바 구해요', icon: 'mdi-account-search', to: '/post/parttime-request' }
 ]
 
-// ✅ 공통 핸들러
+// 공통 핸들러
 const handleSelect = (path: string) => {
   showMenu.value = false
   handleProtectedRoute(path)
 }
 
-// ✅ 현재 페이지에 맞는 메뉴 반환
+// 현재 페이지에 맞는 메뉴 반환
 const currentPostOptions = computed(() => {
   return isBoardPage.value ? boardPostOptions : postOptions
 })
 
-// ✅ 네비 하단 버튼 active 스타일
+//  네비 하단 버튼 active 스타일
 const isActive = (path: string) => {
   return route.path === path
 }

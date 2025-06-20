@@ -1,4 +1,4 @@
-// ✅ ~/domains/bid/infrastructure/bidApi.ts
+//  ~/domains/bid/infrastructure/bidApi.ts
 import { apiClient } from '@/libs/http/apiClient'
 
 export const bidApi = {

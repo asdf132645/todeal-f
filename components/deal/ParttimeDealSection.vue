@@ -78,7 +78,7 @@ const submitBid = async () => {
       nickname: auth.user?.nickname || '알 수 없음'
     })
 
-    snackbar.show('✅ 지원 완료!', 'success')
+    snackbar.show(' 지원 완료!', 'success')
     emit('bid-complete')
     bidAmount.value = 0
   } catch {
@@ -108,7 +108,7 @@ const submitDirect = async () => {
       nickname: auth.user?.nickname || '알 수 없음'
     })
 
-    snackbar.show('✅ 바로 지원 완료!', 'success')
+    snackbar.show(' 바로 지원 완료!', 'success')
     emit('bid-complete')
   } catch {
     snackbar.show('❌ 지원 실패! 다시 시도해주세요.', 'error')

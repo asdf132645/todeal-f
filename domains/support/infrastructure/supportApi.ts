@@ -18,7 +18,7 @@ export const supportApi = {
         type: string
         title: string
         email: string
-        content: string // ✅ 이름 통일
+        content: string //  이름 통일
     }) => apiClient.post('/api/support', payload),
 
 

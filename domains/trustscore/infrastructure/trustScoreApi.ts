@@ -1,4 +1,4 @@
-// ✅ ~/domains/trustscore/infrastructure/trustScoreApi.ts
+//  ~/domains/trustscore/infrastructure/trustScoreApi.ts
 import { apiClient } from '@/libs/http/apiClient'
 import type { TrustScoreType } from './trustScoreType'
 import qs from 'qs'
@@ -35,7 +35,7 @@ export const trustScoreApi = {
     async getUserScores(userIds: number[]) {
         const response = await apiClient.get('/api/trust-scores', {
             params: {
-                userIds: userIds.join(',')  // ✅ '1,2,3' 형태로 보냄
+                userIds: userIds.join(',')  //  '1,2,3' 형태로 보냄
             }
         })
         // console.log(response)

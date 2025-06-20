@@ -1,4 +1,4 @@
-<!--// ✅ components/mytodeal/MyEtcSettings.vue-->
+<!--//  components/mytodeal/MyEtcSettings.vue-->
 <template>
   <v-card flat class="pa-4">
     <div class="text-subtitle-1 font-weight-bold mb-2">기타 설정</div>

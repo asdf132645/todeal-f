@@ -39,7 +39,7 @@
       </v-card-text>
       <v-card-actions>
         <v-spacer />
-        <v-btn color="primary" @click="applyRadius">확인</v-btn> <!-- ✅ 추가 -->
+        <v-btn color="primary" @click="applyRadius">확인</v-btn> <!--  추가 -->
         <v-btn text color="primary" @click="locationDialog = false">닫기</v-btn>
       </v-card-actions>
     </v-card>

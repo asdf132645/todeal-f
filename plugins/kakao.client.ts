@@ -10,7 +10,7 @@ export default defineNuxtPlugin(() => {
                 if (window.Kakao && typeof window.Kakao.init === 'function') {
                     if (!window.Kakao.isInitialized?.()) {
                         window.Kakao.init(import.meta.env.VITE_KAKAO_JS_KEY)
-                        console.log('[✅] Kakao SDK Initialized')
+                        console.log('[] Kakao SDK Initialized')
                     }
                     resolve()
                 } else {

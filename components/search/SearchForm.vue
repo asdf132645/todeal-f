@@ -87,7 +87,7 @@ const router = useRouter()
 const submit = async () => {
   store.addRecentSearch(form.value)
 
-  // ✅ 검색어가 존재하면 백엔드에 검색 로그 기록
+  //  검색어가 존재하면 백엔드에 검색 로그 기록
   if (form.value.keyword?.trim()) {
     try {
       await analyticsApi.logSearch(form.value.keyword.trim())

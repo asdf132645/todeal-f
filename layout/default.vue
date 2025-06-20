@@ -79,23 +79,28 @@ themeStore.initTheme()
 
 const pageTitle = computed(() => {
   const path = route.path
+
+  // 🔹 동적 경로 처리 우선
+  if (/^\/board\/\d+$/.test(path)) return 'page.community'        // 글 상세
+  if (/^\/deals\/detail\/\d+$/.test(path)) return 'page.deal_detail' // 딜 상세
+  if (/^\/post\/(used|barter|parttime|parttime-request)$/.test(path)) {
+    return `page.post_${path.split('/')[2]}` // post/used → page.post_used
+  }
+
   const map: Record<string, string> = {
     '/deals/search-result': 'page.search_result',
-    '/deals/detail': 'page.deal_detail',
-    '/post/used': 'page.post_used',
-    '/post/barter': 'page.post_barter',
-    '/post/parttime-request': 'page.parttime_request',
-    '/mytodeal/sales': '내 판매 내역',
-    '/post/parttime': 'page.parttime',
     '/chats': 'page.chat',
     '/plans': 'page.plans',
     '/support': 'page.support',
     '/post': 'page.post',
     '/mypage': 'page.mypage',
+    '/mytodeal/sales': '내 판매 내역',
     '/mytodeal/bids': '내 거래 내역',
     '/mytodeal/bidders': '내 경매 입찰자 목록',
-    '/board/mine' : '내가 쓴 게시글',
     '/mytodeal/reviews': '받은 후기',
+    '/board': 'page.community',
+    '/board/write': 'page.write',
+    '/board/mine': '내가 쓴 게시글',
     '/support/help/my-inquiries': 'page.my_inquiries',
     '/bids/history': 'page.bids',
     '/settings': 'page.settings',
@@ -104,12 +109,12 @@ const pageTitle = computed(() => {
     '/deals/barter': 'page.barter',
     '/deals/parttime': 'page.parttime_today',
     '/deals/used': 'page.used',
-    '/deals/parttime-request': 'page.parttime_offer',
-    '/board': 'page.community',
-    '/board/write': 'page.write'
+    '/deals/parttime-request': 'page.parttime_offer'
   }
+
   return map[path] || ''
 })
+
 const resolvedTitle = computed(() => _t(pageTitle.value))
 
 const getUserId = (): number => {
@@ -192,7 +197,7 @@ const handleConsent = async (agree: boolean) => {
       localStorage.setItem('userLng', String(geo.longitude))
       localStorage.setItem('userRegionName', geo.regionName)
 
-      // ✅ 리로드 플래그가 없으면 새로고침 (딱 한 번만)
+      //  리로드 플래그가 없으면 새로고침 (딱 한 번만)
       if (!localStorage.getItem('locationConsentReloaded')) {
         localStorage.setItem('locationConsentReloaded', 'true')
         window.location.reload()
@@ -222,7 +227,7 @@ onMounted(async () => {
     } catch (e) {
       console.warn('🚫 방문 로그 실패:', e)
     }
-    // ✅ 성공 여부 관계없이 저장
+    //  성공 여부 관계없이 저장
     localStorage.setItem('visitorLoggedAt', today)
   }
 

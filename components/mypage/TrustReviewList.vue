@@ -2,7 +2,7 @@
   <v-card flat class="pa-4" v-if="user">
     <div class="text-h6 font-weight-bold mb-4">받은 후기</div>
 
-    <!-- ✅ 후기 필터 -->
+    <!--  후기 필터 -->
     <div class="mb-3 d-flex align-center justify-space-between">
       <v-select
           v-model="selectedType"
@@ -17,7 +17,7 @@
       </v-btn>
     </div>
 
-    <!-- ✅ 후기 리스트 -->
+    <!--  후기 리스트 -->
     <v-list v-if="reviews.length > 0">
       <v-list-item
           v-for="(item, idx) in reviews"
@@ -37,7 +37,7 @@
 
     <div v-else class="text-caption text-grey mt-4">후기가 없습니다.</div>
 
-    <!-- ✅ 페이지네이션 -->
+    <!--  페이지네이션 -->
     <div class="d-flex justify-center mt-4" v-if="totalPages > 1">
       <v-pagination
           v-model="page"
@@ -90,7 +90,7 @@ async function fetchReviews() {
       type: selectedType.value || undefined,
     })
 
-    // console.log('✅ 후기 응답:', res)
+    // console.log(' 후기 응답:', res)
     reviews.value = res.content
     totalPages.value = res.totalPages
   } catch (err) {

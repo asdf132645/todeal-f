@@ -1,4 +1,4 @@
-// ✅ @/domains/barterBid/infrastructure/barterBidApi.ts
+//  @/domains/barterBid/infrastructure/barterBidApi.ts
 import { apiClient } from '~/libs/http/apiClient'
 
 export const barterBidApi = {

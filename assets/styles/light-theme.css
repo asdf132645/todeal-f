@@ -194,14 +194,14 @@ body.light-mode .v-btn.active span {
     color: #fff !important;
 }
 
-/* ✅ 라이트 모드용 전체 헤더 */
+/*  라이트 모드용 전체 헤더 */
 body.light-mode .v-app-bar {
     background-color: #ffffff !important;
     color: #1E1E1E !important;
     border-bottom: 1px solid #E0E0E0;
 }
 
-/* ✅ "toDEAL" 타이틀 */
+/*  "toDEAL" 타이틀 */
 body.light-mode .v-app-bar .v-toolbar-title {
     color: #2A2E9D !important;
 }
@@ -209,7 +209,7 @@ body.light-mode .v-toolbar-title span {
     color: #FFD54F !important;
 }
 
-/* ✅ 위치 버튼 */
+/*  위치 버튼 */
 body.light-mode .v-app-bar .v-btn.location-button {
     background-color: #f5f5f5 !important;
     color: #1E1E1E !important;
@@ -224,12 +224,12 @@ body.light-mode .v-app-bar .v-btn.location-button .v-icon:last-child {
     color: #888888 !important;
 }
 
-/* ✅ 메뉴 버튼 */
+/*  메뉴 버튼 */
 body.light-mode .v-app-bar .v-btn.menu-button {
     color: #1E1E1E !important;
 }
 
-/* ✅ 다이얼로그 (지역설정) */
+/*  다이얼로그 (지역설정) */
 body.light-mode .v-dialog .v-card {
     background-color: #ffffff !important;
     color: #1E1E1E !important;

@@ -68,7 +68,7 @@ async function request<T>(
 
     let accessToken = getStoredAccessToken()
 
-    // ✅ accessToken 만료 시 자동 재발급
+    //  accessToken 만료 시 자동 재발급
     if (accessToken && isTokenExpired(accessToken)) {
         const newToken = await reissueAccessToken()
         if (!newToken) {

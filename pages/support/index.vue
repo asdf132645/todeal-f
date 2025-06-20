@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <v-card flat class="pa-4 mt-4" style="background-color: #1A1B1D; color: #F2F3F4">
-      <div class="text-h6 font-weight-bold mb-4">고객센터 문의</div>
+<!--      <div class="text-h6 font-weight-bold mb-4">고객센터 문의</div>-->
 
       <v-select
           v-model="form.type"
@@ -65,7 +65,7 @@ const form = ref({
   type: '',
   title: '',
   email: '',
-  content: ''  // ✅ 이름 수정됨
+  content: ''  //  이름 수정됨
 })
 
 const submitting = ref(false)

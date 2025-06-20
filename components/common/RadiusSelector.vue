@@ -21,7 +21,7 @@
       내 위치 다시 설정
     </v-btn>
 
-    <!-- ✅ 직접 만든 위치 권한 다이얼로그 -->
+    <!--  직접 만든 위치 권한 다이얼로그 -->
     <v-dialog v-model="dialogVisible" max-width="400">
       <v-card>
         <v-card-title class="text-h6 font-weight-bold">
