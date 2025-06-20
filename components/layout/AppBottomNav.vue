@@ -146,6 +146,7 @@ const isActive = (path: string) => {
 };
 </script>
 
+<style scoped>
 .fab-post-btn {
   position: fixed;
   bottom: 90px;
@@ -220,3 +221,4 @@ const isActive = (path: string) => {
 .fade-leave-to {
   opacity: 0;
 }
+</style>

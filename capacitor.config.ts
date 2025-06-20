@@ -2,14 +2,17 @@ import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
     appId: 'com.todeal.app',
-    appName: 'todeal',
-    webDir: 'dist',
+    appName: 'toDEAL',
+    webDir: '.output/public',
     android: {
-        allowMixedContent: true
+        allowMixedContent: false, // 가능하면 false
+        webContentsDebuggingEnabled: true // 개발 중일 땐 true
     },
     server: {
-        cleartext: true
-    }
+        url: 'https://app.to-deal.com',
+        cleartext: false
+    },
+    bundledWebRuntime: false
 }
 
 export default config

@@ -85,31 +85,44 @@ const handleEmailLogin = async () => {
 };
 
 const handleKakaoLogin = async () => {
-    try {
-        const result = await auth.loginWithKakao();
+  try {
+    // WebView 환경: authorize 방식 (리디렉션)
+    if (typeof window !== 'undefined' && window.Capacitor) {
+      if (!window.Kakao?.isInitialized?.()) {
+        window.Kakao.init(import.meta.env.VITE_KAKAO_JS_KEY)
+      }
 
-        if (result.isNewUser) {
-            if (!result.tempToken) {
-                snackbar.show("카카오 인증 토큰이 없습니다. 다시 시도해 주세요.", "error");
-                return;
-            }
-
-            router.push({
-                path: "/auth/signup",
-
-                query: {
-                    tempToken: result.tempToken
-                }
-            });
-        } else {
-            snackbar.show(t("auto_key_137"), "success");
-            router.push("/");
-        }
-    } catch (err: any) {
-        console.error(err);
-        snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, "error");
+      window.Kakao.Auth.authorize({
+        redirectUri: 'https://app.to-deal.com/auth/kakao/callback'
+      })
+      return
     }
+
+    // PC 브라우저: popup 방식
+    const result = await auth.loginWithKakao()
+
+    if (result.isNewUser) {
+      if (!result.tempToken) {
+        snackbar.show("카카오 인증 토큰이 없습니다. 다시 시도해 주세요.", "error")
+        return
+      }
+
+      router.push({
+        path: "/auth/signup",
+        query: {
+          tempToken: result.tempToken
+        }
+      })
+    } else {
+      snackbar.show(t("auto_key_137"), "success")
+      router.push("/")
+    }
+  } catch (err: any) {
+    console.error('[카카오 로그인 오류]', err)
+    snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, "error")
+  }
 };
+
 
 const goToForgotPassword = () => {
     router.push("/auth/forgot-password");

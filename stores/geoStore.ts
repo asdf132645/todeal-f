@@ -1,5 +1,5 @@
-//  geoStore.ts - 기존 코드 보존 + regionDepth1~3 추가
 import { defineStore } from 'pinia'
+import { Geolocation } from '@capacitor/geolocation'
 
 export const useGeoStore = defineStore('geo', {
     state: () => ({
@@ -97,36 +97,51 @@ export const useGeoStore = defineStore('geo', {
                 return
             }
 
-            return new Promise<void>((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(
-                    async (pos) => {
-                        this.latitude = pos.coords.latitude
-                        this.longitude = pos.coords.longitude
-                        this.initialized = true
-                        this.error = null
-                        localStorage.setItem('userLat', String(this.latitude))
-                        localStorage.setItem('userLng', String(this.longitude))
+            try {
+                const isApp = typeof window !== 'undefined' && !!window.Capacitor
 
-                        try {
-                            await this.fetchRegionInfo(this.latitude, this.longitude)
-                        } catch {
-                            this.regionName = '주소 확인 실패'
-                        }
-
-                        resolve()
-                    },
-                    async (err) => {
-                        this.setDefaultLocation()
-                        this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
-                        try {
-                            await this.fetchRegionInfo(this.latitude!, this.longitude!)
-                        } catch {
-                            this.regionName = '주소 확인 실패'
-                        }
-                        reject(err)
+                if (isApp) {
+                    // ✅ Capacitor 기반 WebView
+                    const permStatus = await Geolocation.checkPermissions()
+                    if (permStatus.location !== 'granted') {
+                        const req = await Geolocation.requestPermissions()
+                        if (req.location !== 'granted') throw new Error('위치 권한 거부됨')
                     }
-                )
-            })
+
+                    const pos = await Geolocation.getCurrentPosition()
+                    this.latitude = pos.coords.latitude
+                    this.longitude = pos.coords.longitude
+                } else {
+                    // ✅ 브라우저 기반
+                    await new Promise<void>((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                                this.latitude = pos.coords.latitude
+                                this.longitude = pos.coords.longitude
+                                resolve()
+                            },
+                            (err) => {
+                                reject(err)
+                            }
+                        )
+                    })
+                }
+
+                this.initialized = true
+                this.error = null
+                localStorage.setItem('userLat', String(this.latitude))
+                localStorage.setItem('userLng', String(this.longitude))
+                await this.fetchRegionInfo(this.latitude!, this.longitude!)
+            } catch (err) {
+                this.setDefaultLocation()
+                this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
+                try {
+                    await this.fetchRegionInfo(this.latitude!, this.longitude!)
+                } catch {
+                    this.regionName = '주소 확인 실패'
+                }
+                throw err
+            }
         },
 
         async initLocationOnce() {

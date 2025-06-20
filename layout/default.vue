@@ -48,20 +48,7 @@
 
 <script setup lang="ts">
 const { t } = useI18n()
-// 🔹 동적 경로 처리 우선
-// 글 상세
-// 딜 상세
-// post/used → page.post_used
-// console.log(_t('log.socket_already_connected'))
-// console.log(_t('log.socket_connected'), userId)
-// console.log(_t('log.chat_received'), msg)
-// console.log(_t('log.deal_received'), msg)
-// console.error(_t('log.socket_parse_error'), e)
-//  리로드 플래그가 없으면 새로고침 (딱 한 번만)
-// console.log(' 오늘은 이미 방문 로그 전송함')
-// console.log(' 방문 로그 전송 완료')
-//  성공 여부 관계없이 저장
-// 위치 동의 로직
+
 import { ref, onMounted, watch, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useGeoStore } from "@/stores/geoStore";
@@ -72,6 +59,7 @@ import AppHeader from "~/components/layout/AppHeader.vue";
 import AppBottomNav from "~/components/layout/AppBottomNav.vue";
 import AppBackHeader from "~/components/layout/AppBackHeader.vue";
 import { analyticsApi } from "@/domains/analytics/infrastructure/analyticsApi";
+import { Geolocation } from '@capacitor/geolocation';
 
 const {
     t: _t
@@ -229,33 +217,53 @@ const handleConsent = async (agree: boolean) => {
 };
 
 onMounted(async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    const loggedAt = localStorage.getItem("visitorLoggedAt");
+  const today = new Date().toISOString().slice(0, 10)
+  const loggedAt = localStorage.getItem('visitorLoggedAt')
 
-    if (loggedAt === today)
-        {} else {
-        try {
-            await analyticsApi.logVisitor(route.fullPath, navigator.userAgent);
-        } catch (e) {
-            console.warn(t("auto_key_154"), e);
-        }
-
-        localStorage.setItem("visitorLoggedAt", today);
+  if (loggedAt !== today) {
+    try {
+      await analyticsApi.logVisitor(route.fullPath, navigator.userAgent)
+    } catch (e) {
+      console.warn(t('auto_key_154'), e)
     }
+    localStorage.setItem('visitorLoggedAt', today)
+  }
 
-    localStorage.removeItem("locationConsentReloaded");
-    const consent = localStorage.getItem(LOCATION_KEY);
+  localStorage.removeItem('locationConsentReloaded')
 
-    if (consent === "granted") {
-        await geo.initLocationWithConsent(true);
-    } else if (consent === "denied") {
-        await geo.initLocationWithConsent(false);
+  const isApp = typeof window !== 'undefined' && !!window.Capacitor
+  const storedConsent = localStorage.getItem(LOCATION_KEY)
+
+  try {
+    if (isApp) {
+      // ✅ 앱일 경우에만 권한 요청
+      const permStatus = await Geolocation.checkPermissions()
+      if (permStatus.location !== 'granted') {
+        const req = await Geolocation.requestPermissions()
+        if (req.location !== 'granted') throw new Error('위치 권한 거부됨')
+      }
+
+      await geo.initLocationWithConsent(true)
     } else {
-        showConsentDialog.value = true;
+      // ✅ PC 브라우저일 경우는 localStorage 기준으로만 판단
+      if (storedConsent === 'granted') {
+        await geo.initLocationWithConsent(true)
+      } else {
+        await geo.initLocationWithConsent(false)
+        showConsentDialog.value = true
+      }
     }
+  } catch (e) {
+    console.error('위치 권한 요청 실패', e)
+    await geo.initLocationWithConsent(false)
+    showConsentDialog.value = true
+  }
 
-    connectNotificationSocket();
-});
+  connectNotificationSocket()
+})
+
+
+
 
 watch(() => geo.error, val => {
     if (val) {
