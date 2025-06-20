@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <!-- 📌 게시글 카드 -->
     <v-card class="mb-4 pa-4">
@@ -87,90 +88,91 @@
           auto-grow
           class="color-black"
       />
-      <v-btn color="primary" class="mt-2" @click="submitComment">댓글 작성</v-btn>
+      <v-btn color="primary" class="mt-2" @click="submitComment">{{ $t('auto_key_97') }}</v-btn>
     </v-card>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { boardApi } from '@/domains/board/infrastructure/boardApi'
-import { useAuthStore } from '@/stores/authStore'
+const { t } = useI18n()
+//  원문 보기 상태
+import { ref, onMounted, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { boardApi } from "@/domains/board/infrastructure/boardApi";
+import { useAuthStore } from "@/stores/authStore";
+const route = useRoute();
+const router = useRouter();
+const postId = Number(route.params.id);
+const post = ref<any>({});
+const comments = ref<any[]>([]);
+const newComment = ref("");
+const showOriginal = ref(false);
 
-const route = useRoute()
-const router = useRouter()
-const postId = Number(route.params.id)
-const post = ref<any>({})
-const comments = ref<any[]>([])
-const newComment = ref('')
-const showOriginal = ref(false) //  원문 보기 상태
+const {
+    locale
+} = useI18n();
 
-const { locale } = useI18n()
-const authStore = useAuthStore()
-
-const userId = process.client
-    ? Number(localStorage.getItem('userId') || 0)
-    : 0
-
-const isMine = computed(() => post.value.userId === userId)
+const authStore = useAuthStore();
+const userId = process.client ? Number(localStorage.getItem("userId") || 0) : 0;
+const isMine = computed(() => post.value.userId === userId);
 
 const load = async () => {
-  try {
-    post.value = await boardApi.getPost(postId)
-    comments.value = await boardApi.getComments(postId)
-  } catch (e) {
-    alert('게시글을 불러오는 데 실패했습니다.')
-    router.push('/board')
-  }
-}
+    try {
+        post.value = await boardApi.getPost(postId);
+        comments.value = await boardApi.getComments(postId);
+    } catch (e) {
+        alert("게시글을 불러오는 데 실패했습니다.");
+        router.push("/board");
+    }
+};
 
-const displayedTitle = computed(() =>
-    showOriginal.value ? post.value.title : post.value.translatedTitle || post.value.title
-)
-const displayedContent = computed(() =>
-    showOriginal.value ? post.value.content : post.value.translatedContent || post.value.content
-)
+const displayedTitle = computed(
+    () => showOriginal.value ? post.value.title : post.value.translatedTitle || post.value.title
+);
+
+const displayedContent = computed(
+    () => showOriginal.value ? post.value.content : post.value.translatedContent || post.value.content
+);
 
 const toggleLang = () => {
-  showOriginal.value = !showOriginal.value
-}
+    showOriginal.value = !showOriginal.value;
+};
 
 const langToggleText = computed(() => {
-  const currentLang = locale.value
-  const originalLang = post.value.language || 'ko'
-  const isSame = currentLang === originalLang
-
-  return showOriginal.value
-      ? (isSame ? '영어 보기' : '한국어 보기')
-      : (isSame ? '한국어 보기' : '영어 보기')
-})
+    const currentLang = locale.value;
+    const originalLang = post.value.language || "ko";
+    const isSame = currentLang === originalLang;
+    return showOriginal.value ? (isSame ? t("auto_key_98") : t("auto_key_99")) : (isSame ? t("auto_key_99") : t("auto_key_98"));
+});
 
 const submitComment = async () => {
-  if (!newComment.value.trim()) return
-  await boardApi.createComment({
-    postId,
-    content: newComment.value.trim(),
-    nickname: authStore.user?.nickname || '익명'
-  })
-  newComment.value = ''
-  await load()
-}
+    if (!newComment.value.trim())
+        return;
+
+    await boardApi.createComment({
+        postId,
+        content: newComment.value.trim(),
+        nickname: authStore.user?.nickname || t("auto_key_100")
+    });
+
+    newComment.value = "";
+    await load();
+};
 
 const formatDate = (iso: string) => {
-  try {
-    const date = new Date(iso)
-    return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, '0')}`
-  } catch {
-    return '-'
-  }
-}
+    try {
+        const date = new Date(iso);
+        return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
+    } catch {
+        return "-";
+    }
+};
 
-onMounted(load)
+onMounted(load);
 </script>
 
-<style>
 .comment-list {
   padding: 0;
   border-top: 1px solid #eee;
@@ -178,4 +180,3 @@ onMounted(load)
 .v-list-item {
   border-bottom: 1px solid #f0f0f0;
 }
-</style>

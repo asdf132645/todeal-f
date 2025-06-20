@@ -1,4 +1,5 @@
 <template>
+
   <v-card flat class="pa-4" v-if="user">
 
     <!--  후기 필터 -->
@@ -34,7 +35,7 @@
       </v-list-item>
     </v-list>
 
-    <div v-else class="text-caption text-grey mt-4">후기가 없습니다.</div>
+    <div v-else class="text-caption text-grey mt-4">{{ $t('auto_key_50') }}</div>
 
     <!--  페이지네이션 -->
     <div class="d-flex justify-center mt-4" v-if="totalPages > 1">
@@ -45,76 +46,89 @@
       />
     </div>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { storeToRefs } from 'pinia'
-import { trustScoreApi } from '@/domains/trustscore/infrastructure/trustScoreApi'
-import type { TrustScoreType } from '@/domains/trustscore/infrastructure/trustScoreType'
-import dayjs from 'dayjs'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// console.log(' 후기 응답:', res)
+import { ref, watch, onMounted } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+import { storeToRefs } from "pinia";
+import { trustScoreApi } from "@/domains/trustscore/infrastructure/trustScoreApi";
+import type { TrustScoreType } from "@/domains/trustscore/infrastructure/trustScoreType";
+import dayjs from "dayjs";
 
-const { user } = storeToRefs(useAuthStore())
-const reviews = ref([])
-const selectedType = ref<TrustScoreType | null>(null)
-const page = ref(1)
-const size = 5
-const totalPages = ref(1)
-const userId = ref('');
-const typeOptions = [
-  { title: '중고', value: 'USED' },
-  { title: '알바', value: 'PARTTIME' },
-  { title: '알바요청', value: 'PARTTIME_REQUEST' },
-  { title: '빌려드려요', value: 'BARTER' }
-]
+const {
+    user
+} = storeToRefs(useAuthStore());
+
+const reviews = ref([]);
+const selectedType = ref<TrustScoreType | null>(null);
+const page = ref(1);
+const size = 5;
+const totalPages = ref(1);
+const userId = ref("");
+
+const typeOptions = [{
+    title: t("auto_key_53"),
+    value: "USED"
+}, {
+    title: t("auto_key_54"),
+    value: "PARTTIME"
+}, {
+    title: t("auto_key_55"),
+    value: "PARTTIME_REQUEST"
+}, {
+    title: t("auto_key_28"),
+    value: "BARTER"
+}];
 
 const typeMap: Record<string, string> = {
-  USED: '중고',
-  PARTTIME: '알바',
-  PARTTIME_REQUEST: '알바요청',
-  BARTER: '빌려드려요'
-}
+    USED: t("auto_key_53"),
+    PARTTIME: t("auto_key_54"),
+    PARTTIME_REQUEST: t("auto_key_55"),
+    BARTER: t("auto_key_28")
+};
 
 async function fetchReviews() {
-  if (!userId.value) {
-    console.warn('user.id 없음 → fetchReviews 스킵')
-    return
-  }
+    if (!userId.value) {
+        console.warn("user.id 없음 → fetchReviews 스킵");
+        return;
+    }
 
-  try {
-    const res = await trustScoreApi.getUserReviews(userId.value, {
-      page: page.value - 1,
-      size,
-      type: selectedType.value || undefined,
-    })
+    try {
+        const res = await trustScoreApi.getUserReviews(userId.value, {
+            page: page.value - 1,
+            size,
+            type: selectedType.value || undefined
+        });
 
-    // console.log(' 후기 응답:', res)
-    reviews.value = res.content
-    totalPages.value = res.totalPages
-  } catch (err) {
-    console.error('❌ 후기 조회 실패:', err)
-  }
+        reviews.value = res.content;
+        totalPages.value = res.totalPages;
+    } catch (err) {
+        console.error(t("auto_key_56"), err);
+    }
 }
 
-
 function refreshReviews() {
-  page.value = 1
-  fetchReviews()
+    page.value = 1;
+    fetchReviews();
 }
 
 watch(selectedType, () => {
-  page.value = 1
-  fetchReviews()
-})
-console.log(' [REVIEW PAGE] mounted')
+    page.value = 1;
+    fetchReviews();
+});
 
+console.log(" [REVIEW PAGE] mounted");
 
 onMounted(() => {
-  userId.value = localStorage.getItem('userId') || ''
-  fetchReviews();
-  console.log('????????????')
-})
+    userId.value = localStorage.getItem("userId") || "";
+    fetchReviews();
+    console.log("????????????");
+});
 
-const formatDate = (iso: string) => dayjs(iso).format('YYYY.MM.DD HH:mm')
+const formatDate = (iso: string) => dayjs(iso).format("YYYY.MM.DD HH:mm");
 </script>

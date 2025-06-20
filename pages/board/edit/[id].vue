@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <v-alert
         type="warning"
@@ -10,7 +11,7 @@
       커뮤니티 가이드라인에 어긋나는 내용은 사전 통보 없이 삭제될 수 있습니다.
     </v-alert>
 
-    <div class="mb-1 text-caption text-grey-darken-1">글의 성격에 맞는 카테고리를 선택해주세요.</div>
+    <div class="mb-1 text-caption text-grey-darken-1">{{ $t('auto_key_119') }}</div>
     <v-select
         v-model="category"
         :items="categoryOptions"
@@ -116,180 +117,203 @@
       수정 완료
     </v-btn>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useI18n } from 'vue-i18n'
-import { boardApi } from '@/domains/board/infrastructure/boardApi'
-import { apiClient } from '@/libs/http/apiClient'
-import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
+const { t } = useI18n()
+//  실제 저장되는 값
+//  화면에 표시/편집용
+//  화면에서 입력한 걸 저장용 변수에 반영
+import { ref, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useI18n } from "vue-i18n";
+import { boardApi } from "@/domains/board/infrastructure/boardApi";
+import { apiClient } from "@/libs/http/apiClient";
+import { uploadImage } from "~/domains/upload/infrastructure/uploadApi";
 
-const { t: _t } = useI18n()
-const route = useRoute()
-const router = useRouter()
-const loading = ref(false)
-const loadingTranslation = ref(false)
+const {
+    t: _t
+} = useI18n();
 
-const postId = Number(route.params.id)
+const route = useRoute();
+const router = useRouter();
+const loading = ref(false);
+const loadingTranslation = ref(false);
+const postId = Number(route.params.id);
+
 if (isNaN(postId)) {
-  alert('잘못된 게시글 ID입니다.')
-  router.replace('/board')
+    alert("잘못된 게시글 ID입니다.");
+    router.replace("/board");
 }
 
-//  실제 저장되는 값
-const title = ref('')
-const content = ref('')
+const title = ref("");
+const content = ref("");
 
-//  화면에 표시/편집용
 const display = ref({
-  title: '',
-  content: ''
-})
+    title: "",
+    content: ""
+});
 
-const category = ref('')
-const imageUrls = ref<string[]>([])
-const originalPost = ref<any>(null)
+const category = ref("");
+const imageUrls = ref<string[]>([]);
+const originalPost = ref<any>(null);
+const showTranslatePanel = ref(false);
+const sourceLang = ref("ko");
+const targetLang = ref("");
+const fileInput = ref<HTMLInputElement | null>(null);
 
-const showTranslatePanel = ref(false)
-const sourceLang = ref('ko')
-const targetLang = ref('')
-const fileInput = ref<HTMLInputElement | null>(null)
+const langOptions = [{
+    label: t("auto_key_27"),
+    value: "ko"
+}, {
+    label: t("auto_key_75"),
+    value: "en"
+}];
 
-const langOptions = [
-  { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' }
-]
-
-const categoryOptions = [
-  { label: '우리 동네 생활', value: 'local-life' },
-  { label: '중고거래 도움', value: 'trade-help' },
-  { label: '알바 정보', value: 'parttime' },
-  { label: '언어 교환', value: 'language-exchange' },
-  { label: '문화 교류', value: 'culture' },
-  { label: 'Q&A', value: 'qna' },
-  { label: '자유', value: 'free' }
-]
+const categoryOptions = [{
+    label: t("auto_key_101"),
+    value: "local-life"
+}, {
+    label: t("auto_key_102"),
+    value: "trade-help"
+}, {
+    label: t("auto_key_103"),
+    value: "parttime"
+}, {
+    label: t("auto_key_104"),
+    value: "language-exchange"
+}, {
+    label: t("auto_key_105"),
+    value: "culture"
+}, {
+    label: "Q&A",
+    value: "qna"
+}, {
+    label: t("auto_key_106"),
+    value: "free"
+}];
 
 const load = async () => {
-  try {
-    const res = await boardApi.getPost(postId)
-    const post = res?.data || res
+    try {
+        const res = await boardApi.getPost(postId);
+        const post = res?.data || res;
+        originalPost.value = post;
+        title.value = post.title;
+        content.value = post.content;
+        display.value.title = post.translatedTitle ? post.translatedTitle : post.title;
+        display.value.content = post.translatedContent ? post.translatedContent : post.content;
+        category.value = post.category;
+        imageUrls.value = post.imageUrls || [];
+        sourceLang.value = post.language || "ko";
+    } catch (e) {
+        alert("게시글을 불러올 수 없습니다.");
+        router.replace("/board");
+    }
+};
 
-    originalPost.value = post
-    title.value = post.title
-    content.value = post.content
-    display.value.title = post.translatedTitle ? post.translatedTitle : post.title;
-    display.value.content = post.translatedContent ? post.translatedContent : post.content;
-    category.value = post.category;
-    imageUrls.value = post.imageUrls || []
-    sourceLang.value = post.language || 'ko'
-  } catch (e) {
-    alert('게시글을 불러올 수 없습니다.')
-    router.replace('/board')
-  }
-}
-
-const triggerFileInput = () => fileInput.value?.click()
-const removeImage = (index: number) => imageUrls.value.splice(index, 1)
+const triggerFileInput = () => fileInput.value?.click();
+const removeImage = (index: number) => imageUrls.value.splice(index, 1);
 
 const handleImageUpload = async (e: Event) => {
-  const files = (e.target as HTMLInputElement).files
-  if (!files) return
+    const files = (e.target as HTMLInputElement).files;
 
-  const selected = Array.from(files).slice(0, 5 - imageUrls.value.length)
-  const uploaded: string[] = []
+    if (!files)
+        return;
 
-  for (const file of selected) {
-    try {
-      const url = await uploadImage(file)
-      uploaded.push(url)
-    } catch (e) {
-      alert('이미지 업로드 실패')
-      console.error(e)
+    const selected = Array.from(files).slice(0, 5 - imageUrls.value.length);
+    const uploaded: string[] = [];
+
+    for (const file of selected) {
+        try {
+            const url = await uploadImage(file);
+            uploaded.push(url);
+        } catch (e) {
+            alert(t("auto_key_78"));
+            console.error(e);
+        }
     }
-  }
 
-  imageUrls.value.push(...uploaded)
-  if (fileInput.value) fileInput.value.value = ''
-}
+    imageUrls.value.push(...uploaded);
+
+    if (fileInput.value)
+        fileInput.value.value = "";
+};
 
 const toggleTranslationPanel = () => {
-  showTranslatePanel.value = !showTranslatePanel.value
-}
+    showTranslatePanel.value = !showTranslatePanel.value;
+};
 
 const runTranslation = async () => {
-  if (!display.value.title || !display.value.content) {
-    alert('제목과 내용을 먼저 입력해주세요.')
-    return
-  }
-  loadingTranslation.value = true
+    if (!display.value.title || !display.value.content) {
+        alert("제목과 내용을 먼저 입력해주세요.");
+        return;
+    }
 
-  try {
-    const [resTitle, resContent] = await Promise.all([
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: display.value.title
-      }),
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: display.value.content
-      })
-    ])
-    display.value.title = resTitle?.translatedText || display.value.title
-    display.value.content = resContent?.translatedText || display.value.content
-  } catch (e) {
-    console.error(e)
-    alert('번역 중 오류가 발생했습니다.')
-  } finally {
-    loadingTranslation.value = false
-  }
-}
+    loadingTranslation.value = true;
+
+    try {
+        const [resTitle, resContent] = await Promise.all([apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: display.value.title
+        }), apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: display.value.content
+        })]);
+
+        display.value.title = resTitle?.translatedText || display.value.title;
+        display.value.content = resContent?.translatedText || display.value.content;
+    } catch (e) {
+        console.error(e);
+        alert("번역 중 오류가 발생했습니다.");
+    } finally {
+        loadingTranslation.value = false;
+    }
+};
 
 const submit = async () => {
-  if (!display.value.title.trim() || !display.value.content.trim()) {
-    alert('제목과 내용을 입력해주세요.')
-    return
-  }
+    if (!display.value.title.trim() || !display.value.content.trim()) {
+        alert("제목과 내용을 입력해주세요.");
+        return;
+    }
 
-  if (!category.value) {
-    alert('카테고리를 선택해주세요.')
-    return
-  }
+    if (!category.value) {
+        alert("카테고리를 선택해주세요.");
+        return;
+    }
 
-  //  화면에서 입력한 걸 저장용 변수에 반영
-  title.value = display.value.title
-  content.value = display.value.content
+    title.value = display.value.title;
+    content.value = display.value.content;
 
-  try {
-    loading.value = true
-    await boardApi.updatePost(postId, {
-      title: title.value,
-      content: content.value,
-      category: category.value,
-      language: sourceLang.value,
-      latitude: originalPost.value.latitude,
-      longitude: originalPost.value.longitude,
-      nickname: originalPost.value.nickname,
-      region: originalPost.value.region,
-      imageUrls: imageUrls.value
-    })
-    router.push(`/board/${postId}`)
-  } catch (e) {
-    console.error(e)
-    alert('게시글 수정 중 오류가 발생했습니다.')
-  } finally {
-    loading.value = false
-  }
-}
+    try {
+        loading.value = true;
 
-onMounted(load)
+        await boardApi.updatePost(postId, {
+            title: title.value,
+            content: content.value,
+            category: category.value,
+            language: sourceLang.value,
+            latitude: originalPost.value.latitude,
+            longitude: originalPost.value.longitude,
+            nickname: originalPost.value.nickname,
+            region: originalPost.value.region,
+            imageUrls: imageUrls.value
+        });
+
+        router.push(`/board/${postId}`);
+    } catch (e) {
+        console.error(e);
+        alert("게시글 수정 중 오류가 발생했습니다.");
+    } finally {
+        loading.value = false;
+    }
+};
+
+onMounted(load);
 </script>
 
-<style scoped>
 .image-grid {
   display: flex;
   flex-wrap: wrap;
@@ -308,4 +332,3 @@ onMounted(load)
 .upload-image-slot.add:hover {
   background-color: #f5f5f5;
 }
-</style>

@@ -1,4 +1,5 @@
 <template>
+
   <div
       style="min-height: 100vh; background-color: #0E0F10; color: #F2F3F4"
   >
@@ -27,60 +28,14 @@
         class="d-block mx-auto my-4"
     />
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, onBeforeUnmount } from 'vue'
-import SearchForm from '@/components/search/SearchForm.vue'
-import RecentSearch from '@/components/search/RecentSearch.vue'
-import DealCard from '@/components/deal/DealCard.vue'
-import { dealApi } from '@/domains/deal/infrastructure/dealApi'
-import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
-
-const PAGE_SIZE = 20
-const results = ref<Deal[]>([])
-const page = ref(1)
-const hasNext = ref(true)
-const loadingMore = ref(false)
-const latestFilters = ref<Record<string, any>>({})
-const sentinel = ref<HTMLElement | null>(null)
-
-const resetAndSearch = async (filters: Record<string, any>) => {
-  latestFilters.value = {
-    ...filters,
-    useLocation: filters.useLocation ?? false,
-    radius: filters.radius ?? 5,
-  }
-  page.value = 1
-  results.value = []
-  hasNext.value = true
-  // await fetchPage()
-}
-
-const fetchPage = async () => {
-  if (!hasNext.value || loadingMore.value) return
-  loadingMore.value = true
-  try {
-    const res = await dealApi.searchDeals({
-      ...latestFilters.value,
-      page: page.value,
-      pageSize: PAGE_SIZE,
-    })
-    if (res.length < PAGE_SIZE) {
-      hasNext.value = false
-    }
-    results.value.push(...res)
-    page.value += 1
-  } catch (e) {
-    console.error('검색 결과 로드 실패:', e)
-  } finally {
-    loadingMore.value = false
-  }
-}
-
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// await fetchPage()
 // IntersectionObserver로 무한스크롤 감지
-let observer: IntersectionObserver | null = null
-
 // onMounted(() => {
 //   observer = new IntersectionObserver(
 //       (entries) => {
@@ -99,10 +54,63 @@ let observer: IntersectionObserver | null = null
 //     observer.observe(sentinel.value)
 //   }
 // })
+import { ref, watch, onMounted, onBeforeUnmount } from "vue";
+import SearchForm from "@/components/search/SearchForm.vue";
+import RecentSearch from "@/components/search/RecentSearch.vue";
+import DealCard from "@/components/deal/DealCard.vue";
+import { dealApi } from "@/domains/deal/infrastructure/dealApi";
+import type { Deal } from "@/domains/deal/domain/deal/dealTypes";
+const PAGE_SIZE = 20;
+const results = ref<Deal[]>([]);
+const page = ref(1);
+const hasNext = ref(true);
+const loadingMore = ref(false);
+const latestFilters = ref<Record<string, any>>({});
+const sentinel = ref<HTMLElement | null>(null);
+
+const resetAndSearch = async (filters: Record<string, any>) => {
+    latestFilters.value = {
+        ...filters,
+        useLocation: filters.useLocation ?? false,
+        radius: filters.radius ?? 5
+    };
+
+    page.value = 1;
+    results.value = [];
+    hasNext.value = true;
+};
+
+const fetchPage = async () => {
+    if (!hasNext.value || loadingMore.value)
+        return;
+
+    loadingMore.value = true;
+
+    try {
+        const res = await dealApi.searchDeals({
+            ...latestFilters.value,
+            page: page.value,
+            pageSize: PAGE_SIZE
+        });
+
+        if (res.length < PAGE_SIZE) {
+            hasNext.value = false;
+        }
+
+        results.value.push(...res);
+        page.value += 1;
+    } catch (e) {
+        console.error(t("auto_key_61"), e);
+    } finally {
+        loadingMore.value = false;
+    }
+};
+
+let observer: IntersectionObserver | null = null;
 
 onBeforeUnmount(() => {
-  if (observer && sentinel.value) {
-    observer.unobserve(sentinel.value)
-  }
-})
+    if (observer && sentinel.value) {
+        observer.unobserve(sentinel.value);
+    }
+});
 </script>

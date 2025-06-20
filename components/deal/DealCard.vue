@@ -1,4 +1,5 @@
 <template>
+
   <v-card
       class=" d-flex rounded-lg-custom"
       elevation="2"
@@ -36,56 +37,71 @@
       </div>
     </v-card-text>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { useRouter } from '#vue-router'
-import type { Deal } from '@/domains/deal/domain/deal/dealTypes'
-import noImage from '@/assets/img/noimg.jpg'
-import {onMounted, ref} from "vue";
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { useRouter } from "#vue-router";
+import type { Deal } from "@/domains/deal/domain/deal/dealTypes";
+import noImage from "@/assets/img/noimg.jpg";
+import { onMounted, ref } from "vue";
 
-const props = defineProps<{ deal: Deal }>()
-const router = useRouter()
-const address = ref('')
+const props = defineProps<{
+    deal: Deal;
+}>();
+
+const router = useRouter();
+const address = ref("");
 
 const goToDetail = () => {
-  sessionStorage.setItem('scrollY', String(window.scrollY))
-  router.push({
-    path: `/deals/detail/${props.deal.id}`,
-    query: { type: props.deal.type || 'used' }
-  })
-}
+    sessionStorage.setItem("scrollY", String(window.scrollY));
 
+    router.push({
+        path: `/deals/detail/${props.deal.id}`,
 
-const formatTime = (time: string) =>
-    new Date(time).toLocaleString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+        query: {
+            type: props.deal.type || "used"
+        }
+    });
+};
+
+const formatTime = (time: string) => new Date(time).toLocaleString("ko-KR", {
+    hour: "2-digit",
+    minute: "2-digit"
+});
 
 onMounted(async () => {
-  address.value = await getAddressFromCoords(props.deal.latitude, props.deal.longitude);
-  const savedY = sessionStorage.getItem('scrollY')
-  if (savedY) {
-    window.scrollTo({ top: parseInt(savedY), behavior: 'auto' })
-    sessionStorage.removeItem('scrollY')
-  }
+    address.value = await getAddressFromCoords(props.deal.latitude, props.deal.longitude);
+    const savedY = sessionStorage.getItem("scrollY");
 
-})
+    if (savedY) {
+        window.scrollTo({
+            top: parseInt(savedY),
+            behavior: "auto"
+        });
+
+        sessionStorage.removeItem("scrollY");
+    }
+});
 
 async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
-  try {
-    const response = await fetch(`https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`, {
-      headers: {
-        Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`
-      }
-    })
-    const data = await response.json()
-    return data.documents?.[0]?.region_3depth_name || '위치 미지정'
-  } catch (error) {
-    console.error('위치 변환 실패:', error)
-    return '위치 미지정'
-  }
-}
+    try {
+        const response = await fetch(
+            `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
+            {
+                headers: {
+                    Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`
+                }
+            }
+        );
 
+        const data = await response.json();
+        return data.documents?.[0]?.region_3depth_name || t("auto_key_184");
+    } catch (error) {
+        console.error(t("auto_key_185"), error);
+        return t("auto_key_184");
+    }
+}
 </script>

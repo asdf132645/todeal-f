@@ -1,4 +1,5 @@
 <template>
+
   <v-card class="pa-3 rounded-sm elevation-1" color="#1A1B1D">
     <!-- 이미지 캐러셀 -->
     <v-carousel
@@ -52,30 +53,31 @@
       </div>
     </v-card>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { computed, ref } from "vue";
 
-const props = defineProps<{ deal: any }>()
+const props = defineProps<{
+    deal: any;
+}>();
 
-const showOriginal = ref(false)
+const showOriginal = ref(false);
 
 const toggleButtonText = computed(() => {
-  const originalLang = props.deal.language ?? 'ko'
-  const targetLang = originalLang === 'ko' ? 'en' : 'ko'
-  const isSame = originalLang === targetLang
+    const originalLang = props.deal.language ?? "ko";
+    const targetLang = originalLang === "ko" ? "en" : "ko";
+    const isSame = originalLang === targetLang;
+    return showOriginal.value ? isSame ? t("auto_key_98") : t("auto_key_99") : isSame ? t("auto_key_99") : t("auto_key_98");
+});
 
-  return showOriginal.value
-      ? isSame ? '영어 보기' : '한국어 보기'
-      : isSame ? '한국어 보기' : '영어 보기'
-})
-
-const formatDeadline = (iso: string) =>
-    new Date(iso).toLocaleString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+const formatDeadline = (iso: string) => new Date(iso).toLocaleString("ko-KR", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+});
 </script>

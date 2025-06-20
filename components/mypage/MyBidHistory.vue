@@ -1,6 +1,7 @@
 <template>
+
   <v-card flat class="pa-4">
-    <div class="text-subtitle-1 font-weight-bold mb-2">입찰 내역</div>
+    <div class="text-subtitle-1 font-weight-bold mb-2">{{ $t('auto_key_169') }}</div>
     <v-list>
       <v-list-item v-for="bid in myBids" :key="bid.id">
         <v-list-item-content>
@@ -12,16 +13,18 @@
       </v-list-item>
     </v-list>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { bidApi } from '~/domains/bid/infrastructure/bidApi'
-
-const myBids = ref([])
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { onMounted, ref } from "vue";
+import { bidApi } from "~/domains/bid/infrastructure/bidApi";
+const myBids = ref([]);
 
 onMounted(async () => {
-  const res = await bidApi.getMyBids()
-  myBids.value = res
-})
+    const res = await bidApi.getMyBids();
+    myBids.value = res;
+});
 </script>

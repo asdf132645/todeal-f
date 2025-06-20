@@ -1,4 +1,5 @@
 <template>
+
   <v-container class="d-flex justify-center align-center fill-height login-bg">
     <v-card class="pa-6 text-center login-card" width="360" elevation="3">
       <div class="login-header mb-5">
@@ -45,76 +46,80 @@
       />
 
       <div class="d-flex justify-space-between text-caption text-white px-1">
-        <span @click="goToSignup" class="clickable color-blue">회원가입</span>
-        <span @click="goToForgotPassword" class="clickable color-blue">비밀번호를 잊어버리셨나요?</span>
+        <span @click="goToSignup" class="clickable color-blue">{{ $t('auto_key_135') }}</span>
+        <span @click="goToForgotPassword" class="clickable color-blue">{{ $t('auto_key_136') }}</span>
       </div>
     </v-card>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
-import { useAuthStore } from '@/stores/authStore'
-import { useRouter } from 'vue-router'
-import { useSnackbarStore } from '@/stores/snackbarStore'
-import { ref } from 'vue'
-import kakaoImg from '@/assets/img/kakao_login_medium_wide.png'
-
-const auth = useAuthStore()
-const router = useRouter()
-const snackbar = useSnackbarStore()
-
-const email = ref('')
-const password = ref('')
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { useAuthStore } from "@/stores/authStore";
+import { useRouter } from "vue-router";
+import { useSnackbarStore } from "@/stores/snackbarStore";
+import { ref } from "vue";
+import kakaoImg from "@/assets/img/kakao_login_medium_wide.png";
+const auth = useAuthStore();
+const router = useRouter();
+const snackbar = useSnackbarStore();
+const email = ref("");
+const password = ref("");
 
 const handleEmailLogin = async () => {
-  try {
-    await auth.loginBasic(email.value, password.value)
-    snackbar.show('로그인 성공!', 'success')
-    router.push('/')
-  } catch (err: any) {
-    const serverMsg = err?.response?.data?.message
-    if (serverMsg?.includes('정지')) {
-      snackbar.show(serverMsg, 'error')
-    } else {
-      snackbar.show('이메일과 비밀번호를 확인 해주세요.', 'error')
+    try {
+        await auth.loginBasic(email.value, password.value);
+        snackbar.show(t("auto_key_137"), "success");
+        router.push("/");
+    } catch (err: any) {
+        const serverMsg = err?.response?.data?.message;
+
+        if (serverMsg?.includes(t("auto_key_138"))) {
+            snackbar.show(serverMsg, "error");
+        } else {
+            snackbar.show("이메일과 비밀번호를 확인 해주세요.", "error");
+        }
     }
-  }
-}
+};
 
 const handleKakaoLogin = async () => {
-  try {
-    const result = await auth.loginWithKakao()
+    try {
+        const result = await auth.loginWithKakao();
 
-    if (result.isNewUser) {
-      if (!result.tempToken) {
-        snackbar.show('카카오 인증 토큰이 없습니다. 다시 시도해 주세요.', 'error')
-        return
-      }
+        if (result.isNewUser) {
+            if (!result.tempToken) {
+                snackbar.show("카카오 인증 토큰이 없습니다. 다시 시도해 주세요.", "error");
+                return;
+            }
 
-      router.push({
-        path: '/auth/signup',
-        query: { tempToken: result.tempToken }
-      })
-    } else {
-      snackbar.show('로그인 성공!', 'success')
-      router.push('/')
+            router.push({
+                path: "/auth/signup",
+
+                query: {
+                    tempToken: result.tempToken
+                }
+            });
+        } else {
+            snackbar.show(t("auto_key_137"), "success");
+            router.push("/");
+        }
+    } catch (err: any) {
+        console.error(err);
+        snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, "error");
     }
-  } catch (err: any) {
-    console.error(err)
-    snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, 'error')
-  }
-}
-
+};
 
 const goToForgotPassword = () => {
-  router.push('/auth/forgot-password')
-}
+    router.push("/auth/forgot-password");
+};
+
 const goToSignup = () => {
-  router.push('/auth/signup')
-}
+    router.push("/auth/signup");
+};
 </script>
 
-<style scoped>
 .login-card {
   border-radius: 16px !important;
   background-color: #1f2687;
@@ -159,4 +164,3 @@ const goToSignup = () => {
   height: auto;
   cursor: pointer;
 }
-</style>

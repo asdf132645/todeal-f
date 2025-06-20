@@ -1,4 +1,5 @@
 <template>
+
   <div class="mt-4">
     <v-card
         v-for="deal in deals"
@@ -15,10 +16,10 @@
         </template>
         <v-list>
           <v-list-item @click="editDeal(deal.id)">
-            <v-list-item-title>수정</v-list-item-title>
+            <v-list-item-title>{{ $t('auto_key_46') }}</v-list-item-title>
           </v-list-item>
           <v-list-item @click="deleteDeal(deal.id)">
-            <v-list-item-title>삭제</v-list-item-title>
+            <v-list-item-title>{{ $t('auto_key_47') }}</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -41,58 +42,64 @@
       />
     </div>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
-import { useRouter } from 'vue-router'
-import { dealApi } from '@/domains/deal/infrastructure/dealApi'
-
-const router = useRouter()
-const deals = ref<any[]>([])
-const currentPage = ref(1)
-const totalPages = ref(1)
-const size = 5
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { ref, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import { dealApi } from "@/domains/deal/infrastructure/dealApi";
+const router = useRouter();
+const deals = ref<any[]>([]);
+const currentPage = ref(1);
+const totalPages = ref(1);
+const size = 5;
 
 const loadDeals = async () => {
-  try {
-    const res = await dealApi.getMyDeals({ page: currentPage.value - 1, size })
-    deals.value = res.content
-    totalPages.value = res.totalPages
-  } catch (e) {
-    console.error('❌ 딜 목록 불러오기 실패:', e)
-  }
-}
+    try {
+        const res = await dealApi.getMyDeals({
+            page: currentPage.value - 1,
+            size
+        });
+
+        deals.value = res.content;
+        totalPages.value = res.totalPages;
+    } catch (e) {
+        console.error(t("auto_key_48"), e);
+    }
+};
 
 const goToDetail = (id: number, type: string) => {
-  router.push(`/deals/detail/${id}?type=${type}`)
-}
+    router.push(`/deals/detail/${id}?type=${type}`);
+};
 
 const editDeal = (id: number) => {
-  router.push(`/deals/${id}/edit`)
-}
+    router.push(`/deals/${id}/edit`);
+};
 
 const deleteDeal = async (id: number) => {
-  if (confirm('정말 삭제하시겠습니까?')) {
-    await dealApi.deleteDeal(id)
-    loadDeals()
-  }
-}
+    if (confirm(t("auto_key_49"))) {
+        await dealApi.deleteDeal(id);
+        loadDeals();
+    }
+};
 
 const formatDate = (iso: string) => {
-  const date = new Date(iso)
-  return date.toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
+    const date = new Date(iso);
 
-onMounted(loadDeals)
-watch(currentPage, loadDeals)
+    return date.toLocaleDateString("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+};
+
+onMounted(loadDeals);
+watch(currentPage, loadDeals);
 </script>
 
-<style scoped>
 .cursor-pointer {
   cursor: pointer;
 }
@@ -102,4 +109,3 @@ watch(currentPage, loadDeals)
   right: 8px;
   z-index: 2;
 }
-</style>

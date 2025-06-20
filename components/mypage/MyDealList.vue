@@ -1,6 +1,7 @@
 <template>
+
   <v-card flat class="pa-4" :style="{ backgroundColor: '#1A1B1D', color: '#F2F3F4' }">
-    <div class="text-h6 font-weight-bold mb-4 color-black">내 등록글</div>
+    <div class="text-h6 font-weight-bold mb-4 color-black">{{ $t('auto_key_168') }}</div>
 
     <v-list lines="two" density="comfortable">
       <v-list-item
@@ -55,41 +56,48 @@
       </v-list-item>
     </v-list>
   </v-card>
-</template>
-<script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { dealApi } from '~/domains/deal/infrastructure/dealApi'
-import noImage from '@/assets/img/noimg.jpg'  //  노이미지 경로 import
 
-const myDeals = ref([])
-const router = useRouter()
+</template>
+
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+//  노이미지 경로 import
+import { onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
+import { dealApi } from "~/domains/deal/infrastructure/dealApi";
+import noImage from "@/assets/img/noimg.jpg";
+const myDeals = ref([]);
+const router = useRouter();
 
 const goToDetail = (id: number) => {
-  router.push(`/deals/detail/${id}`)
-}
+    router.push(`/deals/detail/${id}`);
+};
 
 const goToEdit = (id: number) => {
-  router.push(`/deals/${id}/edit`)
-}
+    router.push(`/deals/${id}/edit`);
+};
+
 const deleteDeal = async (id: number) => {
-  if (!confirm('정말 삭제하시겠습니까? 삭제 시 복구되지 않습니다.')) return
-  try {
-    await dealApi.deleteDeal(id)
-    myDeals.value = myDeals.value.filter(deal => deal.id !== id)
-  } catch (e) {
-    alert('삭제에 실패했습니다.')
-    console.error(e)
-  }
-}
+    if (!confirm("정말 삭제하시겠습니까? 삭제 시 복구되지 않습니다."))
+        return;
+
+    try {
+        await dealApi.deleteDeal(id);
+        myDeals.value = myDeals.value.filter(deal => deal.id !== id);
+    } catch (e) {
+        alert("삭제에 실패했습니다.");
+        console.error(e);
+    }
+};
 
 const formatDate = (iso: string) => {
-  const d = new Date(iso)
-  return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`
-}
+    const d = new Date(iso);
+    return `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`;
+};
 
 onMounted(async () => {
-  const res = await dealApi.getMyDeals()
-  myDeals.value = res
-})
+    const res = await dealApi.getMyDeals();
+    myDeals.value = res;
+});
 </script>

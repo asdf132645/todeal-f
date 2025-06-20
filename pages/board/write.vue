@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <v-alert
         type="warning"
@@ -104,147 +105,180 @@
     <!--  제출 버튼 -->
     <v-btn block color="primary" :loading="loading" @click="submit">{{ _t("board.complete") }}</v-btn>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { boardApi } from '@/domains/board/infrastructure/boardApi'
-import { apiClient } from '@/libs/http/apiClient'
-import { useGeoStore } from '@/stores/geoStore'
-import { uploadImage } from '~/domains/upload/infrastructure/uploadApi'
-import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+//  원문 보존용
+//  원문 보존용
+//  원문 저장
+// UI는 번역본으로 대체
+//  원문
+//  원문
+//  번역본
+//  번역본
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { boardApi } from "@/domains/board/infrastructure/boardApi";
+import { apiClient } from "@/libs/http/apiClient";
+import { useGeoStore } from "@/stores/geoStore";
+import { uploadImage } from "~/domains/upload/infrastructure/uploadApi";
+import { useI18n } from "vue-i18n";
+const title = ref("");
+const content = ref("");
+const category = ref("");
+const imageUrls = ref<string[]>([]);
+const fileInput = ref<HTMLInputElement | null>(null);
+const showTranslatePanel = ref(false);
+const sourceLang = ref("ko");
+const targetLang = ref("");
+const loading = ref(false);
+const originalTitle = ref("");
+const originalContent = ref("");
 
-const title = ref('')
-const content = ref('')
-const category = ref('')
-const imageUrls = ref<string[]>([])
-const fileInput = ref<HTMLInputElement | null>(null)
-const showTranslatePanel = ref(false)
-const sourceLang = ref('ko')
-const targetLang = ref('')
-const loading = ref(false)
-const originalTitle = ref('')    //  원문 보존용
-const originalContent = ref('')  //  원문 보존용
+const {
+    t: _t,
+    locale
+} = useI18n();
 
-const { t: _t, locale } = useI18n()
-const geo = useGeoStore()
-const router = useRouter()
+const geo = useGeoStore();
+const router = useRouter();
+const nickname = process.client ? localStorage.getItem("nickname") || t("auto_key_100") : t("auto_key_100");
+const region = process.client ? localStorage.getItem("userRegion") ?? undefined : undefined;
 
-const nickname = process.client ? localStorage.getItem('nickname') || '익명' : '익명'
-const region = process.client ? localStorage.getItem('userRegion') ?? undefined : undefined
+const langOptions = [{
+    label: t("auto_key_27"),
+    value: "ko"
+}, {
+    label: t("auto_key_75"),
+    value: "en"
+}];
 
-const langOptions = [
-  { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' }
-]
+const categoryOptions = [{
+    label: t("auto_key_101"),
+    value: "local-life"
+}, {
+    label: t("auto_key_102"),
+    value: "trade-help"
+}, {
+    label: t("auto_key_103"),
+    value: "parttime"
+}, {
+    label: t("auto_key_104"),
+    value: "language-exchange"
+}, {
+    label: t("auto_key_105"),
+    value: "culture"
+}, {
+    label: "Q&A",
+    value: "qna"
+}, {
+    label: t("auto_key_106"),
+    value: "free"
+}];
 
-const categoryOptions = [
-  { label: '우리 동네 생활', value: 'local-life' },
-  { label: '중고거래 도움', value: 'trade-help' },
-  { label: '알바 정보', value: 'parttime' },
-  { label: '언어 교환', value: 'language-exchange' },
-  { label: '문화 교류', value: 'culture' },
-  { label: 'Q&A', value: 'qna' },
-  { label: '자유', value: 'free' }
-]
-
-const triggerFileInput = () => fileInput.value?.click()
-const removeImage = (index: number) => imageUrls.value.splice(index, 1)
+const triggerFileInput = () => fileInput.value?.click();
+const removeImage = (index: number) => imageUrls.value.splice(index, 1);
 
 const handleImageUpload = async (event: Event) => {
-  const files = (event.target as HTMLInputElement).files
-  if (!files || files.length === 0) return
+    const files = (event.target as HTMLInputElement).files;
 
-  const newFiles = Array.from(files).slice(0, 5 - imageUrls.value.length)
-  const uploadedUrls: string[] = []
+    if (!files || files.length === 0)
+        return;
 
-  for (const file of newFiles) {
-    try {
-      const url = await uploadImage(file)
-      if (!url) throw new Error('S3 업로드 실패')
-      uploadedUrls.push(url)
-    } catch (e) {
-      console.error('이미지 업로드 실패:', e)
-      alert('이미지 업로드에 실패했습니다.')
+    const newFiles = Array.from(files).slice(0, 5 - imageUrls.value.length);
+    const uploadedUrls: string[] = [];
+
+    for (const file of newFiles) {
+        try {
+            const url = await uploadImage(file);
+
+            if (!url)
+                throw new Error(t("auto_key_107"));
+
+            uploadedUrls.push(url);
+        } catch (e) {
+            console.error(t("auto_key_108"), e);
+            alert("이미지 업로드에 실패했습니다.");
+        }
     }
-  }
 
-  imageUrls.value.push(...uploadedUrls)
-  if (fileInput.value) fileInput.value.value = ''
-}
+    imageUrls.value.push(...uploadedUrls);
+
+    if (fileInput.value)
+        fileInput.value.value = "";
+};
 
 const toggleTranslationPanel = () => {
-  showTranslatePanel.value = !showTranslatePanel.value
-}
+    showTranslatePanel.value = !showTranslatePanel.value;
+};
 
 const runTranslation = async () => {
-  if (!title.value || !content.value) {
-    alert('제목과 내용을 먼저 입력하세요.')
-    return
-  }
-  try {
-    //  원문 저장
-    originalTitle.value = title.value
-    originalContent.value = content.value
+    if (!title.value || !content.value) {
+        alert("제목과 내용을 먼저 입력하세요.");
+        return;
+    }
 
-    const [resTitle, resContent] = await Promise.all([
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: title.value
-      }),
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: content.value
-      })
-    ])
+    try {
+        originalTitle.value = title.value;
+        originalContent.value = content.value;
 
-    // UI는 번역본으로 대체
-    title.value = resTitle.translatedText
-    content.value = resContent.translatedText
-    showTranslatePanel.value = false
-  } catch (e) {
-    console.error(e)
-    alert('번역 중 오류가 발생했습니다.')
-  }
-}
+        const [resTitle, resContent] = await Promise.all([apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: title.value
+        }), apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: content.value
+        })]);
+
+        title.value = resTitle.translatedText;
+        content.value = resContent.translatedText;
+        showTranslatePanel.value = false;
+    } catch (e) {
+        console.error(e);
+        alert("번역 중 오류가 발생했습니다.");
+    }
+};
 
 const submit = async () => {
-  if (!title.value.trim() || !content.value.trim()) return alert('제목과 내용을 입력해주세요.')
-  if (!category.value) return alert('카테고리를 선택해주세요.')
+    if (!title.value.trim() || !content.value.trim())
+        return alert("제목과 내용을 입력해주세요.");
 
-  const lat = Number(localStorage.getItem('userLat'))
-  const lng = Number(localStorage.getItem('userLng'))
+    if (!category.value)
+        return alert("카테고리를 선택해주세요.");
 
-  loading.value = true
-  try {
-    await boardApi.createPost({
-      title: originalTitle.value || title.value,        //  원문
-      content: originalContent.value || content.value,  //  원문
-      translatedTitle: title.value,                     //  번역본
-      translatedContent: content.value,                 //  번역본
-      language: sourceLang.value,
-      category: category.value,
-      latitude: lat,
-      longitude: lng,
-      nickname,
-      region,
-      imageUrls: imageUrls.value
-    })
-    router.push('/board')
-  } catch (e) {
-    console.error(e)
-    alert('게시글 작성 실패')
-  } finally {
-    loading.value = false
-  }
-}
+    const lat = Number(localStorage.getItem("userLat"));
+    const lng = Number(localStorage.getItem("userLng"));
+    loading.value = true;
+
+    try {
+        await boardApi.createPost({
+            title: originalTitle.value || title.value,
+            content: originalContent.value || content.value,
+            translatedTitle: title.value,
+            translatedContent: content.value,
+            language: sourceLang.value,
+            category: category.value,
+            latitude: lat,
+            longitude: lng,
+            nickname,
+            region,
+            imageUrls: imageUrls.value
+        });
+
+        router.push("/board");
+    } catch (e) {
+        console.error(e);
+        alert(t("auto_key_109"));
+    } finally {
+        loading.value = false;
+    }
+};
 </script>
 
-
-<style scoped>
 .image-grid {
   display: flex;
   flex-wrap: wrap;
@@ -263,4 +297,3 @@ const submit = async () => {
 .upload-image-slot.add:hover {
   background-color: #f5f5f5;
 }
-</style>

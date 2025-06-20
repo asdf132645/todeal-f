@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <v-select
         v-model="radius"
@@ -32,63 +33,67 @@
           위치 정보를 사용해도 괜찮을까요?
         </v-card-text>
         <v-card-actions class="justify-end">
-          <v-btn variant="text" color="grey" @click="handleConsent(false)">거절</v-btn>
-          <v-btn variant="flat" color="primary" @click="handleConsent(true)">허용</v-btn>
+          <v-btn variant="text" color="grey" @click="handleConsent(false)">{{ $t('auto_key_218') }}</v-btn>
+          <v-btn variant="flat" color="primary" @click="handleConsent(true)">{{ $t('auto_key_155') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useGeoStore } from '@/stores/geoStore'
-import { apiClient } from '~/libs/http/apiClient'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// 위치 새로고침 시 화면 갱신 필요 시 사용
+import { ref, onMounted } from "vue";
+import { useGeoStore } from "@/stores/geoStore";
+import { apiClient } from "~/libs/http/apiClient";
 
 const emit = defineEmits<{
-  (e: 'change', value: number): void
-  (e: 'refresh'): void
-}>()
+    (e: "change", value: number): void;
+    (e: "refresh"): void;
+}>();
 
-const geo = useGeoStore()
-const radiusOptions = [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 100]
-const radius = ref(2)
-const dialogVisible = ref(false)
+const geo = useGeoStore();
+const radiusOptions = [1, 2, 3, 5, 10, 15, 20, 25, 30, 40, 100];
+const radius = ref(2);
+const dialogVisible = ref(false);
 
 onMounted(() => {
-  if (process.client) {
-    const stored = localStorage.getItem('userRadius')
-    radius.value = stored ? parseFloat(stored) : 2
-  }
-})
+    if (process.client) {
+        const stored = localStorage.getItem("userRadius");
+        radius.value = stored ? parseFloat(stored) : 2;
+    }
+});
 
 const onRadiusChange = (val: number) => {
-  if (process.client) {
-    localStorage.setItem('userRadius', val.toString())
-  }
-  emit('change', val)
-}
+    if (process.client) {
+        localStorage.setItem("userRadius", val.toString());
+    }
+
+    emit("change", val);
+};
 
 const handleConsent = async (accepted: boolean) => {
-  dialogVisible.value = false
-  localStorage.setItem('locationConsent', accepted ? 'true' : 'false')
+    dialogVisible.value = false;
+    localStorage.setItem("locationConsent", accepted ? "true" : "false");
 
-  if (accepted) {
-    try {
-      await apiClient.post('/api/users/location', {
-        latitude: geo.latitude,
-        longitude: geo.longitude,
-      })
-      emit('refresh') // 위치 새로고침 시 화면 갱신 필요 시 사용
-    } catch (e) {
-      console.error('📡 위치 저장 실패:', e)
+    if (accepted) {
+        try {
+            await apiClient.post("/api/users/location", {
+                latitude: geo.latitude,
+                longitude: geo.longitude
+            });
+
+            emit("refresh");
+        } catch (e) {
+            console.error(t("auto_key_219"), e);
+        }
     }
-  }
-}
+};
 </script>
 
-<style>
 .w-100 {
   width: 100%;
 }
-</style>

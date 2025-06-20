@@ -1,4 +1,5 @@
 <template>
+
   <v-sheet class="pa-4 mb-4" rounded>
     <v-row dense>
       <v-col cols="12">
@@ -25,89 +26,99 @@
         />
       </v-col>
     </v-row>
-    <v-btn color="primary" block class="mt-3" @click="submit">검색</v-btn>
+    <v-btn color="primary" block class="mt-3" @click="submit">{{ $t('auto_key_160') }}</v-btn>
   </v-sheet>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useSearchStore } from '@/stores/searchStore'
-import { useRouter } from 'vue-router';
-import { analyticsApi } from '@/domains/analytics/infrastructure/analyticsApi';
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// console.log(storedLat, storedLng)
+//  검색어가 존재하면 백엔드에 검색 로그 기록
+import { ref, onMounted } from "vue";
+import { useSearchStore } from "@/stores/searchStore";
+import { useRouter } from "vue-router";
+import { analyticsApi } from "@/domains/analytics/infrastructure/analyticsApi";
 
 onMounted(() => {
-  const storedLat = parseFloat(localStorage.getItem('userLat') || '')
-  const storedLng = parseFloat(localStorage.getItem('userLng') || '')
-  const storedRadius = parseFloat(localStorage.getItem('userRadius') || '')
+    const storedLat = parseFloat(localStorage.getItem("userLat") || "");
+    const storedLng = parseFloat(localStorage.getItem("userLng") || "");
+    const storedRadius = parseFloat(localStorage.getItem("userRadius") || "");
 
-  if (!isNaN(storedLat) && !isNaN(storedLng)) {
-    form.value.lat = storedLat
-    form.value.lng = storedLng
-    form.value.useLocation = true
-  }
-  // console.log(storedLat, storedLng)
-  if (!isNaN(storedRadius)) {
-    form.value.radius = storedRadius
-  }
-})
+    if (!isNaN(storedLat) && !isNaN(storedLng)) {
+        form.value.lat = storedLat;
+        form.value.lng = storedLng;
+        form.value.useLocation = true;
+    }
+
+    if (!isNaN(storedRadius)) {
+        form.value.radius = storedRadius;
+    }
+});
 
 const emit = defineEmits<{
-  (e: 'search', filters: {
-    type: string
-    keyword?: string
-    exclude?: string
-    lat?: number
-    lng?: number
-    radius?: number
-    useLocation?: boolean
-  }): void
-}>()
-const store = useSearchStore()
+    (
+        e: "search",
+        filters: {
+            type: string;
+            keyword?: string;
+            exclude?: string;
+            lat?: number;
+            lng?: number;
+            radius?: number;
+            useLocation?: boolean;
+        }
+    ): void;
+}>();
+
+const store = useSearchStore();
 
 const form = ref({
-  keyword: '',
-  exclude: '',
-  type: 'used',
-  useLocation: false,
-  radius: 5,
-  lat: undefined as number | undefined,
-  lng: undefined as number | undefined
-})
+    keyword: "",
+    exclude: "",
+    type: "used",
+    useLocation: false,
+    radius: 5,
+    lat: undefined as number | undefined,
+    lng: undefined as number | undefined
+});
 
+const typeOptions = [{
+    label: t("auto_key_29"),
+    value: "used"
+}, {
+    label: t("auto_key_161"),
+    value: "parttime"
+}, {
+    label: t("auto_key_162"),
+    value: "parttime-request"
+}, {
+    label: t("auto_key_28"),
+    value: "barter"
+}];
 
-const typeOptions = [
-  { label: '중고거래', value: 'used' },
-  { label: '알바 급해요!', value: 'parttime' },
-  { label: '구직 급해요!', value: 'parttime-request' },
-  { label: '빌려드려요', value: 'barter' }
-]
-
-const router = useRouter()
+const router = useRouter();
 
 const submit = async () => {
-  store.addRecentSearch(form.value)
+    store.addRecentSearch(form.value);
 
-  //  검색어가 존재하면 백엔드에 검색 로그 기록
-  if (form.value.keyword?.trim()) {
-    try {
-      await analyticsApi.logSearch(form.value.keyword.trim())
-    } catch (err) {
-      console.warn('🔎 검색어 로그 저장 실패:', err)
+    if (form.value.keyword?.trim()) {
+        try {
+            await analyticsApi.logSearch(form.value.keyword.trim());
+        } catch (err) {
+            console.warn(t("auto_key_163"), err);
+        }
     }
-  }
 
-  const filteredQuery = Object.fromEntries(
-      Object.entries({
+    const filteredQuery = Object.fromEntries(Object.entries({
         ...form.value,
         page: 1
-      }).filter(([_, v]) => v !== undefined && v !== '')
-  )
+    }).filter(([_, v]) => v !== undefined && v !== ""));
 
-  await router.push({
-    path: '/deals/search-result',
-    query: filteredQuery
-  })
-}
-
-
+    await router.push({
+        path: "/deals/search-result",
+        query: filteredQuery
+    });
+};
 </script>

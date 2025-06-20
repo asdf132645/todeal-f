@@ -1,4 +1,5 @@
 <template>
+
   <v-container fluid class="pa-4 bg-app">
     <!-- 낙찰 필터 토글 -->
     <v-btn
@@ -64,7 +65,7 @@
                   class="ml-2 text-caption"
                   style="color: #FF6B6B; text-decoration: underline; cursor: pointer"
                   @click.stop="openReport(bid.deal.userId, bid.deal.id)"
-              >신고하기</span>
+              >{{ $t('auto_key_235') }}</span>
             </div>
 
             <v-chip
@@ -74,7 +75,7 @@
                 label
                 outlined
                 class="text-caption"
-            >거래 진행중</v-chip>
+            >{{ $t('auto_key_237') }}</v-chip>
 
             <v-chip
                 v-else-if="bid.deal.winnerBidId === bid.id"
@@ -82,7 +83,7 @@
                 :style="{ backgroundColor: '#2E7D32', color: '#C8FACC', fontWeight: 500 }"
                 label
                 class="text-caption"
-            >🎉 낙찰 성공</v-chip>
+            >{{ $t('auto_key_251') }}</v-chip>
 
             <v-chip
                 v-else
@@ -90,7 +91,7 @@
                 :style="{ backgroundColor: '#555555', color: '#CCCCCC', fontWeight: 500 }"
                 label
                 class="text-caption"
-            >낙찰 실패</v-chip>
+            >{{ $t('auto_key_245') }}</v-chip>
           </div>
 
           <div class="text-body-2 mb-1 color-white">
@@ -139,7 +140,7 @@
     <!-- 신고 다이얼로그 -->
     <v-dialog v-model="showReportDialog" max-width="480">
       <v-card>
-        <v-card-title class="text-white">🚨 작성자 신고</v-card-title>
+        <v-card-title class="text-white">{{ $t('auto_key_252') }}</v-card-title>
         <v-card-text>
           <v-select
               v-model="reportReason"
@@ -156,166 +157,208 @@
           />
         </v-card-text>
         <v-card-actions class="justify-end">
-          <v-btn text @click="showReportDialog = false">닫기</v-btn>
-          <v-btn color="red" text @click="submitReport">신고하기</v-btn>
+          <v-btn text @click="showReportDialog = false">{{ $t('auto_key_174') }}</v-btn>
+          <v-btn color="red" text @click="submitReport">{{ $t('auto_key_235') }}</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch  } from 'vue'
-import { useRouter } from 'vue-router'
-import { bidApi } from '@/domains/bid/infrastructure/bidApi'
-import { apiClient } from '@/libs/http/apiClient'
-import { useDebounceFn } from '@vueuse/core'
-import { useSnackbarStore } from '@/stores/snackbarStore'
-import { useAuthStore } from '~/stores/authStore'
-import { chatApi } from '~/domains/chat/infrastructure/chatApi'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
+import { bidApi } from "@/domains/bid/infrastructure/bidApi";
+import { apiClient } from "@/libs/http/apiClient";
+import { useDebounceFn } from "@vueuse/core";
+import { useSnackbarStore } from "@/stores/snackbarStore";
+import { useAuthStore } from "~/stores/authStore";
+import { chatApi } from "~/domains/chat/infrastructure/chatApi";
+const router = useRouter();
+const snackbar = useSnackbarStore();
+const bids = ref<any[]>([]);
+const page = ref(1);
+const size = 10;
+const totalPages = ref(1);
+const isLoading = ref(false);
+const keyword = ref<string | null>(null);
+const keywordInput = ref("");
+const selectedType = ref<string | null>(null);
+const showOnlyWon = ref(false);
+const showReportDialog = ref(false);
 
-const router = useRouter()
-const snackbar = useSnackbarStore()
+const reportTarget = ref<{
+    toUserId: number;
+    dealId: number;
+} | null>(null);
 
-const bids = ref<any[]>([])
-const page = ref(1)
-const size = 10
-const totalPages = ref(1)
-const isLoading = ref(false)
+const reportReason = ref("");
+const reportDetail = ref("");
+const reportReasons = ["욕설/비방", t("auto_key_240"), t("auto_key_241"), t("auto_key_242")];
 
-const keyword = ref<string | null>(null)
-const keywordInput = ref('')
-const selectedType = ref<string | null>(null)
-const showOnlyWon = ref(false)
-
-const showReportDialog = ref(false)
-const reportTarget = ref<{ toUserId: number; dealId: number } | null>(null)
-const reportReason = ref('')
-const reportDetail = ref('')
-const reportReasons = ['욕설/비방', '사기 의심', '허위 정보', '기타']
 watch(showOnlyWon, () => {
-  page.value = 1;
-  fetchBids()
-})
+    page.value = 1;
+    fetchBids();
+});
+
 const openReport = (toUserId: number, dealId: number) => {
-  reportTarget.value = { toUserId, dealId }
-  reportReason.value = ''
-  reportDetail.value = ''
-  showReportDialog.value = true
-}
+    reportTarget.value = {
+        toUserId,
+        dealId
+    };
+
+    reportReason.value = "";
+    reportDetail.value = "";
+    showReportDialog.value = true;
+};
 
 const goToChat = async (dealId: number, ownerId: number) => {
-  const userId = useAuthStore().user.id
+    const userId = useAuthStore().user.id;
 
-  try {
-    const existingRoom = await chatApi.checkChatRoomExist({ dealId, userId1: userId, userId2: ownerId })
-    let chatRoomId: number
+    try {
+        const existingRoom = await chatApi.checkChatRoomExist({
+            dealId,
+            userId1: userId,
+            userId2: ownerId
+        });
 
-    if (existingRoom) {
-      chatRoomId = existingRoom.id
-    } else {
-      const created = await chatApi.createChatRoom({ dealId, sellerId: ownerId, buyerId: userId })
-      chatRoomId = created.id
+        let chatRoomId: number;
+
+        if (existingRoom) {
+            chatRoomId = existingRoom.id;
+        } else {
+            const created = await chatApi.createChatRoom({
+                dealId,
+                sellerId: ownerId,
+                buyerId: userId
+            });
+
+            chatRoomId = created.id;
+        }
+
+        router.push({
+            path: `/chats/${chatRoomId}`,
+
+            query: {
+                receiverId: ownerId
+            }
+        });
+    } catch (e) {
+        console.error(t("auto_key_250"), e);
+        snackbar.show("채팅방 연결에 실패했습니다.", "error");
     }
-
-    router.push({ path: `/chats/${chatRoomId}`, query: { receiverId: ownerId } })
-  } catch (e) {
-    console.error('💥 채팅방 이동 실패', e)
-    snackbar.show('채팅방 연결에 실패했습니다.', 'error')
-  }
-}
+};
 
 const submitReport = async () => {
-  if (!reportTarget.value || !reportReason.value) {
-    snackbar.show('신고 사유를 입력해주세요.', 'error')
-    return
-  }
+    if (!reportTarget.value || !reportReason.value) {
+        snackbar.show("신고 사유를 입력해주세요.", "error");
+        return;
+    }
 
-  try {
-    await apiClient.post('/api/reports/submit', {
-      toUserId: reportTarget.value.toUserId,
-      dealId: reportTarget.value.dealId,
-      reason: reportReason.value,
-      detail: reportDetail.value
-    })
-    snackbar.show('신고가 접수되었습니다.')
-    showReportDialog.value = false
-  } catch (e) {
-    snackbar.show(e.response?.data?.message || '신고 실패', 'error')
-  }
-}
+    try {
+        await apiClient.post("/api/reports/submit", {
+            toUserId: reportTarget.value.toUserId,
+            dealId: reportTarget.value.dealId,
+            reason: reportReason.value,
+            detail: reportDetail.value
+        });
 
-const typeOptions = [
-  { title: '전체', value: null },
-  { title: '중고', value: 'used' },
-  { title: '알바', value: 'parttime' },
-  { title: '빌려드려요', value: 'barter' },
-  { title: '알바구해요', value: 'parttime-request' }
-]
+        snackbar.show("신고가 접수되었습니다.");
+        showReportDialog.value = false;
+    } catch (e) {
+        snackbar.show(e.response?.data?.message || t("auto_key_246"), "error");
+    }
+};
+
+const typeOptions = [{
+    title: t("auto_key_111"),
+    value: null
+}, {
+    title: t("auto_key_53"),
+    value: "used"
+}, {
+    title: t("auto_key_54"),
+    value: "parttime"
+}, {
+    title: t("auto_key_28"),
+    value: "barter"
+}, {
+    title: t("auto_key_254"),
+    value: "parttime-request"
+}];
 
 const filteredBids = computed(() => {
-  let filtered = [...bids.value]
-  if (showOnlyWon.value) {
-    filtered = filtered.filter(b => b.deal.winnerBidId === b.id)
-  } else {
-    const ongoing = filtered.filter(b => b.deal.winnerBidId === null)
-    const completed = filtered.filter(b => b.deal.winnerBidId !== null)
-    filtered = [...ongoing, ...completed]
-  }
-  return filtered
-})
+    let filtered = [...bids.value];
+
+    if (showOnlyWon.value) {
+        filtered = filtered.filter(b => b.deal.winnerBidId === b.id);
+    } else {
+        const ongoing = filtered.filter(b => b.deal.winnerBidId === null);
+        const completed = filtered.filter(b => b.deal.winnerBidId !== null);
+        filtered = [...ongoing, ...completed];
+    }
+
+    return filtered;
+});
 
 const formatDate = (iso: string) => {
-  const date = new Date(iso)
-  return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`
-}
+    const date = new Date(iso);
+    return `${date.getFullYear()}.${date.getMonth() + 1}.${date.getDate()}`;
+};
 
 const cancelBid = async (bidId: number) => {
-  try {
-    const isConfirmed = confirm('정말 이 입찰을 취소하시겠습니까?')
-    if (!isConfirmed) return
-    await bidApi.cancelBid(bidId)
-    snackbar.show('입찰이 취소되었습니다.')
-    refreshBids()
-  } catch (e) {
-    snackbar.show('입찰 취소 실패', 'error')
-  }
-}
+    try {
+        const isConfirmed = confirm(t("auto_key_255"));
+
+        if (!isConfirmed)
+            return;
+
+        await bidApi.cancelBid(bidId);
+        snackbar.show("입찰이 취소되었습니다.");
+        refreshBids();
+    } catch (e) {
+        snackbar.show(t("auto_key_256"), "error");
+    }
+};
 
 const fetchBids = async () => {
-  isLoading.value = true
+    isLoading.value = true;
 
-  try {
-    const res = await bidApi.getMyBids({
-      page: page.value - 1,
-      size,
-      keyword: keyword.value,
-      type: selectedType.value
-    })
-    bids.value = res.content
-    totalPages.value = res.totalPages
-  } catch (e) {
-    snackbar.show('입찰 목록 불러오기 실패', 'error')
-  } finally {
-    isLoading.value = false
-  }
-}
+    try {
+        const res = await bidApi.getMyBids({
+            page: page.value - 1,
+            size,
+            keyword: keyword.value,
+            type: selectedType.value
+        });
+
+        bids.value = res.content;
+        totalPages.value = res.totalPages;
+    } catch (e) {
+        snackbar.show(t("auto_key_257"), "error");
+    } finally {
+        isLoading.value = false;
+    }
+};
 
 const refreshBids = () => {
-  fetchBids()
-}
+    fetchBids();
+};
 
 const goToDeal = (dealId: number) => {
-  router.push(`/deals/detail/${dealId}`)
-}
+    router.push(`/deals/detail/${dealId}`);
+};
 
 const handleSearchDebounced = useDebounceFn(() => {
-  keyword.value = keywordInput.value.trim() || null
-  page.value = 1
-  fetchBids()
-}, 500)
+    keyword.value = keywordInput.value.trim() || null;
+    page.value = 1;
+    fetchBids();
+}, 500);
 
 onMounted(() => {
-  fetchBids()
-})
+    fetchBids();
+});
 </script>

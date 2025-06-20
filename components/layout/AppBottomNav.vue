@@ -1,4 +1,5 @@
 <template>
+
   <div>
     <!--  등록 메뉴 팝업 -->
     <transition name="fade">
@@ -38,96 +39,113 @@
 
       <v-btn to="/deals/search" value="search" :class="{ active: isActive('/deals/search') }">
         <v-icon>mdi-magnify</v-icon>
-        <span class="text-caption">검색</span>
+        <span class="text-caption">{{ $t('auto_key_160') }}</span>
       </v-btn>
 
       <v-btn to="/board" value="board" :class="{ active: isActive('/board') }">
         <v-icon>mdi-forum-outline</v-icon>
-        <span class="text-caption">커뮤니티</span>
+        <span class="text-caption">{{ $t('auto_key_177') }}</span>
       </v-btn>
 
       <v-btn to="/mypage" value="mypage" :class="{ active: isActive('/mypage') }">
         <v-icon>mdi-account</v-icon>
-        <span class="text-caption">마이페이지</span>
+        <span class="text-caption">{{ $t('auto_key_178') }}</span>
       </v-btn>
     </v-bottom-navigation>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-
-const route = useRoute()
-const router = useRouter()
-const showMenu = ref(false)
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+//  현재 채팅 페이지 여부
+//  현재 커뮤니티(/board) 여부
+//  커뮤니티 전용 메뉴
+//  기본 플로팅 메뉴
+// 공통 핸들러
+// 현재 페이지에 맞는 메뉴 반환
+//  네비 하단 버튼 active 스타일
+import { ref, computed } from "vue";
+import { useRoute, useRouter } from "vue-router";
+const route = useRoute();
+const router = useRouter();
+const showMenu = ref(false);
 
 const toggleMenu = () => {
-  showMenu.value = !showMenu.value
-}
+    showMenu.value = !showMenu.value;
+};
 
 const isLoggedIn = () => {
-  return !!localStorage.getItem('accessToken')
-}
+    return !!localStorage.getItem("accessToken");
+};
 
 const handleProtectedRoute = (path: string) => {
-  if (!isLoggedIn()) {
-    router.push('/auth/login')
-  } else {
-    router.push(path)
-  }
-}
+    if (!isLoggedIn()) {
+        router.push("/auth/login");
+    } else {
+        router.push(path);
+    }
+};
 
-//  현재 채팅 페이지 여부
 const isChatPage = computed(() => {
-  return route.path.startsWith('/chats/') && route.query.receiverId
-})
+    return route.path.startsWith("/chats/") && route.query.receiverId;
+});
 
-//  현재 커뮤니티(/board) 여부
-const isBoardPage = computed(() => route.path.includes('/board'))
+const isBoardPage = computed(() => route.path.includes("/board"));
 
-//  커뮤니티 전용 메뉴
 const goToWrite = () => {
-  showMenu.value = false
-  handleProtectedRoute('/board/write')
-}
+    showMenu.value = false;
+    handleProtectedRoute("/board/write");
+};
 
 const goToMine = () => {
-  showMenu.value = false
-  handleProtectedRoute('/board/mine')
-}
+    showMenu.value = false;
+    handleProtectedRoute("/board/mine");
+};
 
-const boardPostOptions = [
-  { title: '글쓰기', icon: 'mdi-pencil', action: goToWrite },
-  { title: '내 글 보기', icon: 'mdi-account', action: goToMine }
-]
+const boardPostOptions = [{
+    title: t("auto_key_114"),
+    icon: "mdi-pencil",
+    action: goToWrite
+}, {
+    title: t("auto_key_179"),
+    icon: "mdi-account",
+    action: goToMine
+}];
 
-//  기본 플로팅 메뉴
-const postOptions = [
-  { title: '중고거래 등록', icon: 'mdi-tag-outline', to: '/post/used' },
-  { title: '알바 등록', icon: 'mdi-account-hard-hat-outline', to: '/post/parttime' },
-  { title: '빌려드려요 등록', icon: 'mdi-swap-horizontal', to: '/post/barter' },
-  { title: '알바 구해요', icon: 'mdi-account-search', to: '/post/parttime-request' }
-]
+const postOptions = [{
+    title: t("auto_key_180"),
+    icon: "mdi-tag-outline",
+    to: "/post/used"
+}, {
+    title: t("auto_key_181"),
+    icon: "mdi-account-hard-hat-outline",
+    to: "/post/parttime"
+}, {
+    title: t("auto_key_38"),
+    icon: "mdi-swap-horizontal",
+    to: "/post/barter"
+}, {
+    title: t("auto_key_44"),
+    icon: "mdi-account-search",
+    to: "/post/parttime-request"
+}];
 
-// 공통 핸들러
 const handleSelect = (path: string) => {
-  showMenu.value = false
-  handleProtectedRoute(path)
-}
+    showMenu.value = false;
+    handleProtectedRoute(path);
+};
 
-// 현재 페이지에 맞는 메뉴 반환
 const currentPostOptions = computed(() => {
-  return isBoardPage.value ? boardPostOptions : postOptions
-})
+    return isBoardPage.value ? boardPostOptions : postOptions;
+});
 
-//  네비 하단 버튼 active 스타일
 const isActive = (path: string) => {
-  return route.path === path
-}
+    return route.path === path;
+};
 </script>
 
-<style scoped>
 .fab-post-btn {
   position: fixed;
   bottom: 90px;
@@ -202,4 +220,3 @@ const isActive = (path: string) => {
 .fade-leave-to {
   opacity: 0;
 }
-</style>

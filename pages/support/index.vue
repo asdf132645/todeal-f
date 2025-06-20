@@ -1,7 +1,8 @@
 <template>
+
   <div class="">
     <v-card flat class="pa-4 mt-4" style="background-color: #1A1B1D; color: #F2F3F4">
-<!--      <div class="text-h6 font-weight-bold mb-4">고객센터 문의</div>-->
+<!--      <div class="text-h6 font-weight-bold mb-4">{{ $t('auto_key_33') }}</div>-->
 
       <v-select
           v-model="form.type"
@@ -52,39 +53,49 @@
       </v-btn>
     </v-card>
   </div>
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useSnackbarStore } from '@/stores/snackbarStore'
-import { supportApi } from '@/domains/support/infrastructure/supportApi'
-
-const snackbar = useSnackbarStore()
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+//  이름 수정됨
+import { ref } from "vue";
+import { useSnackbarStore } from "@/stores/snackbarStore";
+import { supportApi } from "@/domains/support/infrastructure/supportApi";
+const snackbar = useSnackbarStore();
 
 const form = ref({
-  type: '',
-  title: '',
-  email: '',
-  content: ''  //  이름 수정됨
-})
+    type: "",
+    title: "",
+    email: "",
+    content: ""
+});
 
-const submitting = ref(false)
+const submitting = ref(false);
 
 const submit = async () => {
-  if (!form.value.type || !form.value.title || !form.value.email || !form.value.content) {
-    snackbar.show('모든 항목을 입력해주세요.', 'error')
-    return
-  }
+    if (!form.value.type || !form.value.title || !form.value.email || !form.value.content) {
+        snackbar.show("모든 항목을 입력해주세요.", "error");
+        return;
+    }
 
-  submitting.value = true
-  try {
-    await supportApi.submitInquiry(form.value)
-    snackbar.show('문의가 접수되었습니다.', 'success')
-    form.value = { type: '', title: '', email: '', content: '' }
-  } catch (e) {
-    snackbar.show('문의 접수에 실패했습니다.', 'error')
-  } finally {
-    submitting.value = false
-  }
-}
+    submitting.value = true;
+
+    try {
+        await supportApi.submitInquiry(form.value);
+        snackbar.show("문의가 접수되었습니다.", "success");
+
+        form.value = {
+            type: "",
+            title: "",
+            email: "",
+            content: ""
+        };
+    } catch (e) {
+        snackbar.show("문의 접수에 실패했습니다.", "error");
+    } finally {
+        submitting.value = false;
+    }
+};
 </script>

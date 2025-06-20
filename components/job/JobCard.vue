@@ -1,4 +1,5 @@
 <template>
+
   <v-card
       class=" d-flex"
       elevation="2"
@@ -33,60 +34,78 @@
       </div>
     </v-card-text>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import noImage from '@/assets/img/noimg.jpg'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import noImage from "@/assets/img/noimg.jpg";
 
 interface Job {
-  id: number
-  title: string
-  translatedTitle?: string
-  description: string
-  currentPrice: number
-  latitude: number
-  longitude: number
-  type?: string
-  pricingType?: string
-  images?: string[]
+    id: number;
+    title: string;
+    translatedTitle?: string;
+    description: string;
+    currentPrice: number;
+    latitude: number;
+    longitude: number;
+    type?: string;
+    pricingType?: string;
+    images?: string[];
 }
 
-const props = defineProps<{ job: Job }>()
-const address = ref('')
-const router = useRouter()
+const props = defineProps<{
+    job: Job;
+}>();
+
+const address = ref("");
+const router = useRouter();
 
 onMounted(async () => {
-  address.value = await getAddressFromCoords(props.job.latitude, props.job.longitude);
-  const savedY = sessionStorage.getItem('scrollY')
-  if (savedY) {
-    window.scrollTo({ top: parseInt(savedY), behavior: 'auto' })
-    sessionStorage.removeItem('scrollY')
-  }
+    address.value = await getAddressFromCoords(props.job.latitude, props.job.longitude);
+    const savedY = sessionStorage.getItem("scrollY");
 
-})
+    if (savedY) {
+        window.scrollTo({
+            top: parseInt(savedY),
+            behavior: "auto"
+        });
+
+        sessionStorage.removeItem("scrollY");
+    }
+});
 
 async function getAddressFromCoords(lat: number, lng: number): Promise<string> {
-  try {
-    const response = await fetch(`https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`, {
-      headers: {
-        Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`
-      }
-    })
-    const data = await response.json()
-    return data.documents?.[0]?.region_3depth_name || '위치 미지정'
-  } catch (error) {
-    console.error('위치 변환 실패:', error)
-    return '위치 미지정'
-  }
+    try {
+        const response = await fetch(
+            `https://dapi.kakao.com/v2/local/geo/coord2regioncode.json?x=${lng}&y=${lat}`,
+            {
+                headers: {
+                    Authorization: `KakaoAK ${import.meta.env.VITE_KAKAO_REST_API_KEY}`
+                }
+            }
+        );
+
+        const data = await response.json();
+        return data.documents?.[0]?.region_3depth_name || t("auto_key_184");
+    } catch (error) {
+        console.error(t("auto_key_185"), error);
+        return t("auto_key_184");
+    }
 }
 
 const goToDetail = () => {
-  sessionStorage.setItem('scrollY', String(window.scrollY))
-  router.push({
-    path: `/deals/detail/${props.job.id}`,
-    query: { type: props.job.type || 'parttime' }
-  })
-}
+    sessionStorage.setItem("scrollY", String(window.scrollY));
+
+    router.push({
+        path: `/deals/detail/${props.job.id}`,
+
+        query: {
+            type: props.job.type || "parttime"
+        }
+    });
+};
 </script>

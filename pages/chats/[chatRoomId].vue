@@ -1,7 +1,8 @@
 <template>
+
   <v-container class="pa-4">
     <v-card elevation="2" class="rounded-lg">
-      <v-card-title class="text-h6 font-weight-bold">💬 실시간 채팅</v-card-title>
+      <v-card-title class="text-h6 font-weight-bold">{{ $t('auto_key_87') }}</v-card-title>
       <v-divider />
 
       <v-card-text class="chat-window">
@@ -35,134 +36,149 @@
             @keyup.enter="sendMessage"
             @input="sendTypingSignal"
         />
-        <v-btn color="primary" @click="sendMessage">전송</v-btn>
+        <v-btn color="primary" @click="sendMessage">{{ $t('auto_key_88') }}</v-btn>
       </v-card-actions>
     </v-card>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { ref, onMounted, nextTick, watch } from 'vue'
-import { useChatMessages } from '@/composables/useChatMessages'
-import { chatApi } from '@/domains/chat/infrastructure/chatApi'
-import { format, isToday } from 'date-fns'
-import { useChatSocketStore } from '@/stores/chatSocketStore'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+//  이미 연결된 경우 connectOnce는 생략, BUT enterRoom은 꼭 호출해야 함
+import { useRoute } from "vue-router";
+import { ref, onMounted, nextTick, watch } from "vue";
+import { useChatMessages } from "@/composables/useChatMessages";
+import { chatApi } from "@/domains/chat/infrastructure/chatApi";
+import { format, isToday } from "date-fns";
+import { useChatSocketStore } from "@/stores/chatSocketStore";
+const route = useRoute();
+const chatRoomId = Number(route.params.chatRoomId);
+const receiverId = Number(route.query.receiverId || 0);
+const userId = process.client ? Number(localStorage.getItem("userId") || 0) : 0;
+const text = ref("");
+const bottomAnchor = ref<HTMLElement | null>(null);
+const isTyping = ref(false);
+const typingTimeout = ref<NodeJS.Timeout | null>(null);
 
-const route = useRoute()
-const chatRoomId = Number(route.params.chatRoomId)
-const receiverId = Number(route.query.receiverId || 0)
-const userId = process.client ? Number(localStorage.getItem('userId') || 0) : 0
+const {
+    messages,
+    loadMessages
+} = useChatMessages(chatRoomId);
 
-const text = ref('')
-const bottomAnchor = ref<HTMLElement | null>(null)
-const isTyping = ref(false)
-const typingTimeout = ref<NodeJS.Timeout | null>(null)
-
-const { messages, loadMessages } = useChatMessages(chatRoomId)
-const chatSocketStore = useChatSocketStore()
-
-watch(messages, () => scrollToBottom())
+const chatSocketStore = useChatSocketStore();
+watch(messages, () => scrollToBottom());
 
 function handleMessage(msg: any) {
-  if (msg?.source === 'notify') return
+    if (msg?.source === "notify")
+        return;
 
-  const data = typeof msg === 'string' ? JSON.parse(msg) : msg
+    const data = typeof msg === "string" ? JSON.parse(msg) : msg;
 
-  if (data.type === 'typing' && data.senderId !== userId) {
-    isTyping.value = true
-    if (typingTimeout.value) clearTimeout(typingTimeout.value)
-    typingTimeout.value = setTimeout(() => (isTyping.value = false), 3000)
-    return
-  }
+    if (data.type === "typing" && data.senderId !== userId) {
+        isTyping.value = true;
 
-  if (data.senderId === userId && data.type === 'text') return
+        if (typingTimeout.value)
+            clearTimeout(typingTimeout.value);
 
-  messages.value.push({
-    id: data.id ?? Date.now(),
-    chatRoomId: data.chatRoomId ?? chatRoomId,
-    senderId: data.senderId,
-    message: data.message || data.messageContent || '[메시지 없음]',
-    read: data.read ?? false,
-    sentAt: data.sentAt || new Date().toISOString(),
-    receiverId: data.receiverId ?? receiverId
-  })
+        typingTimeout.value = setTimeout(() => (isTyping.value = false), 3000);
+        return;
+    }
 
-  messages.value.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime())
-  markMessagesAsRead()
-  scrollToBottom()
+    if (data.senderId === userId && data.type === "text")
+        return;
+
+    messages.value.push({
+        id: data.id ?? Date.now(),
+        chatRoomId: data.chatRoomId ?? chatRoomId,
+        senderId: data.senderId,
+        message: data.message || data.messageContent || t("auto_key_91"),
+        read: data.read ?? false,
+        sentAt: data.sentAt || new Date().toISOString(),
+        receiverId: data.receiverId ?? receiverId
+    });
+
+    messages.value.sort((a, b) => new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime());
+    markMessagesAsRead();
+    scrollToBottom();
 }
 
 onMounted(async () => {
-  await loadMessages()
-  await markMessagesAsRead()
+    await loadMessages();
+    await markMessagesAsRead();
+    const isConnected = chatSocketStore.socket?.readyState === WebSocket.OPEN && chatSocketStore.currentRoomId === chatRoomId && chatSocketStore.userId === userId;
 
-  //  이미 연결된 경우 connectOnce는 생략, BUT enterRoom은 꼭 호출해야 함
-  const isConnected =
-      chatSocketStore.socket?.readyState === WebSocket.OPEN &&
-      chatSocketStore.currentRoomId === chatRoomId &&
-      chatSocketStore.userId === userId
+    if (!isConnected) {
+        chatSocketStore.connectOnce(userId, chatRoomId);
+    }
 
-  if (!isConnected) {
-    chatSocketStore.connectOnce(userId, chatRoomId)
-  }
-
-  chatSocketStore.enterRoom(chatRoomId, handleMessage)
-  scrollToBottom()
-})
-
+    chatSocketStore.enterRoom(chatRoomId, handleMessage);
+    scrollToBottom();
+});
 
 function scrollToBottom() {
-  nextTick(() => {
-    bottomAnchor.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-  })
+    nextTick(() => {
+        bottomAnchor.value?.scrollIntoView({
+            behavior: "smooth",
+            block: "end"
+        });
+    });
 }
 
 function sendMessage() {
-  if (!text.value.trim()) return
+    if (!text.value.trim())
+        return;
 
-  chatSocketStore.sendMessage({
-    chatRoomId,
-    senderId: userId,
-    receiverId,
-    message: text.value.trim()
-  })
+    chatSocketStore.sendMessage({
+        chatRoomId,
+        senderId: userId,
+        receiverId,
+        message: text.value.trim()
+    });
 
-  text.value = ''
+    text.value = "";
 }
 
 function sendTypingSignal() {
-  if (chatSocketStore.socket?.readyState === WebSocket.OPEN) {
-    chatSocketStore.socket.send(
-        JSON.stringify({
-          type: 'typing',
-          chatRoomId,
-          userId
-        })
-    )
-  }
+    if (chatSocketStore.socket?.readyState === WebSocket.OPEN) {
+        chatSocketStore.socket.send(JSON.stringify({
+            type: "typing",
+            chatRoomId,
+            userId
+        }));
+    }
 }
 
 async function markMessagesAsRead() {
-  try {
-    await chatApi.markAsRead({ chatRoomId, userId })
-    messages.value.forEach((msg) => {
-      if (msg.senderId !== userId) msg.read = true
-    })
-  } catch (e) {
-    console.warn('읽음 처리 실패', e)
-  }
+    try {
+        await chatApi.markAsRead({
+            chatRoomId,
+            userId
+        });
+
+        messages.value.forEach(msg => {
+            if (msg.senderId !== userId)
+                msg.read = true;
+        });
+    } catch (e) {
+        console.warn(t("auto_key_92"), e);
+    }
 }
 
 function formatTime(isoTime: string) {
-  if (!isoTime) return ''
-  const date = new Date(isoTime)
-  if (isNaN(date.getTime())) return ''
-  return isToday(date) ? format(date, 'a h:mm') : format(date, 'M월 d일 a h:mm')
+    if (!isoTime)
+        return "";
+
+    const date = new Date(isoTime);
+
+    if (isNaN(date.getTime()))
+        return "";
+
+    return isToday(date) ? format(date, "a h:mm") : format(date, t("auto_key_93"));
 }
 </script>
 
-<style>
 .chat-window {
   height: 65vh;
   overflow-y: auto;
@@ -189,4 +205,3 @@ function formatTime(isoTime: string) {
   align-self: flex-start;
   text-align: left;
 }
-</style>

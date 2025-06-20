@@ -1,6 +1,7 @@
 <template>
+
   <v-card class="mt-6 pa-4">
-    <div class="text-subtitle-1 font-weight-bold mb-3 color-black">입찰자 목록</div>
+    <div class="text-subtitle-1 font-weight-bold mb-3 color-black">{{ $t('auto_key_84') }}</div>
     <v-list>
       <v-list-item
           v-for="bid in bids"
@@ -29,32 +30,36 @@
       </v-list-item>
     </v-list>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { bidApi } from '~/domains/bid/infrastructure/bidApi'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// 🚨 낙찰 이후 부모에서 winnerBidId 갱신 필요
+import { ref, onMounted } from "vue";
+import { bidApi } from "~/domains/bid/infrastructure/bidApi";
 
 const props = defineProps<{
-  dealId: number
-  winnerBidId?: number | null
-}>()
+    dealId: number;
+    winnerBidId?: number | null;
+}>();
 
-const bids = ref<any[]>([])
+const bids = ref<any[]>([]);
 
 const fetchBids = async () => {
-  const res = await bidApi.getBidListByDealId(props.dealId)
-  bids.value = res
-}
+    const res = await bidApi.getBidListByDealId(props.dealId);
+    bids.value = res;
+};
 
 const selectBid = async (bidId: number) => {
-  if (!confirm('해당 입찰자를 낙찰자로 확정하시겠습니까?')) return
+    if (!confirm(t("auto_key_193")))
+        return;
 
-  await bidApi.selectWinnerBid(bidId)
-  alert('낙찰 처리 완료')
-  await fetchBids()
-  // 🚨 낙찰 이후 부모에서 winnerBidId 갱신 필요
-}
+    await bidApi.selectWinnerBid(bidId);
+    alert(t("auto_key_194"));
+    await fetchBids();
+};
 
-onMounted(fetchBids)
+onMounted(fetchBids);
 </script>

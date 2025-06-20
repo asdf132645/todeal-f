@@ -1,4 +1,5 @@
 <template>
+
   <v-card class="post-popup-card" elevation="8">
     <v-row dense>
       <v-col cols="12" v-for="item in postOptions" :key="item.title">
@@ -16,34 +17,31 @@
       </v-col>
     </v-row>
   </v-card>
+
 </template>
 
 <script setup lang="ts">
-const postOptions = [
-  {
-    title: '빌려드려요 등록',
-    subtitle: '물건끼리 맞교환 경매 등록하기',
-    to: '/post/barter',
-  },
-  {
-    title: '중고 거래 등록',
-    subtitle: '중고 물건을 경매로 올려보세요',
-    to: '/post/used',
-  },
-  {
-    title: '알바 모집 등록',
-    subtitle: '사장님이 알바를 모집할 수 있어요',
-    to: '/post/parttime',
-  },
-  {
-    title: '알바 구해요',
-    subtitle: '알바생이 직접 경매 등록 가능',
-    to: '/post/parttime-request',
-  },
-]
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+const postOptions = [{
+    title: t("auto_key_38"),
+    subtitle: t("auto_key_39"),
+    to: "/post/barter"
+}, {
+    title: t("auto_key_40"),
+    subtitle: t("auto_key_41"),
+    to: "/post/used"
+}, {
+    title: t("auto_key_42"),
+    subtitle: t("auto_key_43"),
+    to: "/post/parttime"
+}, {
+    title: t("auto_key_44"),
+    subtitle: t("auto_key_45"),
+    to: "/post/parttime-request"
+}];
 </script>
 
-<style>
 .post-popup-card {
   position: fixed;
   bottom: 160px;
@@ -57,4 +55,3 @@ const postOptions = [
   background-color: #f5f5f5;
   transition: background-color 0.2s ease;
 }
-</style>

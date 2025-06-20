@@ -1,4 +1,5 @@
 <template>
+
   <v-container class="py-6">
     <v-card class="pa-5 rounded-lg" elevation="2">
       <div class="image-upload-wrapper mb-5">
@@ -75,7 +76,7 @@
           </v-btn>
         </v-card>
       </v-expand-transition>
-      <div class="text-caption text-grey-darken-1 mb-1">제목은 최대 40자까지 입력할 수 있어요</div>
+      <div class="text-caption text-grey-darken-1 mb-1">{{ $t('auto_key_66') }}</div>
       <v-text-field
           v-model="display.title"
           label="제목"
@@ -87,7 +88,7 @@
           ref="titleInput"
       />
 
-      <div class="text-caption text-grey-darken-1 mb-1 mt-0">설명은 최대 500자까지 입력할 수 있어요</div>
+      <div class="text-caption text-grey-darken-1 mb-1 mt-0">{{ $t('auto_key_67') }}</div>
       <v-textarea
           v-model="display.description"
           label="설명"
@@ -131,7 +132,7 @@
       />
       <KakaoLocationPicker v-model:region="region" />
 
-      <div class="text-caption text-grey-darken-1 mb-1 mt-4">마감일은 최대 30일까지 선택 가능합니다</div>
+      <div class="text-caption text-grey-darken-1 mb-1 mt-4">{{ $t('auto_key_190') }}</div>
       <v-text-field
           v-model="formattedDeadline"
           label="마감일"
@@ -147,8 +148,8 @@
           <v-date-picker v-model="tempDate" :min="minDate" :max="maxDate" />
           <v-card-actions>
             <v-spacer />
-            <v-btn text @click="cancelDeadline">취소</v-btn>
-            <v-btn text color="primary" @click="confirmDeadline">확인</v-btn>
+            <v-btn text @click="cancelDeadline">{{ $t('auto_key_69') }}</v-btn>
+            <v-btn text color="primary" @click="confirmDeadline">{{ $t('auto_key_70') }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -166,252 +167,270 @@
       <AdRewardButton v-if="showAdButton" @rewarded="submit" class="mt-2" />
     </v-card>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import { useSnackbarStore } from '@/stores/snackbarStore'
-import KakaoLocationPicker from '@/components/common/KakaoLocationPicker.vue'
-import AdRewardButton from '@/components/common/AdRewardButton.vue'
-import { dealApi } from '~/domains/deal/infrastructure/dealApi'
-import {deleteImage, uploadImage} from '~/domains/upload/infrastructure/uploadApi'
-import { apiClient } from '@/libs/http/apiClient'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/authStore";
+import { useSnackbarStore } from "@/stores/snackbarStore";
+import KakaoLocationPicker from "@/components/common/KakaoLocationPicker.vue";
+import AdRewardButton from "@/components/common/AdRewardButton.vue";
+import { dealApi } from "~/domains/deal/infrastructure/dealApi";
+import { deleteImage, uploadImage } from "~/domains/upload/infrastructure/uploadApi";
+import { apiClient } from "@/libs/http/apiClient";
 
-const { type } = defineProps<{ type: string }>()
-const router = useRouter()
-const snackbar = useSnackbarStore()
-const auth = useAuthStore()
-const user = computed(() => auth.user)
+const {
+    type
+} = defineProps<{
+    type: string;
+}>();
+
+const router = useRouter();
+const snackbar = useSnackbarStore();
+const auth = useAuthStore();
+const user = computed(() => auth.user);
 
 const display = ref({
-  title: '',
-  description: ''
-})
-
+    title: "",
+    description: ""
+});
 
 const form = ref({
-  title: '',
-  description: '',
-  pricingType: 'BIDDING',
-  startPrice: null as number | null
-})
+    title: "",
+    description: "",
+    pricingType: "BIDDING",
+    startPrice: null as number | null
+});
 
 const translated = ref({
-  title: '',
-  description: ''
-})
+    title: "",
+    description: ""
+});
 
-const pricingTypeOptions = [
-  { label: '경매 방식 (여러 명이 입찰)', value: 'BIDDING' },
-  { label: '정가 방식 (가격 고정)', value: 'FIXED' }
-]
+const pricingTypeOptions = [{
+    label: t("auto_key_76"),
+    value: "BIDDING"
+}, {
+    label: t("auto_key_77"),
+    value: "FIXED"
+}];
 
-const images = ref<File[]>([])
-const uploadedImageUrls = ref<string[]>([])
-const fileInput = ref<HTMLInputElement | null>(null)
-const titleInput = ref<HTMLInputElement | null>(null)
-const descriptionInput = ref<HTMLInputElement | null>(null)
-const deadlineDialog = ref(false)
-const deadlineDate = ref<Date | null>(null)
-const formattedDeadline = ref('')
-const tempDate = ref<Date | null>(null)
-const ticket = ref<any>(null)
+const images = ref<File[]>([]);
+const uploadedImageUrls = ref<string[]>([]);
+const fileInput = ref<HTMLInputElement | null>(null);
+const titleInput = ref<HTMLInputElement | null>(null);
+const descriptionInput = ref<HTMLInputElement | null>(null);
+const deadlineDialog = ref(false);
+const deadlineDate = ref<Date | null>(null);
+const formattedDeadline = ref("");
+const tempDate = ref<Date | null>(null);
+const ticket = ref<any>(null);
 const loading = ref(false);
 const loadingTranslation = ref(false);
+const showTranslatePanel = ref(false);
+const sourceLang = ref("ko");
+const targetLang = ref("");
 
-const showTranslatePanel = ref(false)
-const sourceLang = ref('ko')
-const targetLang = ref('')
+const langOptions = [{
+    label: t("auto_key_27"),
+    value: "ko"
+}, {
+    label: t("auto_key_75"),
+    value: "en"
+}];
 
-const langOptions = [
-  { label: '한국어', value: 'ko' },
-  { label: '영어', value: 'en' }
-]
-
-const minDate = new Date()
-const maxDate = new Date()
-maxDate.setDate(minDate.getDate() + 30)
+const minDate = new Date();
+const maxDate = new Date();
+maxDate.setDate(minDate.getDate() + 30);
 
 const region = ref({
-  full: '',
-  depth1: '',
-  depth2: '',
-  depth3: '',
-  longitude: null,
-  latitude: null
-})
+    full: "",
+    depth1: "",
+    depth2: "",
+    depth3: "",
+    longitude: null,
+    latitude: null
+});
 
-const showAdButton = computed(() => !user.value?.isPremium && ticket.value?.adRequired)
+const showAdButton = computed(() => !user.value?.isPremium && ticket.value?.adRequired);
 
 onMounted(async () => {
-  try {
-    const res = await dealApi.getTicket()
-    ticket.value = res
-  } catch (e) {
-    console.warn('등록권 상태 불러오기 실패', e)
-  }
-})
+    try {
+        const res = await dealApi.getTicket();
+        ticket.value = res;
+    } catch (e) {
+        console.warn(t("auto_key_191"), e);
+    }
+});
 
 const triggerFileInput = () => {
-  if (fileInput.value) fileInput.value.click()
-}
+    if (fileInput.value)
+        fileInput.value.click();
+};
 
 const onFileChange = async (e: Event) => {
-  const files = (e.target as HTMLInputElement).files
-  if (!files) return
-  const newFiles = Array.from(files).slice(0, 5 - images.value.length)
+    const files = (e.target as HTMLInputElement).files;
 
-  for (const file of newFiles) {
-    try {
-      const url = await uploadImage(file)
-      if (!url) throw new Error('url is null')
-      uploadedImageUrls.value.push(url)
-      images.value.push(file)
-    } catch (e) {
-      snackbar.show('이미지 업로드 실패', 'error')
-      console.error('이미지 업로드 에러:', e)
+    if (!files)
+        return;
+
+    const newFiles = Array.from(files).slice(0, 5 - images.value.length);
+
+    for (const file of newFiles) {
+        try {
+            const url = await uploadImage(file);
+
+            if (!url)
+                throw new Error("url is null");
+
+            uploadedImageUrls.value.push(url);
+            images.value.push(file);
+        } catch (e) {
+            snackbar.show(t("auto_key_78"), "error");
+            console.error(t("auto_key_192"), e);
+        }
     }
-  }
 
-  if (fileInput.value) fileInput.value.value = ''
-}
+    if (fileInput.value)
+        fileInput.value.value = "";
+};
 
 const removeImage = async (index: number) => {
-  const url = uploadedImageUrls.value[index]
-  try {
-    await deleteImage(url)
-    images.value.splice(index, 1)
-    uploadedImageUrls.value.splice(index, 1)
-    snackbar.show('이미지가 삭제되었습니다.', 'success')
-  } catch (e) {
-    snackbar.show('이미지 삭제 실패', 'error')
-    console.error('이미지 삭제 에러:', e)
-  }
+    const url = uploadedImageUrls.value[index];
 
-}
+    try {
+        await deleteImage(url);
+        images.value.splice(index, 1);
+        uploadedImageUrls.value.splice(index, 1);
+        snackbar.show("이미지가 삭제되었습니다.", "success");
+    } catch (e) {
+        snackbar.show(t("auto_key_79"), "error");
+        console.error(t("auto_key_80"), e);
+    }
+};
 
-const getImageUrl = (file: File) => URL.createObjectURL(file)
+const getImageUrl = (file: File) => URL.createObjectURL(file);
 
 const confirmDeadline = () => {
-  if (!tempDate.value) return
-  deadlineDate.value = tempDate.value
-  formattedDeadline.value = tempDate.value.toISOString().split('T')[0]
-  deadlineDialog.value = false
-}
+    if (!tempDate.value)
+        return;
+
+    deadlineDate.value = tempDate.value;
+    formattedDeadline.value = tempDate.value.toISOString().split("T")[0];
+    deadlineDialog.value = false;
+};
 
 const cancelDeadline = () => {
-  deadlineDialog.value = false
-}
+    deadlineDialog.value = false;
+};
 
 const toggleTranslationPanel = () => {
-  showTranslatePanel.value = !showTranslatePanel.value
-}
+    showTranslatePanel.value = !showTranslatePanel.value;
+};
 
 const runTranslation = async () => {
-  if (!display.value.title || !display.value.description) {
-    snackbar.show('제목과 설명을 먼저 입력해주세요.', 'error')
-    return
-  }
-  loadingTranslation.value = true;
-  try {
-    const [resTitle, resDesc] = await Promise.all([
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: display.value.title
-      }),
-      apiClient.post('/api/translate', {
-        source: sourceLang.value,
-        target: targetLang.value,
-        text: display.value.description
-      })
-    ])
-    translated.value.title = resTitle.translatedText
-    translated.value.description = resDesc.translatedText
-
-    form.value.title = display.value.title
-    form.value.description = display.value.description
-
-    display.value.title = resTitle.translatedText
-    display.value.description = resDesc.translatedText
-    loadingTranslation.value = false;
-
-    snackbar.show('번역이 적용되었습니다.', 'success')
-  } catch (e) {
-    loadingTranslation.value = false;
-
-    snackbar.show('번역에 실패했습니다.', 'error')
-  }
-}
-
-const submit = async () => {
-  if (!display.value.title || display.value.title.length > 40) {
-    snackbar.show('제목을 올바르게 입력해주세요.', 'error')
-    titleInput.value?.focus()
-    return
-  }
-
-  if (!display.value.description || display.value.description.length > 500) {
-    snackbar.show('설명을 올바르게 입력해주세요.', 'error')
-    descriptionInput.value?.focus()
-    return
-  }
-
-  if (!form.value.pricingType) {
-    snackbar.show('가격 설정 방식을 선택해주세요.', 'error')
-    return
-  }
-
-  if (form.value.pricingType === 'FIXED' && (!form.value.startPrice || form.value.startPrice <= 0)) {
-    snackbar.show('정가 가격을 올바르게 입력해주세요.', 'error')
-    return
-  }
-
-  if (!region.value.full) {
-    snackbar.show('지역을 선택해주세요.', 'error')
-    return
-  }
-
-  if (!deadlineDate.value) {
-    snackbar.show('마감일을 선택해주세요.', 'error')
-    return
-  }
-
-  loading.value = true
-  try {
-    const payload = {
-      type,
-      title: form.value.title ? form.value.title : display.value.title,
-      description: form.value.description ? form.value.description : display.value.description,
-      pricingType: form.value.pricingType,
-      deadline: deadlineDate.value.toISOString(),
-      startPrice: form.value.pricingType === 'FIXED' ? form.value.startPrice : null,
-      region: region.value.full,
-      regionDepth1: region.value.depth1,
-      regionDepth2: region.value.depth2,
-      regionDepth3: region.value.depth3,
-      longitude: region.value.longitude,
-      latitude: region.value.latitude,
-      images: uploadedImageUrls.value,
-      translatedTitle: translated.value.title || null,
-      translatedContent: translated.value.description || null,
-      language: targetLang.value || null
+    if (!display.value.title || !display.value.description) {
+        snackbar.show("제목과 설명을 먼저 입력해주세요.", "error");
+        return;
     }
 
-    await dealApi.createDeal(payload)
-    snackbar.show('등록이 완료되었습니다.', 'success')
-    router.push(`/deals/${type}`)
-  } catch (e) {
-    snackbar.show('등록에 실패했습니다.', 'error')
-  } finally {
-    loading.value = false
-  }
-}
+    loadingTranslation.value = true;
+
+    try {
+        const [resTitle, resDesc] = await Promise.all([apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: display.value.title
+        }), apiClient.post("/api/translate", {
+            source: sourceLang.value,
+            target: targetLang.value,
+            text: display.value.description
+        })]);
+
+        translated.value.title = resTitle.translatedText;
+        translated.value.description = resDesc.translatedText;
+        form.value.title = display.value.title;
+        form.value.description = display.value.description;
+        display.value.title = resTitle.translatedText;
+        display.value.description = resDesc.translatedText;
+        loadingTranslation.value = false;
+        snackbar.show("번역이 적용되었습니다.", "success");
+    } catch (e) {
+        loadingTranslation.value = false;
+        snackbar.show("번역에 실패했습니다.", "error");
+    }
+};
+
+const submit = async () => {
+    if (!display.value.title || display.value.title.length > 40) {
+        snackbar.show("제목을 올바르게 입력해주세요.", "error");
+        titleInput.value?.focus();
+        return;
+    }
+
+    if (!display.value.description || display.value.description.length > 500) {
+        snackbar.show("설명을 올바르게 입력해주세요.", "error");
+        descriptionInput.value?.focus();
+        return;
+    }
+
+    if (!form.value.pricingType) {
+        snackbar.show("가격 설정 방식을 선택해주세요.", "error");
+        return;
+    }
+
+    if (form.value.pricingType === "FIXED" && (!form.value.startPrice || form.value.startPrice <= 0)) {
+        snackbar.show("정가 가격을 올바르게 입력해주세요.", "error");
+        return;
+    }
+
+    if (!region.value.full) {
+        snackbar.show("지역을 선택해주세요.", "error");
+        return;
+    }
+
+    if (!deadlineDate.value) {
+        snackbar.show("마감일을 선택해주세요.", "error");
+        return;
+    }
+
+    loading.value = true;
+
+    try {
+        const payload = {
+            type,
+            title: form.value.title ? form.value.title : display.value.title,
+            description: form.value.description ? form.value.description : display.value.description,
+            pricingType: form.value.pricingType,
+            deadline: deadlineDate.value.toISOString(),
+            startPrice: form.value.pricingType === "FIXED" ? form.value.startPrice : null,
+            region: region.value.full,
+            regionDepth1: region.value.depth1,
+            regionDepth2: region.value.depth2,
+            regionDepth3: region.value.depth3,
+            longitude: region.value.longitude,
+            latitude: region.value.latitude,
+            images: uploadedImageUrls.value,
+            translatedTitle: translated.value.title || null,
+            translatedContent: translated.value.description || null,
+            language: targetLang.value || null
+        };
+
+        await dealApi.createDeal(payload);
+        snackbar.show("등록이 완료되었습니다.", "success");
+        router.push(`/deals/${type}`);
+    } catch (e) {
+        snackbar.show("등록에 실패했습니다.", "error");
+    } finally {
+        loading.value = false;
+    }
+};
 </script>
 
-<style>
 .image-grid {
   display: flex;
   flex-wrap: wrap;
@@ -430,4 +449,3 @@ const submit = async () => {
 .upload-image-slot.add:hover {
   background-color: #f5f5f5;
 }
-</style>

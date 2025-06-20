@@ -1,4 +1,5 @@
 <template>
+
   <v-app-bar flat style="background-color: #1A1B1D; color: #F2F3F4">
     <v-btn icon @click="router.back()" style="color: #F2F3F4">
       <v-icon>mdi-arrow-left</v-icon>
@@ -21,30 +22,32 @@
 
   <!-- 공통 드로어 컴포넌트 -->
   <AppDrawer v-if="drawer" v-model="drawer" />
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/authStore'
-import NotificationBell from '@/components/common/NotificationBell.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// Props
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { useAuthStore } from "@/stores/authStore";
+import NotificationBell from "@/components/common/NotificationBell.vue";
 import AppDrawer from "~/components/common/AppDrawer.vue";
 
-// Props
-defineProps<{ title: string }>()
+defineProps<{
+    title: string;
+}>();
 
-const router = useRouter()
-const auth = useAuthStore()
+const router = useRouter();
+const auth = useAuthStore();
 const drawer = ref(false);
 
 const toggleDrawer = () => {
-  drawer.value = !drawer.value
-}
-
+    drawer.value = !drawer.value;
+};
 </script>
 
-<style>
 .v-toolbar-title {
   cursor: default;
 }
-</style>

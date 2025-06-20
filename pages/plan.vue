@@ -1,7 +1,8 @@
 <template>
+
   <v-container class="py-10">
     <div class="text-center mb-8">
-      <h2 class="text-h5 font-weight-bold">투딜 유료 플랜</h2>
+      <h2 class="text-h5 font-weight-bold">{{ $t('auto_key_6') }}</h2>
       <p class="text-body-2 text-grey-darken-1">
         광고 없이 무제한 등록이 가능한 유료 플랜입니다.<br />무료 사용자도 광고 시청 후 계속 등록이 가능합니다.
       </p>
@@ -22,83 +23,64 @@
       </v-col>
     </v-row>
   </v-container>
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { requestBootpay } from '@/utils/requestBootpay'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// 내부 처리됨
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+import { requestBootpay } from "@/utils/requestBootpay";
+const auth = useAuthStore();
+const loading = ref<number | null>(null);
 
-const auth = useAuthStore()
-const loading = ref<number | null>(null)
-
-const plans = [
-  {
+const plans = [{
     id: 1,
-    name: '1개월 플랜',
+    name: t("auto_key_7"),
     price: 3400,
-    benefits: [
-      '30일간 광고 없이 등록',
-      '기본 등록권 포함',
-      '자동 갱신 없음'
-    ],
+    benefits: [t("auto_key_8"), t("auto_key_9"), t("auto_key_10")],
     highlight: false
-  },
-  {
+}, {
     id: 6,
-    name: '6개월 플랜',
+    name: t("auto_key_11"),
     price: 25000,
-    benefits: [
-      '180일 + 30일 보너스',
-      '광고 없이 등록 무제한',
-      '가성비 플랜'
-    ]
-  },
-  {
+    benefits: [t("auto_key_12"), t("auto_key_13"), t("auto_key_14")]
+}, {
     id: 12,
-    name: '12개월 플랜',
+    name: t("auto_key_15"),
     price: 39000,
-    benefits: [
-      '365일 + 60일 보너스',
-      '광고 없이 등록 무제한',
-      '우선 지원 포함'
-    ],
+    benefits: [t("auto_key_16"), t("auto_key_13"), t("auto_key_17")],
     highlight: true
-  },
-  {
+}, {
     id: 0,
-    name: '단건 등록권',
+    name: t("auto_key_18"),
     price: 2900,
-    benefits: [
-      '1회 등록 가능',
-      '광고 없이 바로 등록',
-      '기간제한 없음'
-    ]
-  }
-]
+    benefits: [t("auto_key_19"), t("auto_key_20"), t("auto_key_21")]
+}];
 
 const pay = async (planId: number) => {
-  const plan = plans.find(p => p.id === planId)
-  if (!plan || !auth.user) return
+    const plan = plans.find(p => p.id === planId);
 
-  loading.value = plan.id
-  try {
-    await requestBootpay(plan, {
-      id: auth.user.id,
-      name: auth.user.nickname,
-      email: auth.user.email
-    })
-  } catch (e) {
-    // 내부 처리됨
-  } finally {
-    loading.value = null
-  }
-}
+    if (!plan || !auth.user)
+        return;
+
+    loading.value = plan.id;
+
+    try {
+        await requestBootpay(plan, {
+            id: auth.user.id,
+            name: auth.user.nickname,
+            email: auth.user.email
+        });
+    } catch (e) {} finally {
+        loading.value = null;
+    }
+};
 </script>
 
-<style>
 ul {
   list-style: none;
   padding: 0;
 }
-</style>

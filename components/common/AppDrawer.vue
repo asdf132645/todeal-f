@@ -1,4 +1,5 @@
 <template>
+
   <v-navigation-drawer
       v-if="modelValue"
       :model-value="modelValue"
@@ -36,48 +37,62 @@
       </v-list-group>
     </v-list>
   </v-navigation-drawer>
+
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '@/stores/authStore'
-import { useThemeStore } from '@/stores/themeStore'
-import { useI18n } from 'vue-i18n'
-import { useNuxtApp } from '#app'
-import { useRouter } from 'vue-router'
+const { t } = useI18n()
+//  드롭다운 열림 상태 관리
+// soft reload
+import { ref } from "vue";
+import { useAuthStore } from "@/stores/authStore";
+import { useThemeStore } from "@/stores/themeStore";
+import { useI18n } from "vue-i18n";
+import { useNuxtApp } from "#app";
+import { useRouter } from "vue-router";
+const themeStore = useThemeStore();
+const auth = useAuthStore();
 
-const themeStore = useThemeStore()
-const auth = useAuthStore()
-const { locale } = useI18n()
+const {
+    locale
+} = useI18n();
 
-const languageGroupOpen = ref(false) //  드롭다운 열림 상태 관리
+const languageGroupOpen = ref(false);
 
 const props = defineProps<{
-  modelValue: boolean
-}>()
+    modelValue: boolean;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-}>()
+    (e: "update:modelValue", value: boolean): void;
+}>();
 
-const languages = [
-  { code: 'ko', label: '한국어' },
-  { code: 'en', label: 'English' },
-  { code: 'ja', label: '日本語' },
-  { code: 'zh', label: '中文' },
-  { code: 'ru', label: 'Русский' }
-]
+const languages = [{
+    code: "ko",
+    label: t("auto_key_27")
+}, {
+    code: "en",
+    label: "English"
+}, {
+    code: "ja",
+    label: "日本語"
+}, {
+    code: "zh",
+    label: "中文"
+}, {
+    code: "ru",
+    label: "Русский"
+}];
 
 const changeLocale = async (code: string) => {
-  localStorage.setItem('lang', code)
-  const nuxtApp = useNuxtApp()
-  await nuxtApp.$i18n.setLocale(code)
-  locale.value = code
+    localStorage.setItem("lang", code);
+    const nuxtApp = useNuxtApp();
+    await nuxtApp.$i18n.setLocale(code);
+    locale.value = code;
+    const router = useRouter();
 
-  // soft reload
-  const router = useRouter()
-  await router.replace({ path: router.currentRoute.value.fullPath })
-}
-
-
+    await router.replace({
+        path: router.currentRoute.value.fullPath
+    });
+};
 </script>

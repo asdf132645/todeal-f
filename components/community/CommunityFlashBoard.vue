@@ -1,7 +1,8 @@
 <template>
+
   <v-sheet class="bg-app ">
     <!--  타이틀 -->
-    <div class="customText1 mb-4 px-1"> 우리동네 게시글 💬</div>
+    <div class="customText1 mb-4 px-1">{{ $t('auto_key_196') }}</div>
 
     <!--  슬라이드 카드 리스트 -->
     <v-slide-group v-if="posts.length > 0" show-arrows="false" class="px-0">
@@ -52,42 +53,42 @@
       </v-card>
     </div>
   </v-sheet>
+
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { boardApi } from '@/domains/board/infrastructure/boardApi'
-
-const router = useRouter()
-const posts = ref([])
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+// console.log(res);
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { boardApi } from "@/domains/board/infrastructure/boardApi";
+const router = useRouter();
+const posts = ref([]);
 
 const fetchPosts = async () => {
-  try {
-    const res = await boardApi.getPosts();
-    // console.log(res);
-    posts.value = res.items
-  } catch (e) {
-    console.error('게시글 불러오기 실패', e)
-  }
-}
+    try {
+        const res = await boardApi.getPosts();
+        posts.value = res.items;
+    } catch (e) {
+        console.error(t("auto_key_197"), e);
+    }
+};
 
-onMounted(fetchPosts)
-
-const goToPost = (id: number) => router.push(`/board/${id}`)
+onMounted(fetchPosts);
+const goToPost = (id: number) => router.push(`/board/${id}`);
 
 const goToWrite = () => {
-  if (!localStorage.getItem('accessToken')) {
-    router.push('/auth/login')
-  } else {
-    router.push('/board/write')
-  }
-}
+    if (!localStorage.getItem("accessToken")) {
+        router.push("/auth/login");
+    } else {
+        router.push("/board/write");
+    }
+};
 
-const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
+const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
 </script>
 
-<style scoped>
 .flash-card {
   border-radius: 12px;
   background-color: #1A1B1D;
@@ -98,4 +99,3 @@ const formatDate = (iso: string) => new Date(iso).toLocaleDateString()
 .flash-card:hover {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
-</style>
