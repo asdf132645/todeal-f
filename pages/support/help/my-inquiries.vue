@@ -36,7 +36,7 @@ const auth = useAuthStore()
 onMounted(async () => {
   try {
     const res = await helpApi.getMyInquiries()
-    console.log(res)
+    // console.log(res)
     if (Array.isArray(res)) {
       inquiries.value = res
     }

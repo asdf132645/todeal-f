@@ -90,7 +90,7 @@ async function fetchReviews() {
       type: selectedType.value || undefined,
     })
 
-    console.log('✅ 후기 응답:', res)
+    // console.log('✅ 후기 응답:', res)
     reviews.value = res.content
     totalPages.value = res.totalPages
   } catch (err) {

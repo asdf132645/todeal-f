@@ -60,7 +60,8 @@ export const boardApi = {
     },
 
     /** 내가 쓴 게시글 목록 */
-    getMyPosts() {
-        return apiClient.get('/api/board/mine')
+    getMyPosts(params: { page: number; size: number }) {
+        return apiClient.get('/api/board/mine', { params })
     }
+
 }

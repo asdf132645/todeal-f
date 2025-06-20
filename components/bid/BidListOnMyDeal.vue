@@ -313,7 +313,7 @@ const fetchBids = async () => {
       size,
       keyword: keyword.value
     })
-    console.log(res)
+    // console.log(res)
     groupedBids.value = res?.content
     totalPages.value = Math.ceil(res?.totalElements / size)
   } catch (e) {

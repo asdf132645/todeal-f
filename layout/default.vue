@@ -55,6 +55,7 @@ import { useI18n } from 'vue-i18n'
 import AppHeader from '~/components/layout/AppHeader.vue'
 import AppBottomNav from '~/components/layout/AppBottomNav.vue'
 import AppBackHeader from '~/components/layout/AppBackHeader.vue'
+import { analyticsApi } from '@/domains/analytics/infrastructure/analyticsApi'
 
 const { t: _t } = useI18n()
 const route = useRoute()
@@ -84,6 +85,7 @@ const pageTitle = computed(() => {
     '/post/used': 'page.post_used',
     '/post/barter': 'page.post_barter',
     '/post/parttime-request': 'page.parttime_request',
+    '/mytodeal/sales': '내 판매 내역',
     '/post/parttime': 'page.parttime',
     '/chats': 'page.chat',
     '/plans': 'page.plans',
@@ -92,6 +94,7 @@ const pageTitle = computed(() => {
     '/mypage': 'page.mypage',
     '/mytodeal/bids': '내 거래 내역',
     '/mytodeal/bidders': '내 경매 입찰자 목록',
+    '/board/mine' : '내가 쓴 게시글',
     '/mytodeal/reviews': '받은 후기',
     '/support/help/my-inquiries': 'page.my_inquiries',
     '/bids/history': 'page.bids',
@@ -121,7 +124,7 @@ const connectNotificationSocket = () => {
   }
 
   if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-    console.log(_t('log.socket_already_connected'))
+    // console.log(_t('log.socket_already_connected'))
     return
   }
 
@@ -129,7 +132,7 @@ const connectNotificationSocket = () => {
   socket.value = ws
 
   ws.onopen = () => {
-    console.log(_t('log.socket_connected'), userId)
+    // console.log(_t('log.socket_connected'), userId)
     if (reconnectTimeout) clearTimeout(reconnectTimeout)
   }
 
@@ -147,7 +150,7 @@ const connectNotificationSocket = () => {
           message: msg.message,
           sentAt: msg.sentAt,
         })
-        console.log(_t('log.chat_received'), msg)
+        // console.log(_t('log.chat_received'), msg)
       }
 
       if (msg.type === 'deal') {
@@ -158,10 +161,10 @@ const connectNotificationSocket = () => {
           dealTitle: msg.dealTitle,
           sentAt: msg.sentAt,
         })
-        console.log(_t('log.deal_received'), msg)
+        // console.log(_t('log.deal_received'), msg)
       }
     } catch (e) {
-      console.error(_t('log.socket_parse_error'), e)
+      // console.error(_t('log.socket_parse_error'), e)
     }
   }
 
@@ -206,13 +209,26 @@ const handleConsent = async (agree: boolean) => {
   }
 }
 
-
 onMounted(async () => {
-  // ✅ 무조건 한 번만 리로드되게 초기화
+  const today = new Date().toISOString().slice(0, 10)
+  const loggedAt = localStorage.getItem('visitorLoggedAt')
+
+  if (loggedAt === today) {
+    // console.log(' 오늘은 이미 방문 로그 전송함')
+  } else {
+    try {
+      await analyticsApi.logVisitor(route.fullPath, navigator.userAgent)
+      // console.log(' 방문 로그 전송 완료')
+    } catch (e) {
+      console.warn('🚫 방문 로그 실패:', e)
+    }
+    // ✅ 성공 여부 관계없이 저장
+    localStorage.setItem('visitorLoggedAt', today)
+  }
+
+  // 위치 동의 로직
   localStorage.removeItem('locationConsentReloaded')
-
   const consent = localStorage.getItem(LOCATION_KEY)
-
   if (consent === 'granted') {
     await geo.initLocationWithConsent(true)
   } else if (consent === 'denied') {
@@ -223,6 +239,7 @@ onMounted(async () => {
 
   connectNotificationSocket()
 })
+
 
 watch(() => geo.error, (val) => {
   if (val) {

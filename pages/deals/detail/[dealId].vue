@@ -77,7 +77,7 @@ const fetchTrustScores = async () => {
 
   try {
     const result = await trustScoreApi.getUserScores(uniqueUserIds)
-    console.log('🟢 투딜지수 응답:', result)
+    // console.log('🟢 투딜지수 응답:', result)
     trustScores.value = result
   } catch (e) {
     console.warn('❌ 투딜지수 불러오기 실패', e)

@@ -38,7 +38,7 @@ export const useChatSocketStore = defineStore('chatSocket', () => {
         socket.value = new WebSocket(url)
 
         socket.value.onopen = () => {
-            console.log('✅ WebSocket 연결됨')
+            // console.log('✅ WebSocket 연결됨')
         }
 
         socket.value.onmessage = (event) => {

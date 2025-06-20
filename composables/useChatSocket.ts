@@ -14,7 +14,7 @@ export function useChatSocket(
         }
 
         if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-            console.log('🟡 WebSocket 이미 연결됨 - connect 생략')
+            // console.log('🟡 WebSocket 이미 연결됨 - connect 생략')
             return
         }
 
@@ -23,7 +23,7 @@ export function useChatSocket(
         socket.value = new WebSocket(url)
 
         socket.value.onopen = () => {
-            console.log('✅ WebSocket 연결됨')
+            // console.log('✅ WebSocket 연결됨')
 
             const payload = {
                 type: 'read',
@@ -66,7 +66,7 @@ export function useChatSocket(
 
     const disconnect = () => {
         if (socket.value && socket.value.readyState === WebSocket.OPEN) {
-            console.log('🔻 WebSocket 연결 닫는 중...')
+            // console.log('🔻 WebSocket 연결 닫는 중...')
             socket.value.close()
         }
     }

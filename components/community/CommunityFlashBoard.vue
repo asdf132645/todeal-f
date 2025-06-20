@@ -65,7 +65,7 @@ const posts = ref([])
 const fetchPosts = async () => {
   try {
     const res = await boardApi.getPosts();
-    console.log(res);
+    // console.log(res);
     posts.value = res.items
   } catch (e) {
     console.error('게시글 불러오기 실패', e)

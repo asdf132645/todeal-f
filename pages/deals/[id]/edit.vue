@@ -1,7 +1,7 @@
 <template>
-  <v-container class="py-6">
+  <div class="py-6">
     <v-card class="pa-5 rounded-lg" elevation="2">
-      <div class="text-h6 font-weight-bold mb-4">게시글 수정</div>
+      <div class="text-h6 font-weight-bold mb-4">수정</div>
 
       <div class="image-upload-wrapper mb-5">
         <div class="image-grid">
@@ -160,7 +160,7 @@
         수정 완료
       </v-btn>
     </v-card>
-  </v-container>
+  </div>
 </template>
 
 <script setup lang="ts">

@@ -38,7 +38,7 @@ export const trustScoreApi = {
                 userIds: userIds.join(',')  // ✅ '1,2,3' 형태로 보냄
             }
         })
-        console.log(response)
+        // console.log(response)
         return response
     },
 }

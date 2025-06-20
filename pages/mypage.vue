@@ -9,6 +9,9 @@
       <v-list-item to="/mytodeal/bidders" prepend-icon="mdi-account-group">
         <v-list-item-title>내 경매 입찰자 목록</v-list-item-title>
       </v-list-item>
+      <v-list-item to="/mytodeal/sales" prepend-icon="mdi-package-variant">
+        <v-list-item-title>내 판매 내역</v-list-item-title>
+      </v-list-item>
       <v-list-item to="/mytodeal/reviews" prepend-icon="mdi-star-outline">
         <v-list-item-title>받은 후기</v-list-item-title>
       </v-list-item>

@@ -16,7 +16,7 @@ export const dealApi = {
 
     async createDeal(payload: DealRequest): Promise<DealResponse> {
         const auth = useAuthStore() // ✅ 핀아에서 유저 정보 가져오기
-        console.log(auth.user)
+        // console.log(auth.user)
         return apiClient.post('/api/deals', payload, {
             headers: {
                 'X-USER-ID': auth.user.id
@@ -90,9 +90,10 @@ export const dealApi = {
     },
 
     // ✅ 내가 등록한 딜 목록 조회
-    getMyDeals(): Promise<DealResponse[]> {
-        return apiClient.get('/api/deals/mine')
+    getMyDeals(params: { page: number; size: number }) {
+        return apiClient.get('/api/deals/mine', { params })
     },
+
 
     // ✅ 딜 수정 요청
     updateDeal(dealId: number, payload: DealRequest): Promise<DealResponse> {

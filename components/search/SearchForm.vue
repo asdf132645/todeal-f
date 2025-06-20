@@ -33,6 +33,7 @@
 import { ref, onMounted } from 'vue'
 import { useSearchStore } from '@/stores/searchStore'
 import { useRouter } from 'vue-router';
+import { analyticsApi } from '@/domains/analytics/infrastructure/analyticsApi';
 
 onMounted(() => {
   const storedLat = parseFloat(localStorage.getItem('userLat') || '')
@@ -44,7 +45,7 @@ onMounted(() => {
     form.value.lng = storedLng
     form.value.useLocation = true
   }
-  console.log(storedLat, storedLng)
+  // console.log(storedLat, storedLng)
   if (!isNaN(storedRadius)) {
     form.value.radius = storedRadius
   }
@@ -83,8 +84,17 @@ const typeOptions = [
 
 const router = useRouter()
 
-const submit = () => {
+const submit = async () => {
   store.addRecentSearch(form.value)
+
+  // ✅ 검색어가 존재하면 백엔드에 검색 로그 기록
+  if (form.value.keyword?.trim()) {
+    try {
+      await analyticsApi.logSearch(form.value.keyword.trim())
+    } catch (err) {
+      console.warn('🔎 검색어 로그 저장 실패:', err)
+    }
+  }
 
   const filteredQuery = Object.fromEntries(
       Object.entries({
@@ -92,8 +102,8 @@ const submit = () => {
         page: 1
       }).filter(([_, v]) => v !== undefined && v !== '')
   )
-  console.log(filteredQuery)
-  router.push({
+
+  await router.push({
     path: '/deals/search-result',
     query: filteredQuery
   })

@@ -9,7 +9,7 @@ export const uploadImage = async (file: File): Promise<string> => {
             'Content-Type': 'multipart/form-data',
         },
     })
-    console.log('response',response);
+    // console.log('response',response);
     return response // <- 백엔드에서 반환한 image URL
 }
 

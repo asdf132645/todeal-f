@@ -1,7 +1,5 @@
-// ✅ /pages/board/mine.vue
 <template>
-  <v-container>
-    <div class="text-h6 font-weight-bold mb-4">내가 쓴 게시글</div>
+  <div class="mt-2">
     <v-list lines="three" density="comfortable">
       <v-list-item
           v-for="(post, idx) in posts"
@@ -25,11 +23,19 @@
           </v-btn>
         </template>
 
-        <!-- ✅ 리스트 항목 간 구분선 -->
         <v-divider v-if="idx !== posts.length - 1" class="my-2" />
       </v-list-item>
     </v-list>
-  </v-container>
+
+    <!-- ✅ 페이지네이션 -->
+    <v-pagination
+        v-if="totalPages > 1"
+        v-model="page"
+        :length="totalPages"
+        @update:model-value="load"
+        class="mt-4 d-flex justify-center"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -38,17 +44,25 @@ import { useRouter } from 'vue-router'
 import { boardApi } from '@/domains/board/infrastructure/boardApi'
 
 const posts = ref([])
+const page = ref(1)
+const size = 5
+const totalPages = ref(1)
+
 const router = useRouter()
 
 const load = async () => {
-  const res = await boardApi.getMyPosts()
-  posts.value = res
+  const res = await boardApi.getMyPosts({
+    page: page.value - 1, // 0-indexed
+    size
+  })
+  posts.value = res?.content
+  totalPages.value = Math.ceil(res?.totalElements / size)
 }
 
 const deletePost = async (postId: number) => {
   if (confirm('정말 삭제하시겠습니까?')) {
     await boardApi.deletePost(postId)
-    load()
+    await load()
   }
 }
 

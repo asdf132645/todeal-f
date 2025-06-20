@@ -70,7 +70,7 @@ let circle: any = null
 let marker: any = null
 watch(() => geo.regionDepth3, (newVal) => {
   if (newVal) {
-    console.log('📍 지역명이 바뀜 → 지도/마커 갱신')
+    // console.log('📍 지역명이 바뀜 → 지도/마커 갱신')
     getRegionNameFromCoords()
   }
 })
