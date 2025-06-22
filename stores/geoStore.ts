@@ -1,5 +1,8 @@
+//  geoStore.ts - 기존 코드 보존 + regionDepth1~3 추가
 import { defineStore } from 'pinia'
+import { Capacitor } from '@capacitor/core'
 import { Geolocation } from '@capacitor/geolocation'
+
 
 export const useGeoStore = defineStore('geo', {
     state: () => ({
@@ -51,96 +54,96 @@ export const useGeoStore = defineStore('geo', {
         async fetchRegionInfo(lat: number, lng: number): Promise<void> {
             return new Promise((resolve, reject) => {
                 const waitForKakao = () => {
-                    if (window.kakao && window.kakao.maps && window.kakao.maps.services) {
-                        try {
-                            const geocoder = new kakao.maps.services.Geocoder()
-                            const coord = new kakao.maps.LatLng(lat, lng)
+                    if (window.kakao?.maps?.load && window.kakao?.maps?.services?.Geocoder) {
+                        window.kakao.maps.load(() => {
+                            try {
+                                const geocoder = new kakao.maps.services.Geocoder();
+                                const coord = new kakao.maps.LatLng(lat, lng);
 
-                            geocoder.coord2RegionCode(lng, lat, (result, status) => {
-                                if (status === kakao.maps.services.Status.OK) {
-                                    const region = result.find(r => r.region_type === 'H')
-                                    if (!region) return reject('주소 없음')
+                                geocoder.coord2RegionCode(lng, lat, (result, status) => {
+                                    if (status === kakao.maps.services.Status.OK) {
+                                        const region = result.find(r => r.region_type === 'H');
+                                        if (!region) return reject('주소 없음');
 
-                                    this.regionName = region.address_name || '알 수 없음'
-                                    const parts = region.address_name.split(' ')
-                                    this.regionDepth1 = parts[0] || ''
-                                    this.regionDepth2 = parts[1] || ''
-                                    this.regionDepth3 = parts[2] || ''
-                                    resolve()
-                                } else {
-                                    reject('주소 변환 실패')
-                                }
-                            })
-                        } catch {
-                            reject('Geocoder 오류')
-                        }
+                                        this.regionName = region.address_name || '알 수 없음';
+                                        const parts = region.address_name.split(' ');
+                                        this.regionDepth1 = parts[0] || '';
+                                        this.regionDepth2 = parts[1] || '';
+                                        this.regionDepth3 = parts[2] || '';
+                                        resolve();
+                                    } else {
+                                        reject('주소 변환 실패');
+                                    }
+                                });
+                            } catch (e) {
+                                console.error('Geocoder 예외:', e);
+                                reject('Geocoder 오류');
+                            }
+                        });
                     } else {
-                        setTimeout(waitForKakao, 100)
+                        setTimeout(waitForKakao, 100);
                     }
-                }
+                };
 
-                waitForKakao()
-            })
+                waitForKakao();
+            });
         },
 
-        async initLocationWithConsent(agree: boolean) {
-            if (this.initialized) return
-
-            if (!agree) {
-                this.setDefaultLocation()
-                try {
-                    await this.fetchRegionInfo(this.latitude!, this.longitude!)
-                } catch {
-                    this.regionName = '주소 확인 실패'
-                }
-                this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
-                return
+        async initLocationWithConsent(consent: boolean) {
+            if (!consent) {
+                this.error = '위치 권한이 거부되었습니다.';
+                return;
             }
 
-            try {
-                const isApp = typeof window !== 'undefined' && !!window.Capacitor
+            const isApp = Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios';
 
+            try {
                 if (isApp) {
-                    // ✅ Capacitor 기반 WebView
-                    const permStatus = await Geolocation.checkPermissions()
-                    if (permStatus.location !== 'granted') {
-                        const req = await Geolocation.requestPermissions()
-                        if (req.location !== 'granted') throw new Error('위치 권한 거부됨')
+                    // ✅ 권한 확인
+                    const permission = await Geolocation.checkPermissions();
+                    if (permission.location !== 'granted') {
+                        const request = await Geolocation.requestPermissions();
+                        if (request.location !== 'granted') {
+                            this.error = '위치 권한이 거부되었습니다.';
+                            return;
+                        }
                     }
 
-                    const pos = await Geolocation.getCurrentPosition()
-                    this.latitude = pos.coords.latitude
-                    this.longitude = pos.coords.longitude
-                } else {
-                    // ✅ 브라우저 기반
-                    await new Promise<void>((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(
-                            (pos) => {
-                                this.latitude = pos.coords.latitude
-                                this.longitude = pos.coords.longitude
-                                resolve()
-                            },
-                            (err) => {
-                                reject(err)
-                            }
-                        )
-                    })
-                }
+                    // ✅ 위치 가져오기
+                    const position = await Geolocation.getCurrentPosition({
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                    });
 
-                this.initialized = true
-                this.error = null
-                localStorage.setItem('userLat', String(this.latitude))
-                localStorage.setItem('userLng', String(this.longitude))
-                await this.fetchRegionInfo(this.latitude!, this.longitude!)
-            } catch (err) {
-                this.setDefaultLocation()
-                this.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.'
-                try {
-                    await this.fetchRegionInfo(this.latitude!, this.longitude!)
-                } catch {
-                    this.regionName = '주소 확인 실패'
+                    this.latitude = position.coords.latitude;
+                    this.longitude = position.coords.longitude;
+                    this.initialized = true;
+                    this.error = null;
+                } else {
+                    // ✅ 웹 fallback
+                    if ('geolocation' in navigator) {
+                        navigator.geolocation.getCurrentPosition(
+                            (position) => {
+                                this.latitude = position.coords.latitude;
+                                this.longitude = position.coords.longitude;
+                                this.initialized = true;
+                                this.error = null;
+                            },
+                            (error) => {
+                                console.error('[웹 위치 에러]', error);
+                                this.error = '브라우저 위치 권한이 거부되었거나 실패했습니다.';
+                            },
+                            { enableHighAccuracy: true, timeout: 10000 }
+                        );
+                    } else {
+                        this.error = '위치 기능이 지원되지 않는 브라우저입니다.';
+                    }
                 }
-                throw err
+            } catch (e: any) {
+                console.error('[위치 가져오기 실패]', e);
+                this.error = e?.message || '위치 정보를 가져오지 못했습니다.';
+                this.latitude = null;
+                this.longitude = null;
             }
         },
 

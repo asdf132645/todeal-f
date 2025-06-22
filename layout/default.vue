@@ -1,5 +1,4 @@
 <template>
-
   <v-app :class="{ 'light-mode': !themeStore.isDark }">
     <template v-if="!isIntroPage && isMainPage">
       <AppHeader />
@@ -47,6 +46,7 @@
 </template>
 
 <script setup lang="ts">
+
 const { t } = useI18n()
 
 import { ref, onMounted, watch, computed } from "vue";
@@ -59,7 +59,8 @@ import AppHeader from "~/components/layout/AppHeader.vue";
 import AppBottomNav from "~/components/layout/AppBottomNav.vue";
 import AppBackHeader from "~/components/layout/AppBackHeader.vue";
 import { analyticsApi } from "@/domains/analytics/infrastructure/analyticsApi";
-import { Geolocation } from '@capacitor/geolocation';
+import { Capacitor } from '@capacitor/core';
+
 
 const {
     t: _t
@@ -78,6 +79,10 @@ const socket = ref<WebSocket | null>(null);
 let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 const themeStore = useThemeStore();
 themeStore.initTheme();
+
+const isWebViewApp = () => {
+  return Capacitor.isNativePlatform()
+}
 
 const pageTitle = computed(() => {
     const path = route.path;
@@ -189,91 +194,70 @@ const connectNotificationSocket = () => {
 };
 
 const handleConsent = async (agree: boolean) => {
-    localStorage.setItem(LOCATION_KEY, agree ? "granted" : "denied");
-    showConsentDialog.value = false;
-
-    try {
-        await geo.initLocationWithConsent(agree);
-
-        if (agree && geo.latitude && geo.longitude) {
-            localStorage.setItem("userLat", String(geo.latitude));
-            localStorage.setItem("userLng", String(geo.longitude));
-            localStorage.setItem("userRegionName", geo.regionName);
-
-            if (!localStorage.getItem("locationConsentReloaded")) {
-                localStorage.setItem("locationConsentReloaded", "true");
-                window.location.reload();
-            }
-        } else if (agree) {
-            throw new Error(t("auto_key_152"));
-        }
-    } catch (e) {
-        console.error(t("auto_key_153"), e);
-        geo.error = "위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.";
-        showLocationError.value = true;
-        localStorage.removeItem(LOCATION_KEY);
-        showConsentDialog.value = true;
+  localStorage.setItem(LOCATION_KEY, agree ? 'granted' : 'denied');
+  showConsentDialog.value = false;
+  try {
+    await geo.initLocationWithConsent(agree);
+    if (agree && geo.latitude && geo.longitude) {
+      localStorage.setItem('userLat', String(geo.latitude));
+      localStorage.setItem('userLng', String(geo.longitude));
+      localStorage.setItem('userRegionName', geo.regionName);
+    } else if (agree) {
+      throw new Error(_t('auto_key_152'));
     }
+  } catch (e) {
+    geo.error = '위치 정보를 가져올 수 없습니다. 휴대폰 위치(GPS)를 켜주세요.';
+    showLocationError.value = true;
+    localStorage.removeItem(LOCATION_KEY);
+    setTimeout(() => (showConsentDialog.value = true), 500);
+  }
 };
 
-onMounted(async () => {
-  const today = new Date().toISOString().slice(0, 10)
-  const loggedAt = localStorage.getItem('visitorLoggedAt')
 
+onMounted(async () => {
+  const today = new Date().toISOString().slice(0, 10);
+  const loggedAt = localStorage.getItem('visitorLoggedAt');
   if (loggedAt !== today) {
     try {
-      await analyticsApi.logVisitor(route.fullPath, navigator.userAgent)
-    } catch (e) {
-      console.warn(t('auto_key_154'), e)
-    }
-    localStorage.setItem('visitorLoggedAt', today)
+      await analyticsApi.logVisitor(route.fullPath, navigator.userAgent);
+    } catch {}
+    localStorage.setItem('visitorLoggedAt', today);
   }
 
-  localStorage.removeItem('locationConsentReloaded')
-
-  const isApp = typeof window !== 'undefined' && !!window.Capacitor
-  const storedConsent = localStorage.getItem(LOCATION_KEY)
+  const storedConsent = localStorage.getItem(LOCATION_KEY);
+  const isNative = Capacitor.isNativePlatform(); // ✅ 진짜 앱인지 판단
 
   try {
-    if (isApp) {
-      // ✅ 앱일 경우에만 권한 요청
-      const permStatus = await Geolocation.checkPermissions()
-      if (permStatus.location !== 'granted') {
-        const req = await Geolocation.requestPermissions()
-        if (req.location !== 'granted') throw new Error('위치 권한 거부됨')
-      }
-
-      await geo.initLocationWithConsent(true)
+    if (isNative) {
+      // 📱 앱에서는 storedConsent 없어도 바로 시도 (Capacitor가 직접 권한 요청함)
+      await geo.initLocationWithConsent(true);
     } else {
-      // ✅ PC 브라우저일 경우는 localStorage 기준으로만 판단
+      // 🌐 브라우저에서는 사용자가 동의했을 때만 실행
       if (storedConsent === 'granted') {
-        await geo.initLocationWithConsent(true)
+        await geo.initLocationWithConsent(true);
       } else {
-        await geo.initLocationWithConsent(false)
-        showConsentDialog.value = true
+        showConsentDialog.value = true; // ✅ 브라우저에서만 뜨는 UI
       }
     }
   } catch (e) {
-    console.error('위치 권한 요청 실패', e)
-    await geo.initLocationWithConsent(false)
-    showConsentDialog.value = true
+    console.warn('위치 초기화 실패:', e);
+    // ❗ 오류가 나도 브라우저일 때만 다이얼로그 띄움
+    if (!isNative) showConsentDialog.value = true;
   }
 
-  connectNotificationSocket()
-})
-
+  connectNotificationSocket();
+});
 
 
 
 watch(() => geo.error, val => {
-    if (val) {
-        showLocationError.value = true;
-
-        if (val.includes("denied") || val.includes(t("auto_key_155"))) {
-            setTimeout(() => {
-                showConsentDialog.value = true;
-            }, 1000);
-        }
+  if (val) {
+    showLocationError.value = true;
+    if (val.includes('denied') || val.includes(_t('auto_key_155'))) {
+      setTimeout(() => {
+        showConsentDialog.value = true;
+      }, 1000);
     }
+  }
 });
 </script>

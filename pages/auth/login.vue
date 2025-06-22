@@ -62,6 +62,7 @@ import { useRouter } from "vue-router";
 import { useSnackbarStore } from "@/stores/snackbarStore";
 import { ref } from "vue";
 import kakaoImg from "@/assets/img/kakao_login_medium_wide.png";
+import { Capacitor } from '@capacitor/core';
 const auth = useAuthStore();
 const router = useRouter();
 const snackbar = useSnackbarStore();
@@ -86,25 +87,21 @@ const handleEmailLogin = async () => {
 
 const handleKakaoLogin = async () => {
   try {
-    // WebView 환경: authorize 방식 (리디렉션)
-    if (typeof window !== 'undefined' && window.Capacitor) {
-      if (!window.Kakao?.isInitialized?.()) {
-        window.Kakao.init(import.meta.env.VITE_KAKAO_JS_KEY)
-      }
+    const isWebView = Capacitor.getPlatform() !== 'web';
 
-      window.Kakao.Auth.authorize({
-        redirectUri: 'https://app.to-deal.com/auth/kakao/callback'
-      })
-      return
+    if (isWebView) {
+      const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${import.meta.env.VITE_KAKAO_REST_API_KEY}&redirect_uri=https://app.to-deal.com/auth/kakao/callback&response_type=code`;
+      //  외부 브라우저 대신 WebView 내부에서 리디렉션
+      window.location.assign(kakaoAuthUrl);
+      return;
     }
 
-    // PC 브라우저: popup 방식
-    const result = await auth.loginWithKakao()
+    const result = await auth.loginWithKakao();
 
     if (result.isNewUser) {
       if (!result.tempToken) {
-        snackbar.show("카카오 인증 토큰이 없습니다. 다시 시도해 주세요.", "error")
-        return
+        snackbar.show("카카오 인증 토큰이 없습니다. 다시 시도해 주세요.", "error");
+        return;
       }
 
       router.push({
@@ -112,16 +109,18 @@ const handleKakaoLogin = async () => {
         query: {
           tempToken: result.tempToken
         }
-      })
+      });
     } else {
-      snackbar.show(t("auto_key_137"), "success")
-      router.push("/")
+      snackbar.show(t("auto_key_137"), "success");
+      router.push("/");
     }
   } catch (err: any) {
     console.error('[카카오 로그인 오류]', err)
     snackbar.show(`카카오 로그인 중 문제가 발생했어요. ${err}`, "error")
   }
 };
+
+
 
 
 const goToForgotPassword = () => {

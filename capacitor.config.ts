@@ -5,14 +5,19 @@ const config: CapacitorConfig = {
     appName: 'toDEAL',
     webDir: '.output/public',
     android: {
-        allowMixedContent: false, // 가능하면 false
-        webContentsDebuggingEnabled: true // 개발 중일 땐 true
+        allowMixedContent: false,
+        webContentsDebuggingEnabled: true
     },
     server: {
         url: 'https://app.to-deal.com',
-        cleartext: false
+        cleartext: false,
+        androidScheme: 'https'
     },
-    bundledWebRuntime: false
+    plugins: {
+        Geolocation: {
+            enabled: true
+        }
+    }
 }
 
 export default config

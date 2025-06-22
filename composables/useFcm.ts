@@ -7,7 +7,7 @@ let isRegistered = false //  리스너 중복 방지용
 export const useFcm = () => {
     const registerFcm = async (userId: number) => {
         if (!Capacitor.isNativePlatform()) {
-            console.log('📱 푸시는 네이티브 앱에서만 동작')
+            alert('📱 푸시는 네이티브 앱에서만 동작')
             return
         }
 
@@ -18,7 +18,7 @@ export const useFcm = () => {
         isRegistered = true
 
         PushNotifications.addListener('registration', async (token) => {
-            console.log(' FCM 등록 토큰:', token.value)
+            alert(' FCM 등록 토큰:', token.value)
 
             try {
                 await axios.patch(
